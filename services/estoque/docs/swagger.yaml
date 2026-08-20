@@ -1,0 +1,29 @@
+basePath: /
+info:
+  contact: {}
+  description: API do contexto de Estoque do Sistema de Emissao de Notas Fiscais.
+  title: Estoque Service API
+  version: "1.0"
+paths:
+  /health:
+    get:
+      description: Verifica se a API e a conexao com PostgreSQL estao disponiveis.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verifica a saude do servico
+      tags:
+      - Health
+swagger: "2.0"

@@ -762,6 +762,82 @@ Esses itens possuem relação direta com o problema de negócio e demonstram mel
 
 ---
 
+# ADR-021 — Utilizar GORM para persistência
+
+## Status
+
+Aceita.
+
+## Decisão
+
+Utilizar GORM nos repositórios, consultas e transações dos microsserviços Go.
+
+O domínio e os casos de uso não dependerão diretamente do GORM. Os models e a
+implementação concreta dos repositórios permanecerão na infraestrutura.
+
+## Restrição
+
+Não utilizar `AutoMigrate`. A evolução do schema deve ser explícita e versionada.
+
+---
+
+# ADR-022 — Utilizar golang-migrate
+
+## Status
+
+Aceita.
+
+## Decisão
+
+Cada microsserviço possuirá migrations SQL `up` e `down` próprias, controladas
+por um comando separado baseado em `golang-migrate`.
+
+## Motivos
+
+- histórico de alterações auditável;
+- aplicação e reversão controladas;
+- separação entre inicialização da API e alteração de schema;
+- compatibilidade com execução local, CI e deploy.
+
+---
+
+# ADR-023 — Documentar APIs com Swagger/OpenAPI
+
+## Status
+
+Aceita.
+
+## Decisão
+
+Gerar a especificação Swagger a partir de anotações nos endpoints Gin e expor
+uma interface Swagger UI em cada microsserviço.
+
+Os artefatos gerados serão versionados para que o contrato possa ser consultado
+sem exigir o gerador durante a execução da aplicação.
+
+---
+
+# ADR-024 — Exigir configuração explícita
+
+## Status
+
+Aceita.
+
+## Decisão
+
+Variáveis necessárias não possuirão fallback no código nem no Docker Compose.
+A aplicação deve falhar imediatamente quando uma configuração obrigatória
+estiver ausente ou vazia.
+
+O carregamento e a validação de configuração pertencem à infraestrutura.
+
+## Motivo
+
+Evitar conexões silenciosas com banco, porta ou credenciais incorretas e tornar
+o contrato de execução explícito por meio do `.env.example`.
+
+---
+
 # Resumo das decisões
 
 | Decisão | Escolha |
@@ -770,6 +846,10 @@ Esses itens possuem relação direta com o problema de negócio e demonstram mel
 | UI | Angular Material |
 | Backend | Go |
 | HTTP | Gin |
+| Persistência Go | GORM |
+| Evolução do schema | golang-migrate |
+| Documentação HTTP | Swagger/OpenAPI |
+| Configuração | Variáveis obrigatórias, sem fallback |
 | Banco | PostgreSQL |
 | Separação de dados | Schemas |
 | Mensageria | RabbitMQ |

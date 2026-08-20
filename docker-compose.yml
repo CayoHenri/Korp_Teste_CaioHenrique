@@ -6,11 +6,11 @@ services:
     container_name: korp-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-korp_db}
-      POSTGRES_USER: ${POSTGRES_USER:-korp}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-korp_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:?Defina POSTGRES_DB no arquivo .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER no arquivo .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:?Defina POSTGRES_PORT no arquivo .env}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -30,12 +30,12 @@ services:
     container_name: korp-rabbitmq
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-korp}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-korp_dev_password}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-korp}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Defina RABBITMQ_USER no arquivo .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no arquivo .env}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:?Defina RABBITMQ_VHOST no arquivo .env}
     ports:
-      - "${RABBITMQ_AMQP_PORT:-5672}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+      - "${RABBITMQ_AMQP_PORT:?Defina RABBITMQ_AMQP_PORT no arquivo .env}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:?Defina RABBITMQ_MANAGEMENT_PORT no arquivo .env}:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:

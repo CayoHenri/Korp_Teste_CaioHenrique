@@ -445,6 +445,9 @@ Korp_Teste_CaioHenrique/
 |   |
 |   +-- estoque/
 |   |   +-- cmd/
+|   |   |   +-- api/
+|   |   |   +-- migrate/
+|   |   +-- docs/
 |   |   +-- internal/
 |   |   |   +-- domain/
 |   |   |   +-- application/
@@ -573,7 +576,9 @@ flowchart TD
 
 - Go
 - Gin
-- PostgreSQL driver/ORM ou SQL explícito
+- GORM para persistência e transações
+- golang-migrate para evolução versionada do schema
+- Swagger/OpenAPI para documentação HTTP
 - RabbitMQ client
 
 ### Infraestrutura
