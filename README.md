@@ -9,7 +9,7 @@ microsserviços Go, PostgreSQL e RabbitMQ.
 | Componente | Estado |
 |---|---|
 | PostgreSQL e RabbitMQ | Implementados no Docker Compose |
-| Estoque Service | Estrutura inicial, health check, Swagger e migration de produtos |
+| Estoque Service | Cadastro, listagem e consulta de produtos implementados |
 | Faturamento Service | Planejado, ainda não implementado |
 | Frontend Angular | Planejado, ainda não implementado |
 
@@ -133,6 +133,9 @@ Nesta etapa estão implementados:
 - configuração obrigatória pela infraestrutura;
 - comando independente de migrations;
 - migration inicial de `estoque.produtos`;
+- domínio e casos de uso de Produto;
+- repositório de produtos com GORM;
+- cadastro, listagem e consulta por ID ou código;
 - encerramento gracioso da API.
 
 ### Decisões técnicas
@@ -246,6 +249,39 @@ Com o serviço executando:
 |---|---|
 | Health check | <http://localhost:8081/health> |
 | Swagger UI | <http://localhost:8081/swagger/index.html> |
+
+Endpoints implementados:
+
+| Método | Rota | Resultado |
+|---|---|---|
+| `POST` | `/produtos` | Cadastra um produto |
+| `GET` | `/produtos` | Lista produtos ordenados por código |
+| `GET` | `/produtos/{id}` | Consulta por UUID |
+| `GET` | `/produtos/codigo/{codigo}` | Consulta por código |
+
+Exemplo de cadastro, válido em Bash, Zsh e Git Bash:
+
+```bash
+curl -X POST http://localhost:8081/produtos \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"SKU-001","descricao":"Teclado mecanico","saldo":10}'
+```
+
+PowerShell:
+
+```powershell
+$body = @{
+    codigo = "SKU-001"
+    descricao = "Teclado mecanico"
+    saldo = 10
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri "http://localhost:8081/produtos" `
+    -ContentType "application/json" `
+    -Body $body
+```
 
 Depois de alterar anotações HTTP, regenere os arquivos Swagger:
 

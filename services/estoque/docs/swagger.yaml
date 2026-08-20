@@ -1,4 +1,41 @@
 basePath: /
+definitions:
+  http.criarProdutoRequest:
+    properties:
+      codigo:
+        example: SKU-001
+        type: string
+      descricao:
+        example: Teclado mecanico
+        type: string
+      saldo:
+        example: 10
+        type: integer
+    type: object
+  http.errorResponse:
+    properties:
+      codigo:
+        example: PRODUTO_NAO_ENCONTRADO
+        type: string
+      mensagem:
+        example: produto nao encontrado
+        type: string
+    type: object
+  http.produtoResponse:
+    properties:
+      codigo:
+        type: string
+      dataAtualizacao:
+        type: string
+      dataCadastro:
+        type: string
+      descricao:
+        type: string
+      id:
+        type: string
+      saldo:
+        type: integer
+    type: object
 info:
   contact: {}
   description: API do contexto de Estoque do Sistema de Emissao de Notas Fiscais.
@@ -26,4 +63,110 @@ paths:
       summary: Verifica a saude do servico
       tags:
       - Health
+  /produtos:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.produtoResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      summary: Lista produtos
+      tags:
+      - Produtos
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dados do produto
+        in: body
+        name: produto
+        required: true
+        schema:
+          $ref: '#/definitions/http.criarProdutoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.produtoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      summary: Cadastra um produto
+      tags:
+      - Produtos
+  /produtos/{id}:
+    get:
+      parameters:
+      - description: UUID do produto
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.produtoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      summary: Consulta um produto por ID
+      tags:
+      - Produtos
+  /produtos/codigo/{codigo}:
+    get:
+      parameters:
+      - description: Codigo do produto
+        in: path
+        name: codigo
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.produtoResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.errorResponse'
+      summary: Consulta um produto por codigo
+      tags:
+      - Produtos
 swagger: "2.0"

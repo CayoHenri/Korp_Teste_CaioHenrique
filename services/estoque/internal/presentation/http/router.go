@@ -14,12 +14,15 @@ type databasePinger interface {
 	PingContext(context.Context) error
 }
 
-func NewRouter(database databasePinger) http.Handler {
+func NewRouter(database databasePinger, produtoHandler *ProdutoHandler) http.Handler {
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/health", healthHandler(database))
+	if produtoHandler != nil {
+		produtoHandler.RegisterRoutes(router)
+	}
 
 	return router
 }

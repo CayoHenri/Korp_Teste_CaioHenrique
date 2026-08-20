@@ -20,7 +20,7 @@ func TestHealthReturnsOKWhenDatabaseIsAvailable(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)
 
-	NewRouter(databaseStub{}).ServeHTTP(recorder, request)
+	NewRouter(databaseStub{}, nil).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("esperava status %d, recebeu %d", http.StatusOK, recorder.Code)
@@ -31,7 +31,7 @@ func TestHealthReturnsServiceUnavailableWhenDatabaseFails(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)
 
-	NewRouter(databaseStub{err: errors.New("database unavailable")}).ServeHTTP(recorder, request)
+	NewRouter(databaseStub{err: errors.New("database unavailable")}, nil).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusServiceUnavailable {
 		t.Fatalf("esperava status %d, recebeu %d", http.StatusServiceUnavailable, recorder.Code)

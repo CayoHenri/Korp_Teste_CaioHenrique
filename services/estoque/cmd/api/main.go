@@ -11,8 +11,10 @@ import (
 	"time"
 
 	_ "github.com/caiog/korp-notas-fiscais/services/estoque/docs"
+	produtoApplication "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/produto"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/infrastructure/config"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/infrastructure/database"
+	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/infrastructure/repository"
 	httpapi "github.com/caiog/korp-notas-fiscais/services/estoque/internal/presentation/http"
 )
 
@@ -34,10 +36,13 @@ func main() {
 		os.Exit(1)
 	}
 	defer connection.Close()
+	produtoRepository := repository.NewGormProdutoRepository(connection.Gorm)
+	produtoService := produtoApplication.NewService(produtoRepository)
+	produtoHandler := httpapi.NewProdutoHandler(produtoService)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
-		Handler:           httpapi.NewRouter(connection.SQL),
+		Handler:           httpapi.NewRouter(connection.SQL, produtoHandler),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

@@ -14,7 +14,9 @@ type Connection struct {
 }
 
 func Open(databaseURL string) (*Connection, error) {
-	gormDB, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+	gormDB, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{
+		TranslateError: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("abrir conexao GORM: %w", err)
 	}
