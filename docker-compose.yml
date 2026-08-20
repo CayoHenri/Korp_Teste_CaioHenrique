@@ -1,0 +1,59 @@
+name: korp-notas-fiscais
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: korp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-korp_db}
+      POSTGRES_USER: ${POSTGRES_USER:-korp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-korp_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - korp-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: korp-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-korp}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-korp_dev_password}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-korp}
+    ports:
+      - "${RABBITMQ_AMQP_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - korp-network
+
+volumes:
+  postgres_data:
+    name: korp-postgres-data
+  rabbitmq_data:
+    name: korp-rabbitmq-data
+
+networks:
+  korp-network:
+    name: korp-network
+    driver: bridge
