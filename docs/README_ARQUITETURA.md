@@ -490,6 +490,9 @@ Exemplo:
 ```text
 internal/
 |
++-- dependency/
+|   +-- container.go
+|
 +-- domain/
 |   +-- produto/
 |
@@ -499,13 +502,21 @@ internal/
 |   +-- baixar_estoque.go
 |
 +-- infrastructure/
-|   +-- persistence/
-|   |   +-- postgres/
+|   +-- database/
+|   |   +-- models/
+|   +-- repository/
 |   +-- messaging/
 |       +-- rabbitmq/
 |
 +-- presentation/
-    +-- http/
+|   +-- http/
+|       +-- domainerror/
+|       +-- dto/
+|       +-- response/
+|       +-- handlers
+|
++-- shared/
+    +-- text/
 ```
 
 Princípios:
@@ -514,6 +525,21 @@ Princípios:
 - application orquestra casos de uso;
 - infrastructure implementa banco, mensageria e integrações;
 - presentation expõe HTTP.
+
+Convenções adicionais:
+
+- construtores de entidades seguem `NewNomeDaEntidade`;
+- textos de domínio são normalizados por funções compartilhadas antes da persistência;
+- models GORM são separados dos repositories e convertem explicitamente com `ToDomain`;
+- DTOs HTTP são separados dos handlers e não são reutilizados como entidades de domínio.
+- repositories recebem nomes de negócio, sem prefixos como `Gorm`;
+- a montagem das dependências concretas fica centralizada em `internal/dependency`.
+- respostas HTTP usam envelopes consistentes de sucesso ou erro;
+- a tradução de erros de domínio para HTTP ocorre em um pacote dedicado;
+- erros inesperados não expõem detalhes internos ao cliente.
+- entidades mantêm propriedades privadas e disponibilizam somente getters;
+- alterações de estado usam métodos de negócio específicos, nunca setters genéricos;
+- a reconstituição de models também passa pelas invariantes do domínio.
 
 ---
 

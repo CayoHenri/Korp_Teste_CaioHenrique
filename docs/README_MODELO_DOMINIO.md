@@ -863,6 +863,15 @@ O modelo deve seguir estas regras:
 8. Cada contexto é dono dos próprios dados.
 9. Integração entre contextos ocorre por contratos.
 10. Regras de saldo permanecem sob responsabilidade do Estoque.
+11. Construtores de entidades seguem o padrão `NewNomeDaEntidade`.
+12. Código e descrição de Produto são normalizados em uppercase.
+13. Models de persistência e DTOs HTTP não fazem parte do domínio.
+14. Repositories possuem nomes de negócio, independentemente da tecnologia concreta.
+15. A composição das dependências ocorre fora das camadas de domínio e aplicação.
+16. A camada HTTP traduz erros do domínio sem adicionar dependência HTTP ao domínio.
+17. Propriedades das entidades são privadas e lidas por getters idiomáticos de Go.
+18. Alterações ocorrem por métodos de negócio específicos, não por setters genéricos.
+19. A reconstituição de entidades persistidas reaplica as invariantes do domínio.
 
 ---
 

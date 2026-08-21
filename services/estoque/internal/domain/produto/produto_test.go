@@ -6,16 +6,33 @@ import (
 )
 
 func TestNovoProdutoNormalizaDados(t *testing.T) {
-	produto, err := Novo("  SKU-001  ", "  Teclado  ", 10)
+	produto, err := NewProduto("  sku-001  ", "  Teclado Mecânico  ", 10)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
 
-	if produto.Codigo != "SKU-001" || produto.Descricao != "Teclado" {
+	if produto.Codigo() != "SKU-001" || produto.Descricao() != "TECLADO MECÂNICO" {
 		t.Fatalf("dados nao foram normalizados: %+v", produto)
 	}
-	if produto.ID.String() == "00000000-0000-0000-0000-000000000000" {
+	if produto.ID().String() == "00000000-0000-0000-0000-000000000000" {
 		t.Fatal("esperava um UUID gerado")
+	}
+}
+
+func TestAtualizarDescricaoPreservaInvariantes(t *testing.T) {
+	produto, err := NewProduto("SKU", "Teclado", 1)
+	if err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+
+	if err := produto.AtualizarDescricao("  mouse gamer  "); err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+	if produto.Descricao() != "MOUSE GAMER" {
+		t.Fatalf("descricao nao foi normalizada: %q", produto.Descricao())
+	}
+	if err := produto.AtualizarDescricao("  "); !errors.Is(err, ErrDescricaoObrigatoria) {
+		t.Fatalf("esperava erro de descricao, recebeu %v", err)
 	}
 }
 
@@ -34,7 +51,7 @@ func TestNovoProdutoValidaInvariantes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := Novo(test.codigo, test.descricao, test.saldo)
+			_, err := NewProduto(test.codigo, test.descricao, test.saldo)
 			if !errors.Is(err, test.expected) {
 				t.Fatalf("esperava %v, recebeu %v", test.expected, err)
 			}

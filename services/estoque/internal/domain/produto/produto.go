@@ -2,9 +2,9 @@ package produto
 
 import (
 	"errors"
-	"strings"
 	"time"
 
+	sharedtext "github.com/caiog/korp-notas-fiscais/services/estoque/internal/shared/text"
 	"github.com/google/uuid"
 )
 
@@ -12,23 +12,39 @@ var (
 	ErrCodigoObrigatorio    = errors.New("codigo do produto e obrigatorio")
 	ErrDescricaoObrigatoria = errors.New("descricao do produto e obrigatoria")
 	ErrSaldoInvalido        = errors.New("saldo do produto nao pode ser negativo")
+	ErrIDInvalido           = errors.New("id do produto e invalido")
 	ErrProdutoNaoEncontrado = errors.New("produto nao encontrado")
 	ErrCodigoJaExistente    = errors.New("codigo do produto ja existente")
 )
 
 type Produto struct {
-	ID              uuid.UUID
-	Codigo          string
-	Descricao       string
-	Saldo           int
-	DataCadastro    time.Time
-	DataAtualizacao time.Time
+	id              uuid.UUID
+	codigo          string
+	descricao       string
+	saldo           int
+	dataCadastro    time.Time
+	dataAtualizacao time.Time
 }
 
-func Novo(codigo, descricao string, saldo int) (*Produto, error) {
-	codigo = strings.TrimSpace(codigo)
-	descricao = strings.TrimSpace(descricao)
+func NewProduto(codigo, descricao string, saldo int) (*Produto, error) {
+	agora := time.Now().UTC()
+	return NewProdutoWithState(uuid.New(), codigo, descricao, saldo, agora, agora)
+}
 
+func NewProdutoWithState(
+	id uuid.UUID,
+	codigo string,
+	descricao string,
+	saldo int,
+	dataCadastro time.Time,
+	dataAtualizacao time.Time,
+) (*Produto, error) {
+	codigo = sharedtext.NormalizeUpper(codigo)
+	descricao = sharedtext.NormalizeUpper(descricao)
+
+	if id == uuid.Nil {
+		return nil, ErrIDInvalido
+	}
 	if codigo == "" {
 		return nil, ErrCodigoObrigatorio
 	}
@@ -39,13 +55,33 @@ func Novo(codigo, descricao string, saldo int) (*Produto, error) {
 		return nil, ErrSaldoInvalido
 	}
 
-	agora := time.Now().UTC()
 	return &Produto{
-		ID:              uuid.New(),
-		Codigo:          codigo,
-		Descricao:       descricao,
-		Saldo:           saldo,
-		DataCadastro:    agora,
-		DataAtualizacao: agora,
+		id:              id,
+		codigo:          codigo,
+		descricao:       descricao,
+		saldo:           saldo,
+		dataCadastro:    dataCadastro.UTC(),
+		dataAtualizacao: dataAtualizacao.UTC(),
 	}, nil
+}
+
+func (produto *Produto) ID() uuid.UUID              { return produto.id }
+func (produto *Produto) Codigo() string             { return produto.codigo }
+func (produto *Produto) Descricao() string          { return produto.descricao }
+func (produto *Produto) Saldo() int                 { return produto.saldo }
+func (produto *Produto) DataCadastro() time.Time    { return produto.dataCadastro }
+func (produto *Produto) DataAtualizacao() time.Time { return produto.dataAtualizacao }
+
+func (produto *Produto) AtualizarDescricao(descricao string) error {
+	descricao = sharedtext.NormalizeUpper(descricao)
+	if descricao == "" {
+		return ErrDescricaoObrigatoria
+	}
+	if descricao == produto.descricao {
+		return nil
+	}
+
+	produto.descricao = descricao
+	produto.dataAtualizacao = time.Now().UTC()
+	return nil
 }

@@ -1,27 +1,18 @@
 basePath: /
 definitions:
-  http.criarProdutoRequest:
+  dto.CriarProdutoRequest:
     properties:
       codigo:
         example: SKU-001
         type: string
       descricao:
-        example: Teclado mecanico
+        example: TECLADO MECANICO
         type: string
       saldo:
         example: 10
         type: integer
     type: object
-  http.errorResponse:
-    properties:
-      codigo:
-        example: PRODUTO_NAO_ENCONTRADO
-        type: string
-      mensagem:
-        example: produto nao encontrado
-        type: string
-    type: object
-  http.produtoResponse:
+  dto.ProdutoResponse:
     properties:
       codigo:
         type: string
@@ -35,6 +26,30 @@ definitions:
         type: string
       saldo:
         type: integer
+    type: object
+  response.ErrorData:
+    properties:
+      code:
+        example: PRODUTO_NAO_ENCONTRADO
+        type: string
+      message:
+        example: produto nao encontrado
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/response.ErrorData'
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.SuccessResponse:
+    properties:
+      data: {}
+      success:
+        example: true
+        type: boolean
     type: object
 info:
   contact: {}
@@ -51,15 +66,11 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.SuccessResponse'
         "503":
           description: Service Unavailable
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Verifica a saude do servico
       tags:
       - Health
@@ -71,13 +82,18 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/http.produtoResponse'
-            type: array
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.ProdutoResponse'
+                  type: array
+              type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Lista produtos
       tags:
       - Produtos
@@ -90,26 +106,31 @@ paths:
         name: produto
         required: true
         schema:
-          $ref: '#/definitions/http.criarProdutoRequest'
+          $ref: '#/definitions/dto.CriarProdutoRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/http.produtoResponse'
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProdutoResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Cadastra um produto
       tags:
       - Produtos
@@ -127,19 +148,24 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/http.produtoResponse'
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProdutoResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Consulta um produto por ID
       tags:
       - Produtos
@@ -157,15 +183,20 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/http.produtoResponse'
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProdutoResponse'
+              type: object
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.errorResponse'
+            $ref: '#/definitions/response.ErrorResponse'
       summary: Consulta um produto por codigo
       tags:
       - Produtos

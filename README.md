@@ -135,6 +135,12 @@ Nesta etapa estão implementados:
 - migration inicial de `estoque.produtos`;
 - domínio e casos de uso de Produto;
 - repositório de produtos com GORM;
+- models GORM separados dos repositórios e conversão explícita para domínio;
+- DTOs HTTP separados dos handlers;
+- normalização compartilhada de textos com remoção de espaços e uppercase;
+- injeção de dependências centralizada em um container próprio;
+- envelopes HTTP e tradução de erros de domínio centralizados;
+- entidades com estado privado, leitura por getters e alterações por métodos de negócio;
 - cadastro, listagem e consulta por ID ou código;
 - encerramento gracioso da API.
 
@@ -146,6 +152,17 @@ Nesta etapa estão implementados:
 - `golang-migrate` aplica arquivos SQL `up` e `down` em ordem de versão.
 - O health check executa `PingContext` no banco e retorna `503` quando a conexão não está disponível.
 - Swagger é gerado a partir de anotações e seus artefatos são versionados.
+- Construtores de entidades seguem o padrão `NewNomeDaEntidade`.
+- Models GORM ficam em `internal/infrastructure/database/models` e expõem `ToDomain`.
+- DTOs ficam na apresentação HTTP, separados dos handlers.
+- Código e descrição de produtos são persistidos em uppercase.
+- `Produto` não expõe campos públicos; getters seguem a convenção idiomática de Go, como `ID()` e `Descricao()`.
+- Não são criados setters genéricos; mudanças usam métodos específicos, como `AtualizarDescricao`.
+- Dados persistidos são reconstituídos por `NewProdutoWithState`, que reaplica as invariantes.
+- Repositories usam nomes de negócio, como `ProdutoRepository`, sem prefixo da tecnologia de persistência.
+- O pacote `internal/dependency` concentra a composição de repositories, services, handlers e router.
+- O pacote HTTP `response` fornece respostas `OK`, `Created`, `Data`, `Message` e `Error`.
+- O pacote HTTP `domainerror` traduz erros conhecidos do domínio e oculta detalhes de falhas inesperadas.
 
 ### Variáveis obrigatórias
 
@@ -259,6 +276,30 @@ Endpoints implementados:
 | `GET` | `/produtos/{id}` | Consulta por UUID |
 | `GET` | `/produtos/codigo/{codigo}` | Consulta por código |
 
+Respostas de sucesso seguem o envelope:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+Respostas de erro seguem o envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "PRODUTO_NAO_ENCONTRADO",
+    "message": "produto nao encontrado"
+  }
+}
+```
+
+Erros inesperados retornam `ERRO_INTERNO` sem expor mensagens de banco, stack
+traces ou outros detalhes internos.
+
 Exemplo de cadastro, válido em Bash, Zsh e Git Bash:
 
 ```bash
@@ -333,8 +374,14 @@ Korp_Teste_CaioHenrique/
 │       ├── cmd/api/
 │       ├── cmd/migrate/
 │       ├── docs/
-│       ├── internal/infrastructure/
+│       ├── internal/dependency/
+│       ├── internal/infrastructure/database/models/
+│       ├── internal/infrastructure/repository/
 │       ├── internal/presentation/http/
+│       │   ├── domainerror/
+│       │   ├── dto/
+│       │   └── response/
+│       ├── internal/shared/text/
 │       └── migrations/
 ├── .env.example
 ├── docker-compose.yml

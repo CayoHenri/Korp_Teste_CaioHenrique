@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/presentation/http/response"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -32,8 +33,8 @@ func NewRouter(database databasePinger, produtoHandler *ProdutoHandler) http.Han
 // @Description Verifica se a API e a conexao com PostgreSQL estao disponiveis.
 // @Tags Health
 // @Produce json
-// @Success 200 {object} map[string]string
-// @Failure 503 {object} map[string]string
+// @Success 200 {object} response.SuccessResponse
+// @Failure 503 {object} response.ErrorResponse
 // @Router /health [get]
 func healthHandler(database databasePinger) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -41,14 +42,11 @@ func healthHandler(database databasePinger) gin.HandlerFunc {
 		defer cancel()
 
 		if err := database.PingContext(ctx); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{
-				"status":   "unhealthy",
-				"database": "unavailable",
-			})
+			response.Error(c, http.StatusServiceUnavailable, "SERVICO_INDISPONIVEL", "banco de dados indisponivel")
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
+		response.OK(c, gin.H{
 			"status":   "healthy",
 			"service":  "estoque-service",
 			"database": "available",

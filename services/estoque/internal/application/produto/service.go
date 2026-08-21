@@ -22,7 +22,7 @@ func NewService(repository domain.Repository) *Service {
 }
 
 func (service *Service) Criar(ctx context.Context, input CriarInput) (*domain.Produto, error) {
-	produto, err := domain.Novo(input.Codigo, input.Descricao, input.Saldo)
+	produto, err := domain.NewProduto(input.Codigo, input.Descricao, input.Saldo)
 	if err != nil {
 		return nil, err
 	}

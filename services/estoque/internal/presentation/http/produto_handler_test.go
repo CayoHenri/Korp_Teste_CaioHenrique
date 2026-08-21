@@ -50,6 +50,9 @@ func TestCriarProdutoReturnsCreated(t *testing.T) {
 	if len(repository.produtos) != 1 {
 		t.Fatal("esperava um produto persistido")
 	}
+	if repository.produtos[0].Descricao() != "TECLADO" {
+		t.Fatalf("esperava descricao em uppercase, recebeu %q", repository.produtos[0].Descricao())
+	}
 }
 
 func TestBuscarProdutoRejectsInvalidID(t *testing.T) {
