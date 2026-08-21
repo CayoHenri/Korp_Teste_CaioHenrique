@@ -15,8 +15,12 @@ type Container struct {
 
 func NewContainer(connection *database.Connection) *Container {
 	produtoRepository := repository.NewProdutoRepository(connection.Gorm)
-	produtoService := produtoApplication.NewService(produtoRepository)
-	produtoHandler := httpapi.NewProdutoHandler(produtoService)
+	produtoHandler := httpapi.NewProdutoHandler(
+		produtoApplication.NewCriarProdutoUseCase(produtoRepository),
+		produtoApplication.NewListarProdutosUseCase(produtoRepository),
+		produtoApplication.NewBuscarProdutoPorIDUseCase(produtoRepository),
+		produtoApplication.NewBuscarProdutoPorCodigoUseCase(produtoRepository),
+	)
 
 	return &Container{
 		HTTPHandler: httpapi.NewRouter(connection.SQL, produtoHandler),

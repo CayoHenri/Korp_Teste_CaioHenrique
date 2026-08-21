@@ -12,11 +12,24 @@ import (
 )
 
 type ProdutoHandler struct {
-	service *application.Service
+	criarProduto           *application.CriarProdutoUseCase
+	listarProdutos         *application.ListarProdutosUseCase
+	buscarProdutoPorID     *application.BuscarProdutoPorIDUseCase
+	buscarProdutoPorCodigo *application.BuscarProdutoPorCodigoUseCase
 }
 
-func NewProdutoHandler(service *application.Service) *ProdutoHandler {
-	return &ProdutoHandler{service: service}
+func NewProdutoHandler(
+	criarProduto *application.CriarProdutoUseCase,
+	listarProdutos *application.ListarProdutosUseCase,
+	buscarProdutoPorID *application.BuscarProdutoPorIDUseCase,
+	buscarProdutoPorCodigo *application.BuscarProdutoPorCodigoUseCase,
+) *ProdutoHandler {
+	return &ProdutoHandler{
+		criarProduto:           criarProduto,
+		listarProdutos:         listarProdutos,
+		buscarProdutoPorID:     buscarProdutoPorID,
+		buscarProdutoPorCodigo: buscarProdutoPorCodigo,
+	}
 }
 
 func (handler *ProdutoHandler) RegisterRoutes(router *gin.Engine) {
@@ -45,7 +58,7 @@ func (handler *ProdutoHandler) criar(c *gin.Context) {
 		return
 	}
 
-	produto, err := handler.service.Criar(c.Request.Context(), application.CriarInput{
+	produto, err := handler.criarProduto.Execute(c.Request.Context(), application.CriarProdutoInput{
 		Codigo: request.Codigo, Descricao: request.Descricao, Saldo: request.Saldo,
 	})
 	if err != nil {
@@ -64,7 +77,7 @@ func (handler *ProdutoHandler) criar(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponse
 // @Router /produtos [get]
 func (handler *ProdutoHandler) listar(c *gin.Context) {
-	produtos, err := handler.service.Listar(c.Request.Context())
+	produtos, err := handler.listarProdutos.Execute(c.Request.Context())
 	if err != nil {
 		domainerror.Respond(c, err)
 		return
@@ -94,7 +107,7 @@ func (handler *ProdutoHandler) buscarPorID(c *gin.Context) {
 		return
 	}
 
-	produto, err := handler.service.BuscarPorID(c.Request.Context(), id)
+	produto, err := handler.buscarProdutoPorID.Execute(c.Request.Context(), id)
 	if err != nil {
 		domainerror.Respond(c, err)
 		return
@@ -112,7 +125,7 @@ func (handler *ProdutoHandler) buscarPorID(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponse
 // @Router /produtos/codigo/{codigo} [get]
 func (handler *ProdutoHandler) buscarPorCodigo(c *gin.Context) {
-	produto, err := handler.service.BuscarPorCodigo(c.Request.Context(), c.Param("codigo"))
+	produto, err := handler.buscarProdutoPorCodigo.Execute(c.Request.Context(), c.Param("codigo"))
 	if err != nil {
 		domainerror.Respond(c, err)
 		return

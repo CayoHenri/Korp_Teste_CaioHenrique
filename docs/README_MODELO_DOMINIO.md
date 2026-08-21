@@ -872,6 +872,7 @@ O modelo deve seguir estas regras:
 17. Propriedades das entidades são privadas e lidas por getters idiomáticos de Go.
 18. Alterações ocorrem por métodos de negócio específicos, não por setters genéricos.
 19. A reconstituição de entidades persistidas reaplica as invariantes do domínio.
+20. Cada operação da aplicação é representada por um use case independente.
 
 ---
 

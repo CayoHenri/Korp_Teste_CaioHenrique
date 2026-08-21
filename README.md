@@ -141,6 +141,7 @@ Nesta etapa estão implementados:
 - injeção de dependências centralizada em um container próprio;
 - envelopes HTTP e tradução de erros de domínio centralizados;
 - entidades com estado privado, leitura por getters e alterações por métodos de negócio;
+- camada application organizada em um use case por operação;
 - cadastro, listagem e consulta por ID ou código;
 - encerramento gracioso da API.
 
@@ -160,7 +161,8 @@ Nesta etapa estão implementados:
 - Não são criados setters genéricos; mudanças usam métodos específicos, como `AtualizarDescricao`.
 - Dados persistidos são reconstituídos por `NewProdutoWithState`, que reaplica as invariantes.
 - Repositories usam nomes de negócio, como `ProdutoRepository`, sem prefixo da tecnologia de persistência.
-- O pacote `internal/dependency` concentra a composição de repositories, services, handlers e router.
+- O pacote `internal/dependency` concentra a composição de repositories, use cases, handlers e router.
+- A camada application não usa services genéricos: cada operação possui seu próprio use case com método `Execute`.
 - O pacote HTTP `response` fornece respostas `OK`, `Created`, `Data`, `Message` e `Error`.
 - O pacote HTTP `domainerror` traduz erros conhecidos do domínio e oculta detalhes de falhas inesperadas.
 
@@ -375,6 +377,11 @@ Korp_Teste_CaioHenrique/
 │       ├── cmd/migrate/
 │       ├── docs/
 │       ├── internal/dependency/
+│       ├── internal/application/produto/
+│       │   ├── criar_produto.go
+│       │   ├── listar_produtos.go
+│       │   ├── buscar_produto_por_id.go
+│       │   └── buscar_produto_por_codigo.go
 │       ├── internal/infrastructure/database/models/
 │       ├── internal/infrastructure/repository/
 │       ├── internal/presentation/http/

@@ -16,6 +16,15 @@ type produtoRepositoryStub struct {
 	produtos []domain.Produto
 }
 
+func newProdutoHandlerForTest(repository *produtoRepositoryStub) *ProdutoHandler {
+	return NewProdutoHandler(
+		application.NewCriarProdutoUseCase(repository),
+		application.NewListarProdutosUseCase(repository),
+		application.NewBuscarProdutoPorIDUseCase(repository),
+		application.NewBuscarProdutoPorCodigoUseCase(repository),
+	)
+}
+
 func (repository *produtoRepositoryStub) Criar(_ context.Context, produto *domain.Produto) error {
 	repository.produtos = append(repository.produtos, *produto)
 	return nil
@@ -32,7 +41,7 @@ func (repository *produtoRepositoryStub) Listar(context.Context) ([]domain.Produ
 
 func TestCriarProdutoReturnsCreated(t *testing.T) {
 	repository := &produtoRepositoryStub{}
-	handler := NewProdutoHandler(application.NewService(repository))
+	handler := newProdutoHandlerForTest(repository)
 	router := NewRouter(databaseStub{}, handler)
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(
@@ -56,7 +65,7 @@ func TestCriarProdutoReturnsCreated(t *testing.T) {
 }
 
 func TestBuscarProdutoRejectsInvalidID(t *testing.T) {
-	handler := NewProdutoHandler(application.NewService(&produtoRepositoryStub{}))
+	handler := newProdutoHandlerForTest(&produtoRepositoryStub{})
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/produtos/id-invalido", nil)
 

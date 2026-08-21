@@ -499,6 +499,7 @@ internal/
 +-- application/
 |   +-- criar_produto.go
 |   +-- consultar_produto.go
+|   +-- listar_produtos.go
 |   +-- baixar_estoque.go
 |
 +-- infrastructure/
@@ -540,6 +541,8 @@ Convenções adicionais:
 - entidades mantêm propriedades privadas e disponibilizam somente getters;
 - alterações de estado usam métodos de negócio específicos, nunca setters genéricos;
 - a reconstituição de models também passa pelas invariantes do domínio.
+- cada operação da camada application possui um use case próprio com método `Execute`;
+- não são utilizados services genéricos para agrupar casos de uso diferentes.
 
 ---
 
