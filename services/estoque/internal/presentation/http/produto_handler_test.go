@@ -7,7 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	estoqueApplication "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/estoque"
 	application "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/produto"
+	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/movimentacao"
 	domain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/produto"
 	"github.com/google/uuid"
 )
@@ -25,6 +27,7 @@ func newProdutoHandlerForTest(repository *produtoRepositoryStub) *ProdutoHandler
 		application.NewAtivarProdutoUseCase(repository),
 		application.NewInativarProdutoUseCase(repository),
 		application.NewAtualizarProdutoUseCase(repository),
+		estoqueApplication.NewListarMovimentacoesUseCase(repository),
 	)
 }
 
@@ -33,6 +36,12 @@ func (repository *produtoRepositoryStub) Criar(_ context.Context, produto *domai
 	return nil
 }
 func (*produtoRepositoryStub) Atualizar(context.Context, *domain.Produto) error { return nil }
+func (*produtoRepositoryStub) BaixarEstoque(context.Context, domain.BaixaEstoque) (bool, error) {
+	return true, nil
+}
+func (*produtoRepositoryStub) ListarMovimentacoes(context.Context, uuid.UUID) ([]movimentacao.Movimentacao, error) {
+	return nil, nil
+}
 func (*produtoRepositoryStub) BuscarPorID(context.Context, uuid.UUID) (*domain.Produto, error) {
 	return nil, domain.ErrProdutoNaoEncontrado
 }

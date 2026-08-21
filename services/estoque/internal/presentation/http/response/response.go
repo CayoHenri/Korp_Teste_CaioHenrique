@@ -26,7 +26,10 @@ type MessageData struct {
 }
 
 func Data(c *gin.Context, status int, data any) {
-	c.JSON(status, SuccessResponse{Success: true, Data: data})
+	c.JSON(status, SuccessResponse{
+		Success: true,
+		Data:    data,
+	})
 }
 
 func OK(c *gin.Context, data any) {
@@ -44,6 +47,9 @@ func Message(c *gin.Context, status int, message string) {
 func Error(c *gin.Context, status int, code, message string) {
 	c.JSON(status, ErrorResponse{
 		Success: false,
-		Error:   ErrorData{Code: code, Message: message},
+		Error: ErrorData{
+			Code:    code,
+			Message: message,
+		},
 	})
 }

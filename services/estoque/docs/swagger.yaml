@@ -24,6 +24,21 @@ definitions:
         example: 10
         type: integer
     type: object
+  dto.MovimentacaoResponse:
+    properties:
+      dataMovimentacao:
+        type: string
+      id:
+        type: string
+      produtoId:
+        type: string
+      quantidade:
+        type: integer
+      referencia:
+        type: string
+      tipo:
+        type: string
+    type: object
   dto.ProdutoResponse:
     properties:
       ativo:
@@ -293,6 +308,39 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Inativa um produto sem exclui-lo
+      tags:
+      - Produtos
+  /produtos/{id}/movimentacoes:
+    get:
+      parameters:
+      - description: UUID do produto
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.MovimentacaoResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Lista o historico de movimentacoes de um produto
       tags:
       - Produtos
   /produtos/codigo/{codigo}:

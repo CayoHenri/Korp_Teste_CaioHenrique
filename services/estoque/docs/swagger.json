@@ -428,6 +428,61 @@
                     }
                 }
             }
+        },
+        "/produtos/{id}/movimentacoes": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Produtos"
+                ],
+                "summary": "Lista o historico de movimentacoes de um produto",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID do produto",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.MovimentacaoResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -462,6 +517,29 @@
                 "saldo": {
                     "type": "integer",
                     "example": 10
+                }
+            }
+        },
+        "dto.MovimentacaoResponse": {
+            "type": "object",
+            "properties": {
+                "dataMovimentacao": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "produtoId": {
+                    "type": "string"
+                },
+                "quantidade": {
+                    "type": "integer"
+                },
+                "referencia": {
+                    "type": "string"
+                },
+                "tipo": {
+                    "type": "string"
                 }
             }
         },

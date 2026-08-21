@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	estoqueApplication "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/estoque"
 	application "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/produto"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/presentation/http/domainerror"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/presentation/http/dto"
@@ -19,6 +20,7 @@ type ProdutoHandler struct {
 	ativarProduto          *application.AtivarProdutoUseCase
 	inativarProduto        *application.InativarProdutoUseCase
 	atualizarProduto       *application.AtualizarProdutoUseCase
+	listarMovimentacoes    *estoqueApplication.ListarMovimentacoesUseCase
 }
 
 func NewProdutoHandler(
@@ -29,6 +31,7 @@ func NewProdutoHandler(
 	ativarProduto *application.AtivarProdutoUseCase,
 	inativarProduto *application.InativarProdutoUseCase,
 	atualizarProduto *application.AtualizarProdutoUseCase,
+	listarMovimentacoes *estoqueApplication.ListarMovimentacoesUseCase,
 ) *ProdutoHandler {
 	return &ProdutoHandler{
 		criarProduto:           criarProduto,
@@ -38,6 +41,7 @@ func NewProdutoHandler(
 		ativarProduto:          ativarProduto,
 		inativarProduto:        inativarProduto,
 		atualizarProduto:       atualizarProduto,
+		listarMovimentacoes:    listarMovimentacoes,
 	}
 }
 
@@ -50,6 +54,33 @@ func (handler *ProdutoHandler) RegisterRoutes(router *gin.Engine) {
 	group.PATCH("/:id/ativar", handler.ativar)
 	group.PATCH("/:id/inativar", handler.inativar)
 	group.PUT("/:id", handler.atualizar)
+	group.GET("/:id/movimentacoes", handler.listarHistorico)
+}
+
+// listarHistorico godoc
+// @Summary Lista o historico de movimentacoes de um produto
+// @Tags Produtos
+// @Produce json
+// @Param id path string true "UUID do produto"
+// @Success 200 {object} response.SuccessResponse{data=[]dto.MovimentacaoResponse}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /produtos/{id}/movimentacoes [get]
+func (handler *ProdutoHandler) listarHistorico(c *gin.Context) {
+	id, ok := produtoID(c)
+	if !ok {
+		return
+	}
+	movimentacoes, err := handler.listarMovimentacoes.Execute(c.Request.Context(), id)
+	if err != nil {
+		domainerror.Respond(c, err)
+		return
+	}
+	result := make([]dto.MovimentacaoResponse, 0, len(movimentacoes))
+	for index := range movimentacoes {
+		result = append(result, dto.NewMovimentacaoResponse(&movimentacoes[index]))
+	}
+	response.OK(c, result)
 }
 
 // atualizar godoc
@@ -77,7 +108,9 @@ func (handler *ProdutoHandler) atualizar(c *gin.Context) {
 	}
 
 	produto, err := handler.atualizarProduto.Execute(c.Request.Context(), application.AtualizarProdutoInput{
-		ID: id, Descricao: request.Descricao, Saldo: *request.Saldo,
+		ID:        id,
+		Descricao: request.Descricao,
+		Saldo:     *request.Saldo,
 	})
 	if err != nil {
 		domainerror.Respond(c, err)
@@ -160,7 +193,9 @@ func (handler *ProdutoHandler) criar(c *gin.Context) {
 	}
 
 	produto, err := handler.criarProduto.Execute(c.Request.Context(), application.CriarProdutoInput{
-		Codigo: request.Codigo, Descricao: request.Descricao, Saldo: request.Saldo,
+		Codigo:    request.Codigo,
+		Descricao: request.Descricao,
+		Saldo:     request.Saldo,
 	})
 	if err != nil {
 		domainerror.Respond(c, err)

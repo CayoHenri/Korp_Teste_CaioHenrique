@@ -3,6 +3,7 @@ package dependency
 import (
 	"net/http"
 
+	estoqueApplication "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/estoque"
 	produtoApplication "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/produto"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/infrastructure/database"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/infrastructure/repository"
@@ -10,7 +11,8 @@ import (
 )
 
 type Container struct {
-	HTTPHandler http.Handler
+	HTTPHandler   http.Handler
+	BaixarEstoque *estoqueApplication.BaixarEstoqueUseCase
 }
 
 func NewContainer(connection *database.Connection) *Container {
@@ -23,9 +25,11 @@ func NewContainer(connection *database.Connection) *Container {
 		produtoApplication.NewAtivarProdutoUseCase(produtoRepository),
 		produtoApplication.NewInativarProdutoUseCase(produtoRepository),
 		produtoApplication.NewAtualizarProdutoUseCase(produtoRepository),
+		estoqueApplication.NewListarMovimentacoesUseCase(produtoRepository),
 	)
 
 	return &Container{
-		HTTPHandler: httpapi.NewRouter(connection.SQL, produtoHandler),
+		HTTPHandler:   httpapi.NewRouter(connection.SQL, produtoHandler),
+		BaixarEstoque: estoqueApplication.NewBaixarEstoqueUseCase(produtoRepository),
 	}
 }

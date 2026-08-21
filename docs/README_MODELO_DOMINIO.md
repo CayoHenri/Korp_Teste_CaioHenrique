@@ -883,6 +883,9 @@ O modelo deve seguir estas regras:
 19. A reconstituição de entidades persistidas reaplica as invariantes do domínio.
 20. Cada operação da aplicação é representada por um use case independente.
 21. Atualizações de múltiplos campos do Produto são atômicas no domínio.
+22. Toda alteração de saldo gera uma movimentação de entrada ou saída.
+23. A baixa de múltiplos itens é transacional: todos são aplicados ou nenhum é.
+24. O `eventId` garante que uma solicitação repetida não produza nova baixa.
 
 ---
 

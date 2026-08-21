@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -39,10 +40,23 @@ func DatabaseURL() (string, error) {
 }
 
 func loadEnvironmentFile() {
-	// Variaveis do processo possuem precedencia. Os caminhos atendem execucao
-	// na raiz do repositorio e dentro de services/estoque, respectivamente.
-	for _, path := range []string{".env", "../../.env"} {
-		_ = godotenv.Load(path)
+	// Variaveis do processo possuem precedencia. A busca ascendente permite
+	// executar API, migrations e testes a partir de qualquer pacote do modulo.
+	directory, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	for {
+		path := filepath.Join(directory, ".env")
+		if _, err := os.Stat(path); err == nil {
+			_ = godotenv.Load(path)
+			return
+		}
+		parent := filepath.Dir(directory)
+		if parent == directory {
+			return
+		}
+		directory = parent
 	}
 }
 

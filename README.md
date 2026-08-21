@@ -144,6 +144,8 @@ Nesta etapa estão implementados:
 - camada application organizada em um use case por operação;
 - cadastro, listagem e consulta por ID ou código;
 - ativação e inativação sem exclusão física;
+- movimentações auditáveis de entrada e saída;
+- baixa transacional, concorrente e idempotente preparada para mensageria;
 - encerramento gracioso da API.
 
 ### Decisões técnicas
@@ -159,9 +161,11 @@ Nesta etapa estão implementados:
 - DTOs ficam na apresentação HTTP, separados dos handlers.
 - Código e descrição de produtos são persistidos em uppercase.
 - `Produto` não expõe campos públicos; getters seguem a convenção idiomática de Go, como `ID()` e `Descricao()`.
-- Não são criados setters genéricos; descrição e saldo mudam juntos pelo método de domínio `Atualizar`.
+- Não são criados setters genéricos; o caso de uso de atualização orquestra os métodos de domínio `AtualizarDescricao` e `AtualizarSaldo`.
 - Dados persistidos são reconstituídos por `NewProdutoWithState`, que reaplica as invariantes.
 - Produtos novos iniciam ativos e não possuem operação de exclusão; o ciclo de vida usa `Ativar` e `Inativar`.
+- Alterações manuais de saldo geram movimentações de ajuste do tipo `ENTRADA` ou `SAIDA`.
+- Baixas de nota fiscal usam atualização atômica, transação única e idempotência por `eventId`.
 - Repositories usam nomes de negócio, como `ProdutoRepository`, sem prefixo da tecnologia de persistência.
 - O pacote `internal/dependency` concentra a composição de repositories, use cases, handlers e router.
 - A camada application não usa services genéricos: cada operação possui seu próprio use case com método `Execute`.
@@ -212,6 +216,12 @@ go test ./...
 go vet ./...
 ```
 
+Com PostgreSQL ativo e migrations aplicadas, execute também os testes integrados:
+
+```console
+go test -tags=integration ./internal/infrastructure/repository -count=1 -v
+```
+
 ### Comandos de migration
 
 Os comandos devem ser executados dentro de `services/estoque`, pois o caminho
@@ -255,8 +265,8 @@ go run ./cmd/api
 Para criar uma nova migration, adicione o par com o próximo número sequencial:
 
 ```text
-migrations/000003_descricao_da_alteracao.up.sql
-migrations/000003_descricao_da_alteracao.down.sql
+migrations/000005_descricao_da_alteracao.up.sql
+migrations/000005_descricao_da_alteracao.down.sql
 ```
 
 O arquivo `up` aplica a mudança. O arquivo `down` deve desfazer apenas essa
@@ -282,6 +292,7 @@ Endpoints implementados:
 | `PUT` | `/produtos/{id}` | Atualiza descrição e saldo |
 | `PATCH` | `/produtos/{id}/ativar` | Ativa um produto |
 | `PATCH` | `/produtos/{id}/inativar` | Inativa sem excluir |
+| `GET` | `/produtos/{id}/movimentacoes` | Lista o histórico de estoque |
 
 Não existe endpoint `DELETE /produtos/{id}`. Produtos referenciados por
 movimentações ou notas precisam continuar disponíveis para rastreabilidade.
@@ -393,6 +404,9 @@ Korp_Teste_CaioHenrique/
 │       │   ├── atualizar_produto.go
 │       │   ├── ativar_produto.go
 │       │   └── inativar_produto.go
+│       ├── internal/application/estoque/
+│       │   ├── baixar_estoque.go
+│       │   └── listar_movimentacoes.go
 │       ├── internal/infrastructure/database/models/
 │       ├── internal/infrastructure/repository/
 │       ├── internal/presentation/http/

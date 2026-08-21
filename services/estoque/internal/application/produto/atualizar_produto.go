@@ -27,7 +27,10 @@ func (useCase *AtualizarProdutoUseCase) Execute(ctx context.Context, input Atual
 		return nil, err
 	}
 
-	if err := produto.Atualizar(input.Descricao, input.Saldo); err != nil {
+	if err := produto.AtualizarDescricao(input.Descricao); err != nil {
+		return nil, err
+	}
+	if err := produto.AtualizarSaldo(input.Saldo); err != nil {
 		return nil, err
 	}
 	if err := useCase.repository.Atualizar(ctx, produto); err != nil {

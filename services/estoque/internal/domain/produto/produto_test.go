@@ -39,13 +39,33 @@ func TestAtivarEInativarProduto(t *testing.T) {
 	}
 }
 
+func TestProdutoValidarBaixa(t *testing.T) {
+	produto, err := NewProduto("SKU", "Teclado", 2)
+	if err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+	if err := produto.ValidarBaixa(2); err != nil {
+		t.Fatalf("baixa valida retornou erro: %v", err)
+	}
+	if err := produto.ValidarBaixa(3); !errors.Is(err, ErrEstoqueInsuficiente) {
+		t.Fatalf("esperava estoque insuficiente, recebeu %v", err)
+	}
+	produto.Inativar()
+	if err := produto.ValidarBaixa(1); !errors.Is(err, ErrProdutoInativo) {
+		t.Fatalf("esperava produto inativo, recebeu %v", err)
+	}
+}
+
 func TestAtualizarProdutoPreservaInvariantes(t *testing.T) {
 	produto, err := NewProduto("SKU", "Teclado", 1)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
 
-	if err := produto.Atualizar("  mouse gamer  ", 8); err != nil {
+	if err := produto.AtualizarDescricao("  mouse gamer  "); err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+	if err := produto.AtualizarSaldo(8); err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
 	if produto.Descricao() != "MOUSE GAMER" {
@@ -54,13 +74,13 @@ func TestAtualizarProdutoPreservaInvariantes(t *testing.T) {
 	if produto.Saldo() != 8 {
 		t.Fatalf("esperava saldo 8, recebeu %d", produto.Saldo())
 	}
-	if err := produto.Atualizar("  ", 10); !errors.Is(err, ErrDescricaoObrigatoria) {
+	if err := produto.AtualizarDescricao("  "); !errors.Is(err, ErrDescricaoObrigatoria) {
 		t.Fatalf("esperava erro de descricao, recebeu %v", err)
 	}
 	if produto.Descricao() != "MOUSE GAMER" || produto.Saldo() != 8 {
 		t.Fatal("atualizacao invalida nao deve alterar parcialmente o produto")
 	}
-	if err := produto.Atualizar("Mouse", -1); !errors.Is(err, ErrSaldoInvalido) {
+	if err := produto.AtualizarSaldo(-1); !errors.Is(err, ErrSaldoInvalido) {
 		t.Fatalf("esperava erro de saldo, recebeu %v", err)
 	}
 }
@@ -73,9 +93,25 @@ func TestNovoProdutoValidaInvariantes(t *testing.T) {
 		saldo     int
 		expected  error
 	}{
-		{name: "codigo vazio", descricao: "Produto", saldo: 0, expected: ErrCodigoObrigatorio},
-		{name: "descricao vazia", codigo: "SKU", saldo: 0, expected: ErrDescricaoObrigatoria},
-		{name: "saldo negativo", codigo: "SKU", descricao: "Produto", saldo: -1, expected: ErrSaldoInvalido},
+		{
+			name:      "codigo vazio",
+			descricao: "Produto",
+			saldo:     0,
+			expected:  ErrCodigoObrigatorio,
+		},
+		{
+			name:     "descricao vazia",
+			codigo:   "SKU",
+			saldo:    0,
+			expected: ErrDescricaoObrigatoria,
+		},
+		{
+			name:      "saldo negativo",
+			codigo:    "SKU",
+			descricao: "Produto",
+			saldo:     -1,
+			expected:  ErrSaldoInvalido,
+		},
 	}
 
 	for _, test := range tests {

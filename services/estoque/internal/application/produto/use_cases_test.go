@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/movimentacao"
 	domain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/produto"
 	"github.com/google/uuid"
 )
@@ -25,6 +26,12 @@ func (repository *repositoryStub) Atualizar(_ context.Context, produto *domain.P
 	repository.atualizado = produto
 	return nil
 }
+func (*repositoryStub) BaixarEstoque(context.Context, domain.BaixaEstoque) (bool, error) {
+	return true, nil
+}
+func (*repositoryStub) ListarMovimentacoes(context.Context, uuid.UUID) ([]movimentacao.Movimentacao, error) {
+	return nil, nil
+}
 func (repository *repositoryStub) BuscarPorID(_ context.Context, id uuid.UUID) (*domain.Produto, error) {
 	repository.id = id
 	return repository.produto, nil
@@ -42,7 +49,9 @@ func TestCriarProdutoUseCaseValidaEPersiste(t *testing.T) {
 	useCase := NewCriarProdutoUseCase(repository)
 
 	produto, err := useCase.Execute(context.Background(), CriarProdutoInput{
-		Codigo: "SKU-001", Descricao: "Teclado", Saldo: 5,
+		Codigo:    "SKU-001",
+		Descricao: "Teclado",
+		Saldo:     5,
 	})
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
@@ -113,7 +122,11 @@ func TestAtualizarProdutoUseCaseAtualizaCamposPermitidos(t *testing.T) {
 
 	atualizado, err := NewAtualizarProdutoUseCase(repository).Execute(
 		context.Background(),
-		AtualizarProdutoInput{ID: produto.ID(), Descricao: "Mouse", Saldo: 12},
+		AtualizarProdutoInput{
+			ID:        produto.ID(),
+			Descricao: "Mouse",
+			Saldo:     12,
+		},
 	)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)

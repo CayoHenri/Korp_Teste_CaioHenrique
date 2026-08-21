@@ -31,7 +31,10 @@ func Open(databaseURL string) (*Connection, error) {
 		return nil, fmt.Errorf("testar conexao PostgreSQL: %w", err)
 	}
 
-	return &Connection{Gorm: gormDB, SQL: sqlDB}, nil
+	return &Connection{
+		Gorm: gormDB,
+		SQL:  sqlDB,
+	}, nil
 }
 
 func (connection *Connection) Close() error {

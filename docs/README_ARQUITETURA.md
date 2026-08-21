@@ -545,7 +545,10 @@ Convenções adicionais:
 - cada operação da camada application possui um use case próprio com método `Execute`;
 - não são utilizados services genéricos para agrupar casos de uso diferentes.
 - produtos são preservados para rastreabilidade e usam estado ativo/inativo em vez de exclusão.
-- a atualização cadastral de Produto permite somente descrição e saldo, validados em conjunto no domínio.
+- a atualização cadastral de Produto permite somente descrição e saldo; o mesmo caso de uso orquestra `AtualizarDescricao` e `AtualizarSaldo`, mantendo suas validações no domínio.
+- alterações manuais de saldo e baixas geram movimentações auditáveis;
+- a baixa de múltiplos itens e o registro do `eventId` ocorrem na mesma transação;
+- atualizações atômicas impedem saldo negativo sob concorrência.
 
 ---
 

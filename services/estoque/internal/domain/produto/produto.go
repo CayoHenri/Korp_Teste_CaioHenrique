@@ -15,6 +15,9 @@ var (
 	ErrIDInvalido           = errors.New("id do produto e invalido")
 	ErrProdutoNaoEncontrado = errors.New("produto nao encontrado")
 	ErrCodigoJaExistente    = errors.New("codigo do produto ja existente")
+	ErrProdutoInativo       = errors.New("produto esta inativo")
+	ErrEstoqueInsuficiente  = errors.New("estoque insuficiente")
+	ErrQuantidadeInvalida   = errors.New("quantidade deve ser positiva")
 )
 
 type Produto struct {
@@ -68,29 +71,71 @@ func NewProdutoWithState(
 	}, nil
 }
 
-func (produto *Produto) ID() uuid.UUID              { return produto.id }
-func (produto *Produto) Codigo() string             { return produto.codigo }
-func (produto *Produto) Descricao() string          { return produto.descricao }
-func (produto *Produto) Saldo() int                 { return produto.saldo }
-func (produto *Produto) Ativo() bool                { return produto.ativo }
-func (produto *Produto) DataCadastro() time.Time    { return produto.dataCadastro }
-func (produto *Produto) DataAtualizacao() time.Time { return produto.dataAtualizacao }
+func (produto *Produto) ID() uuid.UUID {
+	return produto.id
+}
 
-func (produto *Produto) Atualizar(descricao string, saldo int) error {
+func (produto *Produto) Codigo() string {
+	return produto.codigo
+}
+
+func (produto *Produto) Descricao() string {
+	return produto.descricao
+}
+
+func (produto *Produto) Saldo() int {
+	return produto.saldo
+}
+
+func (produto *Produto) Ativo() bool {
+	return produto.ativo
+}
+
+func (produto *Produto) DataCadastro() time.Time {
+	return produto.dataCadastro
+}
+
+func (produto *Produto) DataAtualizacao() time.Time {
+	return produto.dataAtualizacao
+}
+
+func (produto *Produto) AtualizarDescricao(descricao string) error {
 	descricao = sharedtext.NormalizeUpper(descricao)
 	if descricao == "" {
 		return ErrDescricaoObrigatoria
 	}
-	if saldo < 0 {
-		return ErrSaldoInvalido
-	}
-	if descricao == produto.descricao && saldo == produto.saldo {
+	if descricao == produto.descricao {
 		return nil
 	}
 
 	produto.descricao = descricao
+	produto.dataAtualizacao = time.Now().UTC()
+	return nil
+}
+
+func (produto *Produto) AtualizarSaldo(saldo int) error {
+	if saldo < 0 {
+		return ErrSaldoInvalido
+	}
+	if saldo == produto.saldo {
+		return nil
+	}
+
 	produto.saldo = saldo
 	produto.dataAtualizacao = time.Now().UTC()
+	return nil
+}
+
+func (produto *Produto) ValidarBaixa(quantidade int) error {
+	if quantidade <= 0 {
+		return ErrQuantidadeInvalida
+	}
+	if !produto.ativo {
+		return ErrProdutoInativo
+	}
+	if produto.saldo < quantidade {
+		return ErrEstoqueInsuficiente
+	}
 	return nil
 }
 
