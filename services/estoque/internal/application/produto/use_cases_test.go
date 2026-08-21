@@ -9,15 +9,20 @@ import (
 )
 
 type repositoryStub struct {
-	criado   *domain.Produto
-	produto  *domain.Produto
-	produtos []domain.Produto
-	id       uuid.UUID
-	codigo   string
+	criado     *domain.Produto
+	produto    *domain.Produto
+	produtos   []domain.Produto
+	id         uuid.UUID
+	codigo     string
+	atualizado *domain.Produto
 }
 
 func (repository *repositoryStub) Criar(_ context.Context, produto *domain.Produto) error {
 	repository.criado = produto
+	return nil
+}
+func (repository *repositoryStub) Atualizar(_ context.Context, produto *domain.Produto) error {
+	repository.atualizado = produto
 	return nil
 }
 func (repository *repositoryStub) BuscarPorID(_ context.Context, id uuid.UUID) (*domain.Produto, error) {
@@ -74,5 +79,49 @@ func TestListarProdutosUseCaseRetornaProdutos(t *testing.T) {
 	produtos, err := NewListarProdutosUseCase(repository).Execute(context.Background())
 	if err != nil || len(produtos) != 1 {
 		t.Fatalf("resultado inesperado: produtos=%d erro=%v", len(produtos), err)
+	}
+}
+
+func TestInativarEAtivarProdutoUseCases(t *testing.T) {
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5)
+	if err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+	repository := &repositoryStub{produto: produto}
+
+	if _, err := NewInativarProdutoUseCase(repository).Execute(context.Background(), produto.ID()); err != nil {
+		t.Fatalf("nao esperava erro ao inativar: %v", err)
+	}
+	if produto.Ativo() || repository.atualizado != produto {
+		t.Fatal("produto inativo deveria ser persistido")
+	}
+
+	if _, err := NewAtivarProdutoUseCase(repository).Execute(context.Background(), produto.ID()); err != nil {
+		t.Fatalf("nao esperava erro ao ativar: %v", err)
+	}
+	if !produto.Ativo() {
+		t.Fatal("produto deveria voltar a ficar ativo")
+	}
+}
+
+func TestAtualizarProdutoUseCaseAtualizaCamposPermitidos(t *testing.T) {
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5)
+	if err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+	repository := &repositoryStub{produto: produto}
+
+	atualizado, err := NewAtualizarProdutoUseCase(repository).Execute(
+		context.Background(),
+		AtualizarProdutoInput{ID: produto.ID(), Descricao: "Mouse", Saldo: 12},
+	)
+	if err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+	if atualizado.Descricao() != "MOUSE" || atualizado.Saldo() != 12 {
+		t.Fatalf("produto nao foi atualizado: descricao=%s saldo=%d", atualizado.Descricao(), atualizado.Saldo())
+	}
+	if repository.atualizado != produto {
+		t.Fatal("produto atualizado deveria ser persistido")
 	}
 }

@@ -30,6 +30,25 @@ func (repository *ProdutoRepository) Criar(ctx context.Context, produto *domain.
 	return nil
 }
 
+func (repository *ProdutoRepository) Atualizar(ctx context.Context, produto *domain.Produto) error {
+	result := repository.database.WithContext(ctx).
+		Model(&models.Produto{}).
+		Where("id = ?", produto.ID()).
+		Updates(map[string]any{
+			"descricao":        produto.Descricao(),
+			"saldo":            produto.Saldo(),
+			"ativo":            produto.Ativo(),
+			"data_atualizacao": produto.DataAtualizacao(),
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrProdutoNaoEncontrado
+	}
+	return nil
+}
+
 func (repository *ProdutoRepository) BuscarPorID(ctx context.Context, id uuid.UUID) (*domain.Produto, error) {
 	var model models.Produto
 	err := repository.database.WithContext(ctx).First(&model, "id = ?", id).Error

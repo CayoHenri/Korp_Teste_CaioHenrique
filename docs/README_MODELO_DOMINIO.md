@@ -70,6 +70,7 @@ Produto
 +-- codigo
 +-- descricao
 +-- saldo
++-- ativo
 +-- dataCadastro
 +-- dataAtualizacao
 ```
@@ -82,6 +83,10 @@ Produto
 4. Saldo é obrigatório.
 5. Saldo não pode ser negativo.
 6. Uma baixa não pode resultar em saldo negativo.
+7. Um produto novo inicia ativo.
+8. Produtos não são excluídos; podem ser ativados ou inativados.
+9. Somente descrição e saldo podem ser atualizados pelo cadastro.
+10. A atualização valida todos os campos antes de alterar a entidade.
 
 ---
 
@@ -94,6 +99,7 @@ classDiagram
         +string codigo
         +string descricao
         +int saldo
+        +bool ativo
         +datetime dataCadastro
         +datetime dataAtualizacao
         +BaixarSaldo(quantidade)
@@ -712,6 +718,7 @@ id UUID PK
 codigo VARCHAR UNIQUE NOT NULL
 descricao VARCHAR NOT NULL
 saldo INTEGER NOT NULL
+ativo BOOLEAN NOT NULL DEFAULT TRUE
 data_cadastro TIMESTAMP NOT NULL
 data_atualizacao TIMESTAMP NOT NULL
 ```
@@ -781,6 +788,8 @@ published_at TIMESTAMP NULL
 codigo != vazio
 descricao != vazio
 saldo >= 0
+produto novo inicia ativo
+produto pode ser inativado, mas não excluído
 ```
 
 ## ItemNotaFiscal
@@ -873,6 +882,7 @@ O modelo deve seguir estas regras:
 18. Alterações ocorrem por métodos de negócio específicos, não por setters genéricos.
 19. A reconstituição de entidades persistidas reaplica as invariantes do domínio.
 20. Cada operação da aplicação é representada por um use case independente.
+21. Atualizações de múltiplos campos do Produto são atômicas no domínio.
 
 ---
 

@@ -20,6 +20,9 @@ func NewContainer(connection *database.Connection) *Container {
 		produtoApplication.NewListarProdutosUseCase(produtoRepository),
 		produtoApplication.NewBuscarProdutoPorIDUseCase(produtoRepository),
 		produtoApplication.NewBuscarProdutoPorCodigoUseCase(produtoRepository),
+		produtoApplication.NewAtivarProdutoUseCase(produtoRepository),
+		produtoApplication.NewInativarProdutoUseCase(produtoRepository),
+		produtoApplication.NewAtualizarProdutoUseCase(produtoRepository),
 	)
 
 	return &Container{

@@ -22,6 +22,9 @@ func newProdutoHandlerForTest(repository *produtoRepositoryStub) *ProdutoHandler
 		application.NewListarProdutosUseCase(repository),
 		application.NewBuscarProdutoPorIDUseCase(repository),
 		application.NewBuscarProdutoPorCodigoUseCase(repository),
+		application.NewAtivarProdutoUseCase(repository),
+		application.NewInativarProdutoUseCase(repository),
+		application.NewAtualizarProdutoUseCase(repository),
 	)
 }
 
@@ -29,6 +32,7 @@ func (repository *produtoRepositoryStub) Criar(_ context.Context, produto *domai
 	repository.produtos = append(repository.produtos, *produto)
 	return nil
 }
+func (*produtoRepositoryStub) Atualizar(context.Context, *domain.Produto) error { return nil }
 func (*produtoRepositoryStub) BuscarPorID(context.Context, uuid.UUID) (*domain.Produto, error) {
 	return nil, domain.ErrProdutoNaoEncontrado
 }

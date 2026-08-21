@@ -17,22 +17,51 @@ func TestNovoProdutoNormalizaDados(t *testing.T) {
 	if produto.ID().String() == "00000000-0000-0000-0000-000000000000" {
 		t.Fatal("esperava um UUID gerado")
 	}
+	if !produto.Ativo() {
+		t.Fatal("produto novo deve iniciar ativo")
+	}
 }
 
-func TestAtualizarDescricaoPreservaInvariantes(t *testing.T) {
+func TestAtivarEInativarProduto(t *testing.T) {
 	produto, err := NewProduto("SKU", "Teclado", 1)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
 
-	if err := produto.AtualizarDescricao("  mouse gamer  "); err != nil {
+	produto.Inativar()
+	if produto.Ativo() {
+		t.Fatal("produto deveria estar inativo")
+	}
+
+	produto.Ativar()
+	if !produto.Ativo() {
+		t.Fatal("produto deveria estar ativo")
+	}
+}
+
+func TestAtualizarProdutoPreservaInvariantes(t *testing.T) {
+	produto, err := NewProduto("SKU", "Teclado", 1)
+	if err != nil {
+		t.Fatalf("nao esperava erro: %v", err)
+	}
+
+	if err := produto.Atualizar("  mouse gamer  ", 8); err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
 	if produto.Descricao() != "MOUSE GAMER" {
 		t.Fatalf("descricao nao foi normalizada: %q", produto.Descricao())
 	}
-	if err := produto.AtualizarDescricao("  "); !errors.Is(err, ErrDescricaoObrigatoria) {
+	if produto.Saldo() != 8 {
+		t.Fatalf("esperava saldo 8, recebeu %d", produto.Saldo())
+	}
+	if err := produto.Atualizar("  ", 10); !errors.Is(err, ErrDescricaoObrigatoria) {
 		t.Fatalf("esperava erro de descricao, recebeu %v", err)
+	}
+	if produto.Descricao() != "MOUSE GAMER" || produto.Saldo() != 8 {
+		t.Fatal("atualizacao invalida nao deve alterar parcialmente o produto")
+	}
+	if err := produto.Atualizar("Mouse", -1); !errors.Is(err, ErrSaldoInvalido) {
+		t.Fatalf("esperava erro de saldo, recebeu %v", err)
 	}
 }
 

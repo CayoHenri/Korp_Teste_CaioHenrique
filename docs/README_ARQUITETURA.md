@@ -113,6 +113,7 @@ O `estoque-service` é responsável exclusivamente pelo contexto de estoque.
 - Cadastrar produtos;
 - Consultar produtos;
 - Consultar saldo;
+- Ativar e inativar produtos sem exclusão física;
 - Realizar baixa de estoque;
 - Validar saldo disponível;
 - Controlar concorrência;
@@ -543,6 +544,8 @@ Convenções adicionais:
 - a reconstituição de models também passa pelas invariantes do domínio.
 - cada operação da camada application possui um use case próprio com método `Execute`;
 - não são utilizados services genéricos para agrupar casos de uso diferentes.
+- produtos são preservados para rastreabilidade e usam estado ativo/inativo em vez de exclusão.
+- a atualização cadastral de Produto permite somente descrição e saldo, validados em conjunto no domínio.
 
 ---
 

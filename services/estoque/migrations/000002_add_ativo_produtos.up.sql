@@ -1,0 +1,2 @@
+ALTER TABLE estoque.produtos
+    ADD COLUMN ativo BOOLEAN NOT NULL DEFAULT TRUE;

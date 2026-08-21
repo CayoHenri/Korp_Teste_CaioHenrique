@@ -17,7 +17,8 @@ func TestProdutoConversionRoundTrip(t *testing.T) {
 		t.Fatalf("nao esperava erro ao reconstituir: %v", err)
 	}
 	if restored.ID() != produto.ID() || restored.Codigo() != produto.Codigo() ||
-		restored.Descricao() != produto.Descricao() || restored.Saldo() != produto.Saldo() {
+		restored.Descricao() != produto.Descricao() || restored.Saldo() != produto.Saldo() ||
+		restored.Ativo() != produto.Ativo() {
 		t.Fatalf("conversao alterou o produto: esperado %+v, recebido %+v", produto, restored)
 	}
 }

@@ -12,6 +12,7 @@ type Produto struct {
 	Codigo          string    `gorm:"column:codigo"`
 	Descricao       string    `gorm:"column:descricao"`
 	Saldo           int       `gorm:"column:saldo"`
+	Ativo           bool      `gorm:"column:ativo"`
 	DataCadastro    time.Time `gorm:"column:data_cadastro"`
 	DataAtualizacao time.Time `gorm:"column:data_atualizacao"`
 }
@@ -26,6 +27,7 @@ func NewProdutoModel(produto *domain.Produto) Produto {
 		Codigo:          produto.Codigo(),
 		Descricao:       produto.Descricao(),
 		Saldo:           produto.Saldo(),
+		Ativo:           produto.Ativo(),
 		DataCadastro:    produto.DataCadastro(),
 		DataAtualizacao: produto.DataAtualizacao(),
 	}
@@ -37,6 +39,7 @@ func (model Produto) ToDomain() (*domain.Produto, error) {
 		model.Codigo,
 		model.Descricao,
 		model.Saldo,
+		model.Ativo,
 		model.DataCadastro,
 		model.DataAtualizacao,
 	)

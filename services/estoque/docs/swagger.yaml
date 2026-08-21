@@ -1,5 +1,17 @@
 basePath: /
 definitions:
+  dto.AtualizarProdutoRequest:
+    properties:
+      descricao:
+        example: TECLADO MECANICO RGB
+        type: string
+      saldo:
+        example: 20
+        type: integer
+    required:
+    - descricao
+    - saldo
+    type: object
   dto.CriarProdutoRequest:
     properties:
       codigo:
@@ -14,6 +26,8 @@ definitions:
     type: object
   dto.ProdutoResponse:
     properties:
+      ativo:
+        type: boolean
       codigo:
         type: string
       dataAtualizacao:
@@ -167,6 +181,118 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Consulta um produto por ID
+      tags:
+      - Produtos
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: UUID do produto
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Campos atualizaveis
+        in: body
+        name: produto
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarProdutoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProdutoResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Atualiza descricao e saldo de um produto
+      tags:
+      - Produtos
+  /produtos/{id}/ativar:
+    patch:
+      parameters:
+      - description: UUID do produto
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProdutoResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Ativa um produto
+      tags:
+      - Produtos
+  /produtos/{id}/inativar:
+    patch:
+      parameters:
+      - description: UUID do produto
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProdutoResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Inativa um produto sem exclui-lo
       tags:
       - Produtos
   /produtos/codigo/{codigo}:

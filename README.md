@@ -143,6 +143,7 @@ Nesta etapa estão implementados:
 - entidades com estado privado, leitura por getters e alterações por métodos de negócio;
 - camada application organizada em um use case por operação;
 - cadastro, listagem e consulta por ID ou código;
+- ativação e inativação sem exclusão física;
 - encerramento gracioso da API.
 
 ### Decisões técnicas
@@ -158,8 +159,9 @@ Nesta etapa estão implementados:
 - DTOs ficam na apresentação HTTP, separados dos handlers.
 - Código e descrição de produtos são persistidos em uppercase.
 - `Produto` não expõe campos públicos; getters seguem a convenção idiomática de Go, como `ID()` e `Descricao()`.
-- Não são criados setters genéricos; mudanças usam métodos específicos, como `AtualizarDescricao`.
+- Não são criados setters genéricos; descrição e saldo mudam juntos pelo método de domínio `Atualizar`.
 - Dados persistidos são reconstituídos por `NewProdutoWithState`, que reaplica as invariantes.
+- Produtos novos iniciam ativos e não possuem operação de exclusão; o ciclo de vida usa `Ativar` e `Inativar`.
 - Repositories usam nomes de negócio, como `ProdutoRepository`, sem prefixo da tecnologia de persistência.
 - O pacote `internal/dependency` concentra a composição de repositories, use cases, handlers e router.
 - A camada application não usa services genéricos: cada operação possui seu próprio use case com método `Execute`.
@@ -253,8 +255,8 @@ go run ./cmd/api
 Para criar uma nova migration, adicione o par com o próximo número sequencial:
 
 ```text
-migrations/000002_descricao_da_alteracao.up.sql
-migrations/000002_descricao_da_alteracao.down.sql
+migrations/000003_descricao_da_alteracao.up.sql
+migrations/000003_descricao_da_alteracao.down.sql
 ```
 
 O arquivo `up` aplica a mudança. O arquivo `down` deve desfazer apenas essa
@@ -277,6 +279,12 @@ Endpoints implementados:
 | `GET` | `/produtos` | Lista produtos ordenados por código |
 | `GET` | `/produtos/{id}` | Consulta por UUID |
 | `GET` | `/produtos/codigo/{codigo}` | Consulta por código |
+| `PUT` | `/produtos/{id}` | Atualiza descrição e saldo |
+| `PATCH` | `/produtos/{id}/ativar` | Ativa um produto |
+| `PATCH` | `/produtos/{id}/inativar` | Inativa sem excluir |
+
+Não existe endpoint `DELETE /produtos/{id}`. Produtos referenciados por
+movimentações ou notas precisam continuar disponíveis para rastreabilidade.
 
 Respostas de sucesso seguem o envelope:
 
@@ -381,7 +389,10 @@ Korp_Teste_CaioHenrique/
 │       │   ├── criar_produto.go
 │       │   ├── listar_produtos.go
 │       │   ├── buscar_produto_por_id.go
-│       │   └── buscar_produto_por_codigo.go
+│       │   ├── buscar_produto_por_codigo.go
+│       │   ├── atualizar_produto.go
+│       │   ├── ativar_produto.go
+│       │   └── inativar_produto.go
 │       ├── internal/infrastructure/database/models/
 │       ├── internal/infrastructure/repository/
 │       ├── internal/presentation/http/

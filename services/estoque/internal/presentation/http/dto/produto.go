@@ -13,11 +13,17 @@ type CriarProdutoRequest struct {
 	Saldo     int    `json:"saldo" example:"10"`
 }
 
+type AtualizarProdutoRequest struct {
+	Descricao string `json:"descricao" binding:"required" example:"TECLADO MECANICO RGB"`
+	Saldo     *int   `json:"saldo" binding:"required" example:"20"`
+}
+
 type ProdutoResponse struct {
 	ID              uuid.UUID `json:"id"`
 	Codigo          string    `json:"codigo"`
 	Descricao       string    `json:"descricao"`
 	Saldo           int       `json:"saldo"`
+	Ativo           bool      `json:"ativo"`
 	DataCadastro    time.Time `json:"dataCadastro"`
 	DataAtualizacao time.Time `json:"dataAtualizacao"`
 }
@@ -28,6 +34,7 @@ func NewProdutoResponse(produto *domain.Produto) ProdutoResponse {
 		Codigo:          produto.Codigo(),
 		Descricao:       produto.Descricao(),
 		Saldo:           produto.Saldo(),
+		Ativo:           produto.Ativo(),
 		DataCadastro:    produto.DataCadastro(),
 		DataAtualizacao: produto.DataAtualizacao(),
 	}
