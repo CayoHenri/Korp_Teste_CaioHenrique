@@ -18,6 +18,12 @@ type CriarNotaFiscalRequest struct {
 	Itens           []CriarNotaFiscalItemRequest `json:"itens" binding:"required"`
 }
 
+type AtualizarNotaFiscalRequest struct {
+	NomeCliente     string                       `json:"nomeCliente" binding:"required" example:"MARIA DA SILVA"`
+	EnderecoCliente string                       `json:"enderecoCliente" binding:"required" example:"AVENIDA BRASIL, 200 - CURITIBA/PR"`
+	Itens           []CriarNotaFiscalItemRequest `json:"itens" binding:"required,min=1"`
+}
+
 type ItemNotaFiscalResponse struct {
 	ID               uuid.UUID `json:"id" example:"550e8400-e29b-41d4-a716-446655440001"`
 	ProdutoID        uuid.UUID `json:"produtoId" example:"550e8400-e29b-41d4-a716-446655440002"`

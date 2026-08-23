@@ -52,6 +52,35 @@ func TestIntegrationCriarEIniciarFechamento(t *testing.T) {
 	if len(persistida.Itens()) != 1 || persistida.Itens()[0].Quantidade() != 2 {
 		t.Fatalf("itens persistidos incorretamente: %+v", persistida.Itens())
 	}
+	novoItem, err := domain.NewItemNotaFiscal(
+		uuid.New(),
+		"SKU-ATUALIZADO",
+		"Produto atualizado",
+		3,
+		40,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := nota.Atualizar(
+		"Cliente Atualizado",
+		"Avenida Atualizada, 20",
+		[]domain.ItemNotaFiscal{*novoItem},
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := repository.Atualizar(context.Background(), nota); err != nil {
+		t.Fatal(err)
+	}
+	persistida, err = repository.BuscarPorID(context.Background(), nota.ID())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persistida.NomeCliente() != "CLIENTE ATUALIZADO" ||
+		len(persistida.Itens()) != 1 ||
+		persistida.Itens()[0].CodigoProduto() != "SKU-ATUALIZADO" {
+		t.Fatal("cabecalho e itens da nota nao foram substituidos")
+	}
 
 	if err := nota.IniciarFechamento(); err != nil {
 		t.Fatal(err)

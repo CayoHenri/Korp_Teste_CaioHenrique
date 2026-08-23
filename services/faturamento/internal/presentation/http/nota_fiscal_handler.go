@@ -13,6 +13,7 @@ import (
 
 type NotaFiscalHandler struct {
 	criar             *application.CriarNotaFiscalUseCase
+	atualizar         *application.AtualizarNotaFiscalUseCase
 	buscar            *application.BuscarNotaFiscalUseCase
 	listar            *application.ListarNotasFiscaisUseCase
 	iniciarFechamento *application.IniciarFechamentoUseCase
@@ -20,12 +21,14 @@ type NotaFiscalHandler struct {
 
 func NewNotaFiscalHandler(
 	criar *application.CriarNotaFiscalUseCase,
+	atualizar *application.AtualizarNotaFiscalUseCase,
 	buscar *application.BuscarNotaFiscalUseCase,
 	listar *application.ListarNotasFiscaisUseCase,
 	iniciar *application.IniciarFechamentoUseCase,
 ) *NotaFiscalHandler {
 	return &NotaFiscalHandler{
 		criar:             criar,
+		atualizar:         atualizar,
 		buscar:            buscar,
 		listar:            listar,
 		iniciarFechamento: iniciar,
@@ -35,9 +38,53 @@ func NewNotaFiscalHandler(
 func (handler *NotaFiscalHandler) RegisterRoutes(router *gin.Engine) {
 	notas := router.Group("/notas-fiscais")
 	notas.POST("", handler.criarNota)
+	notas.PUT("/:id", handler.atualizarNota)
 	notas.GET("", handler.listarNotas)
 	notas.GET("/:id", handler.buscarNota)
 	notas.POST("/:id/fechamento", handler.iniciarFechamentoNota)
+}
+
+// atualizarNota godoc
+// @Summary Atualiza uma nota fiscal aberta
+// @Description Substitui cliente, endereco e itens. A operacao e permitida somente no status ABERTA.
+// @Tags Notas Fiscais
+// @Accept json
+// @Produce json
+// @Param id path string true "UUID da nota"
+// @Param request body dto.AtualizarNotaFiscalRequest true "Novos dados da nota"
+// @Success 200 {object} response.SuccessResponse{data=dto.NotaFiscalResponse}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 409 {object} response.ErrorResponse
+// @Router /notas-fiscais/{id} [put]
+func (handler *NotaFiscalHandler) atualizarNota(c *gin.Context) {
+	id, ok := parseID(c)
+	if !ok {
+		return
+	}
+	var request dto.AtualizarNotaFiscalRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		response.Error(c, http.StatusBadRequest, "REQUISICAO_INVALIDA", "dados da requisicao invalidos")
+		return
+	}
+	input := application.AtualizarNotaFiscalInput{
+		ID:              id,
+		NomeCliente:     request.NomeCliente,
+		EnderecoCliente: request.EnderecoCliente,
+		Itens:           make([]application.CriarNotaFiscalItemInput, 0, len(request.Itens)),
+	}
+	for _, item := range request.Itens {
+		input.Itens = append(input.Itens, application.CriarNotaFiscalItemInput{
+			CodigoProduto: item.CodigoProduto,
+			Quantidade:    item.Quantidade,
+		})
+	}
+	nota, err := handler.atualizar.Execute(c.Request.Context(), input)
+	if err != nil {
+		domainerror.Respond(c, err)
+		return
+	}
+	response.OK(c, dto.NewNotaFiscalResponse(nota))
 }
 
 // criarNota godoc

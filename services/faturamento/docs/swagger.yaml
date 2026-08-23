@@ -1,5 +1,23 @@
 basePath: /
 definitions:
+  dto.AtualizarNotaFiscalRequest:
+    properties:
+      enderecoCliente:
+        example: AVENIDA BRASIL, 200 - CURITIBA/PR
+        type: string
+      itens:
+        items:
+          $ref: '#/definitions/dto.CriarNotaFiscalItemRequest'
+        minItems: 1
+        type: array
+      nomeCliente:
+        example: MARIA DA SILVA
+        type: string
+    required:
+    - enderecoCliente
+    - itens
+    - nomeCliente
+    type: object
   dto.CriarNotaFiscalItemRequest:
     properties:
       codigoProduto:
@@ -195,6 +213,50 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Consulta uma nota fiscal
+      tags:
+      - Notas Fiscais
+    put:
+      consumes:
+      - application/json
+      description: Substitui cliente, endereco e itens. A operacao e permitida somente
+        no status ABERTA.
+      parameters:
+      - description: UUID da nota
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Novos dados da nota
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarNotaFiscalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.NotaFiscalResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Atualiza uma nota fiscal aberta
       tags:
       - Notas Fiscais
   /notas-fiscais/{id}/fechamento:

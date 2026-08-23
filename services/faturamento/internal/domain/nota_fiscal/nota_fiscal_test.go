@@ -56,6 +56,35 @@ func TestNotaFiscalCalculaTotais(t *testing.T) {
 	}
 }
 
+func TestAtualizarNotaFiscalAberta(t *testing.T) {
+	nota, _ := NewNotaFiscal(1, "Cliente", "Rua A", []ItemNotaFiscal{itemValido(t)})
+	novoItem, _ := NewItemNotaFiscal(uuid.New(), "sku-2", "mouse", 3, 20)
+
+	if err := nota.Atualizar(" novo cliente ", " avenida central ", []ItemNotaFiscal{*novoItem}); err != nil {
+		t.Fatal(err)
+	}
+	if nota.NomeCliente() != "NOVO CLIENTE" || nota.EnderecoCliente() != "AVENIDA CENTRAL" {
+		t.Fatal("dados do cliente nao foram atualizados e normalizados")
+	}
+	if nota.QuantidadeTotal() != 3 || nota.ValorTotal() != 60 {
+		t.Fatal("itens e totalizadores nao foram atualizados")
+	}
+}
+
+func TestAtualizarNotaFiscalRejeitaStatusDiferenteDeAberta(t *testing.T) {
+	nota, _ := NewNotaFiscal(1, "Cliente", "Rua A", []ItemNotaFiscal{itemValido(t)})
+	_ = nota.IniciarFechamento()
+	nomeOriginal := nota.NomeCliente()
+
+	err := nota.Atualizar("Outro cliente", "Outra rua", []ItemNotaFiscal{itemValido(t)})
+	if !errors.Is(err, ErrNotaNaoEstaAberta) {
+		t.Fatalf("esperava nota nao aberta, recebeu %v", err)
+	}
+	if nota.NomeCliente() != nomeOriginal {
+		t.Fatal("nota nao aberta foi modificada")
+	}
+}
+
 func TestCicloDeFechamento(t *testing.T) {
 	nota, _ := NewNotaFiscal(1, "Cliente", "Rua A", []ItemNotaFiscal{itemValido(t)})
 	if err := nota.IniciarFechamento(); err != nil {

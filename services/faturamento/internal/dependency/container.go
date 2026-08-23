@@ -24,6 +24,7 @@ func NewContainer(connection *database.Connection, cfg config.Config) *Container
 	)
 	handler := httpPresentation.NewNotaFiscalHandler(
 		notafiscalApplication.NewCriarNotaFiscalUseCase(notaRepository, estoqueClient),
+		notafiscalApplication.NewAtualizarNotaFiscalUseCase(notaRepository, estoqueClient),
 		notafiscalApplication.NewBuscarNotaFiscalUseCase(notaRepository),
 		notafiscalApplication.NewListarNotasFiscaisUseCase(notaRepository),
 		notafiscalApplication.NewIniciarFechamentoUseCase(notaRepository),

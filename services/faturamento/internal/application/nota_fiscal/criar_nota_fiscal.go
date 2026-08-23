@@ -48,29 +48,9 @@ func (useCase *CriarNotaFiscalUseCase) Execute(
 	ctx context.Context,
 	input CriarNotaFiscalInput,
 ) (*domain.NotaFiscal, error) {
-	if len(input.Itens) == 0 {
-		return nil, domain.ErrNotaSemItens
-	}
-	itens := make([]domain.ItemNotaFiscal, 0, len(input.Itens))
-	for _, inputItem := range input.Itens {
-		produto, err := useCase.produtos.BuscarPorCodigo(ctx, inputItem.CodigoProduto)
-		if err != nil {
-			return nil, err
-		}
-		if !produto.Ativo {
-			return nil, domain.ErrProdutoInativo
-		}
-		item, err := domain.NewItemNotaFiscal(
-			produto.ID,
-			produto.Codigo,
-			produto.Descricao,
-			inputItem.Quantidade,
-			produto.Valor,
-		)
-		if err != nil {
-			return nil, err
-		}
-		itens = append(itens, *item)
+	itens, err := montarItens(ctx, useCase.produtos, input.Itens)
+	if err != nil {
+		return nil, err
 	}
 	numero, err := useCase.repository.ProximoNumero(ctx)
 	if err != nil {

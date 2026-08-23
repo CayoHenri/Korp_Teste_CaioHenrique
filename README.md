@@ -442,6 +442,7 @@ Endpoints implementados:
 | Método | Rota | Resultado |
 |---|---|---|
 | `POST` | `/notas-fiscais` | Cria uma nota aberta com seus itens |
+| `PUT` | `/notas-fiscais/{id}` | Substitui cliente, endereço e itens enquanto a nota estiver `ABERTA` |
 | `GET` | `/notas-fiscais` | Lista as notas por número decrescente |
 | `GET` | `/notas-fiscais/{id}` | Consulta uma nota e seus itens |
 | `POST` | `/notas-fiscais/{id}/fechamento` | Muda para `PROCESSANDO` e grava a Outbox |
@@ -464,6 +465,11 @@ Body mínimo para criar uma nota:
 O Faturamento consulta o Estoque pelo código. O cliente da API não envia ID,
 descrição nem valor: esses dados são copiados do produto ativo e preservados
 como snapshot no item da nota.
+
+Na atualização, o body segue o mesmo formato mínimo da criação. Os produtos são
+consultados novamente no Estoque, precisam continuar ativos e seus snapshots são
+renovados. A operação substitui todos os itens e retorna conflito (`409`) se a
+nota já estiver `PROCESSANDO` ou `FECHADA`.
 
 A publicação da Outbox no RabbitMQ e o consumo do resultado do Estoque são a
 próxima etapa da integração assíncrona.

@@ -142,6 +142,75 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "put": {
+                "description": "Substitui cliente, endereco e itens. A operacao e permitida somente no status ABERTA.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notas Fiscais"
+                ],
+                "summary": "Atualiza uma nota fiscal aberta",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID da nota",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Novos dados da nota",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtualizarNotaFiscalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.NotaFiscalResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/notas-fiscais/{id}/fechamento": {
@@ -192,6 +261,31 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.AtualizarNotaFiscalRequest": {
+            "type": "object",
+            "required": [
+                "enderecoCliente",
+                "itens",
+                "nomeCliente"
+            ],
+            "properties": {
+                "enderecoCliente": {
+                    "type": "string",
+                    "example": "AVENIDA BRASIL, 200 - CURITIBA/PR"
+                },
+                "itens": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/dto.CriarNotaFiscalItemRequest"
+                    }
+                },
+                "nomeCliente": {
+                    "type": "string",
+                    "example": "MARIA DA SILVA"
+                }
+            }
+        },
         "dto.CriarNotaFiscalItemRequest": {
             "type": "object",
             "required": [

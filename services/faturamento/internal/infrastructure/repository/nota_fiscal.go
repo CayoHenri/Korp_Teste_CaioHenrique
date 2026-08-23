@@ -34,6 +34,33 @@ func (r *NotaFiscalRepository) Criar(ctx context.Context, nota *notafiscal.NotaF
 	})
 }
 
+func (r *NotaFiscalRepository) Atualizar(ctx context.Context, nota *notafiscal.NotaFiscal) error {
+	model := models.NewNotaFiscalModel(nota)
+	return r.db.WithContext(ctx).Transaction(func(transaction *gorm.DB) error {
+		result := transaction.Model(&models.NotaFiscal{}).
+			Where("id = ? AND status = ?", nota.ID(), string(notafiscal.StatusAberta)).
+			Updates(map[string]any{
+				"nome_cliente":     nota.NomeCliente(),
+				"endereco_cliente": nota.EnderecoCliente(),
+				"data_atualizacao": nota.DataAtualizacao(),
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return notafiscal.ErrNotaNaoEstaAberta
+		}
+		if err := transaction.Where("nota_fiscal_id = ?", nota.ID()).
+			Delete(&models.ItemNotaFiscal{}).Error; err != nil {
+			return err
+		}
+		if len(model.Itens) == 0 {
+			return nil
+		}
+		return transaction.Create(&model.Itens).Error
+	})
+}
+
 func (r *NotaFiscalRepository) BuscarPorID(
 	ctx context.Context,
 	id uuid.UUID,

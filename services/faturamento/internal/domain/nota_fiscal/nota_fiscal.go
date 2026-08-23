@@ -154,6 +154,38 @@ func (nota *NotaFiscal) DataFechamento() *time.Time {
 	return cloneTime(nota.dataFechamento)
 }
 
+func (nota *NotaFiscal) ValidarEdicao() error {
+	if nota.status != StatusAberta {
+		return ErrNotaNaoEstaAberta
+	}
+	return nil
+}
+
+func (nota *NotaFiscal) Atualizar(
+	nomeCliente, enderecoCliente string,
+	itens []ItemNotaFiscal,
+) error {
+	if err := nota.ValidarEdicao(); err != nil {
+		return err
+	}
+	if len(itens) == 0 {
+		return ErrNotaSemItens
+	}
+	nomeCliente = sharedtext.NormalizeUpper(nomeCliente)
+	enderecoCliente = sharedtext.NormalizeUpper(enderecoCliente)
+	if nomeCliente == "" {
+		return ErrNomeClienteObrigatorio
+	}
+	if enderecoCliente == "" {
+		return ErrEnderecoClienteObrigatorio
+	}
+	nota.nomeCliente = nomeCliente
+	nota.enderecoCliente = enderecoCliente
+	nota.itens = append([]ItemNotaFiscal(nil), itens...)
+	nota.dataAtualizacao = time.Now().UTC()
+	return nil
+}
+
 func (nota *NotaFiscal) IniciarFechamento() error {
 	if nota.status != StatusAberta {
 		return ErrNotaNaoEstaAberta
