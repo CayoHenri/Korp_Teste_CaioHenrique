@@ -28,7 +28,22 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.NotaFiscalResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -59,7 +74,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.NotaFiscalResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -93,7 +120,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.NotaFiscalResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "404": {
@@ -127,7 +166,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.NotaFiscalResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "409": {
@@ -149,10 +200,12 @@ const docTemplate = `{
             ],
             "properties": {
                 "codigoProduto": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "SKU-001"
                 },
                 "quantidade": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 2
                 }
             }
         },
@@ -165,7 +218,8 @@ const docTemplate = `{
             ],
             "properties": {
                 "enderecoCliente": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "RUA DAS FLORES, 100 - CURITIBA/PR"
                 },
                 "itens": {
                     "type": "array",
@@ -174,7 +228,97 @@ const docTemplate = `{
                     }
                 },
                 "nomeCliente": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "MARIA DA SILVA"
+                }
+            }
+        },
+        "dto.ItemNotaFiscalResponse": {
+            "type": "object",
+            "properties": {
+                "codigoProduto": {
+                    "type": "string",
+                    "example": "SKU-001"
+                },
+                "descricaoProduto": {
+                    "type": "string",
+                    "example": "TECLADO MECANICO"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "produtoId": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440002"
+                },
+                "quantidade": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "valor": {
+                    "type": "number",
+                    "example": 159.9
+                },
+                "valorTotal": {
+                    "type": "number",
+                    "example": 319.8
+                }
+            }
+        },
+        "dto.NotaFiscalResponse": {
+            "type": "object",
+            "properties": {
+                "dataAtualizacao": {
+                    "type": "string",
+                    "example": "2026-08-23T12:00:00Z"
+                },
+                "dataCadastro": {
+                    "type": "string",
+                    "example": "2026-08-23T12:00:00Z"
+                },
+                "dataFechamento": {
+                    "type": "string",
+                    "example": "2026-08-23T12:05:00Z"
+                },
+                "enderecoCliente": {
+                    "type": "string",
+                    "example": "RUA DAS FLORES, 100 - CURITIBA/PR"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "itens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ItemNotaFiscalResponse"
+                    }
+                },
+                "nomeCliente": {
+                    "type": "string",
+                    "example": "MARIA DA SILVA"
+                },
+                "numero": {
+                    "type": "integer",
+                    "example": 1001
+                },
+                "quantidadeTotal": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "ABERTA",
+                        "PROCESSANDO",
+                        "FECHADA"
+                    ],
+                    "example": "ABERTA"
+                },
+                "valorTotal": {
+                    "type": "number",
+                    "example": 319.8
                 }
             }
         },

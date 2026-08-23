@@ -2,9 +2,9 @@ package notafiscal
 
 import (
 	"errors"
-	"strings"
 	"time"
 
+	sharedtext "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/text"
 	"github.com/google/uuid"
 )
 
@@ -77,8 +77,8 @@ func NewNotaFiscalWithState(
 	if !status.Valido() {
 		return nil, ErrStatusInvalido
 	}
-	nomeCliente = strings.TrimSpace(nomeCliente)
-	enderecoCliente = strings.TrimSpace(enderecoCliente)
+	nomeCliente = sharedtext.NormalizeUpper(nomeCliente)
+	enderecoCliente = sharedtext.NormalizeUpper(enderecoCliente)
 	if nomeCliente == "" {
 		return nil, ErrNomeClienteObrigatorio
 	}

@@ -34,7 +34,10 @@ func NewBaixarEstoqueUseCase(repository baixaRepository) *BaixarEstoqueUseCase {
 	return &BaixarEstoqueUseCase{repository: repository}
 }
 
-func (useCase *BaixarEstoqueUseCase) Execute(ctx context.Context, input BaixarEstoqueInput) (BaixarEstoqueOutput, error) {
+func (useCase *BaixarEstoqueUseCase) Execute(
+	ctx context.Context,
+	input BaixarEstoqueInput,
+) (BaixarEstoqueOutput, error) {
 	itens := make([]domain.BaixaItem, 0, len(input.Itens))
 	for _, item := range input.Itens {
 		baixaItem, err := domain.NewBaixaItem(item.ProdutoID, item.Quantidade)

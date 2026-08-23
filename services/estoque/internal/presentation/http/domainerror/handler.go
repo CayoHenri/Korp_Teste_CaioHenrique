@@ -15,16 +15,41 @@ type Mapping struct {
 	Message string
 }
 
-var mappings = []struct {
+type mappingEntry struct {
 	Target  error
 	Mapping Mapping
-}{
-	{domain.ErrCodigoObrigatorio, Mapping{http.StatusBadRequest, "CODIGO_OBRIGATORIO", domain.ErrCodigoObrigatorio.Error()}},
-	{domain.ErrDescricaoObrigatoria, Mapping{http.StatusBadRequest, "DESCRICAO_OBRIGATORIA", domain.ErrDescricaoObrigatoria.Error()}},
-	{domain.ErrSaldoInvalido, Mapping{http.StatusBadRequest, "SALDO_INVALIDO", domain.ErrSaldoInvalido.Error()}},
-	{domain.ErrValorInvalido, Mapping{http.StatusBadRequest, "VALOR_INVALIDO", domain.ErrValorInvalido.Error()}},
-	{domain.ErrCodigoJaExistente, Mapping{http.StatusConflict, "CODIGO_PRODUTO_JA_EXISTENTE", domain.ErrCodigoJaExistente.Error()}},
-	{domain.ErrProdutoNaoEncontrado, Mapping{http.StatusNotFound, "PRODUTO_NAO_ENCONTRADO", domain.ErrProdutoNaoEncontrado.Error()}},
+}
+
+var mappings = []mappingEntry{
+	newMappingEntry(domain.ErrCodigoObrigatorio, http.StatusBadRequest, "CODIGO_OBRIGATORIO"),
+	newMappingEntry(
+		domain.ErrDescricaoObrigatoria,
+		http.StatusBadRequest,
+		"DESCRICAO_OBRIGATORIA",
+	),
+	newMappingEntry(domain.ErrSaldoInvalido, http.StatusBadRequest, "SALDO_INVALIDO"),
+	newMappingEntry(domain.ErrValorInvalido, http.StatusBadRequest, "VALOR_INVALIDO"),
+	newMappingEntry(
+		domain.ErrCodigoJaExistente,
+		http.StatusConflict,
+		"CODIGO_PRODUTO_JA_EXISTENTE",
+	),
+	newMappingEntry(
+		domain.ErrProdutoNaoEncontrado,
+		http.StatusNotFound,
+		"PRODUTO_NAO_ENCONTRADO",
+	),
+}
+
+func newMappingEntry(target error, status int, code string) mappingEntry {
+	return mappingEntry{
+		Target: target,
+		Mapping: Mapping{
+			Status:  status,
+			Code:    code,
+			Message: target.Error(),
+		},
+	}
 }
 
 func Map(err error) Mapping {

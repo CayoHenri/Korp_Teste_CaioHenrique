@@ -819,6 +819,7 @@ itens não vazios antes do fechamento
 somente ABERTA pode iniciar fechamento
 somente PROCESSANDO pode ser confirmada
 somente PROCESSANDO pode voltar para ABERTA após rejeição
+nome e endereço do cliente são normalizados em uppercase
 ```
 
 ---

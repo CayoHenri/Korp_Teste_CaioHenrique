@@ -35,7 +35,9 @@ func (repository *produtoRepositoryStub) Criar(_ context.Context, produto *domai
 	repository.produtos = append(repository.produtos, *produto)
 	return nil
 }
-func (*produtoRepositoryStub) Atualizar(context.Context, *domain.Produto) error { return nil }
+func (*produtoRepositoryStub) Atualizar(context.Context, *domain.Produto) error {
+	return nil
+}
 func (*produtoRepositoryStub) BaixarEstoque(context.Context, domain.BaixaEstoque) (bool, error) {
 	return true, nil
 }
@@ -74,6 +76,12 @@ func TestCriarProdutoReturnsCreated(t *testing.T) {
 	}
 	if repository.produtos[0].Descricao() != "TECLADO" {
 		t.Fatalf("esperava descricao em uppercase, recebeu %q", repository.produtos[0].Descricao())
+	}
+	if repository.produtos[0].Valor() != 159.90 {
+		t.Fatalf("esperava valor 159.90, recebeu %.2f", repository.produtos[0].Valor())
+	}
+	if !bytes.Contains(recorder.Body.Bytes(), []byte(`"valor":159.9`)) {
+		t.Fatalf("resposta nao contem o valor do produto: %s", recorder.Body.String())
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	application "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/application/nota_fiscal"
+	sharedtext "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/text"
 )
 
 type EstoqueClient struct {
@@ -17,13 +18,18 @@ type EstoqueClient struct {
 }
 
 func NewEstoqueClient(baseURL string, httpClient *http.Client) *EstoqueClient {
-	return &EstoqueClient{baseURL: strings.TrimRight(baseURL, "/"), httpClient: httpClient}
+	return &EstoqueClient{
+		baseURL:    strings.TrimRight(baseURL, "/"),
+		httpClient: httpClient,
+	}
 }
+
 func (client *EstoqueClient) BuscarPorCodigo(
 	ctx context.Context,
 	codigo string,
 ) (*application.ProdutoCatalogo, error) {
-	endpoint := client.baseURL + "/produtos/codigo/" + url.PathEscape(strings.TrimSpace(codigo))
+	codigoNormalizado := sharedtext.NormalizeUpper(codigo)
+	endpoint := client.baseURL + "/produtos/codigo/" + url.PathEscape(codigoNormalizado)
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("criar requisicao ao estoque: %w", err)
@@ -33,6 +39,7 @@ func (client *EstoqueClient) BuscarPorCodigo(
 		return nil, application.ErrEstoqueIndisponivel
 	}
 	defer result.Body.Close()
+
 	if result.StatusCode == http.StatusNotFound {
 		return nil, application.ErrProdutoNaoEncontrado
 	}
@@ -42,6 +49,7 @@ func (client *EstoqueClient) BuscarPorCodigo(
 	var envelope struct {
 		Data application.ProdutoCatalogo `json:"data"`
 	}
+
 	if err := json.NewDecoder(result.Body).Decode(&envelope); err != nil {
 		return nil, application.ErrEstoqueIndisponivel
 	}

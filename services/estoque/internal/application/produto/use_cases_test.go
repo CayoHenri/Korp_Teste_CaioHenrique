@@ -52,12 +52,16 @@ func TestCriarProdutoUseCaseValidaEPersiste(t *testing.T) {
 		Codigo:    "SKU-001",
 		Descricao: "Teclado",
 		Saldo:     5,
+		Valor:     159.90,
 	})
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
 	if repository.criado != produto {
 		t.Fatal("esperava que o produto criado fosse persistido")
+	}
+	if produto.Valor() != 159.90 {
+		t.Fatalf("esperava valor 159.90, recebeu %.2f", produto.Valor())
 	}
 }
 
@@ -79,7 +83,7 @@ func TestBuscarProdutoPorCodigoUseCaseDelegaAoRepository(t *testing.T) {
 }
 
 func TestListarProdutosUseCaseRetornaProdutos(t *testing.T) {
-	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 0)
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 159.90)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -92,7 +96,7 @@ func TestListarProdutosUseCaseRetornaProdutos(t *testing.T) {
 }
 
 func TestInativarEAtivarProdutoUseCases(t *testing.T) {
-	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 0)
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 159.90)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -114,7 +118,7 @@ func TestInativarEAtivarProdutoUseCases(t *testing.T) {
 }
 
 func TestAtualizarProdutoUseCaseAtualizaCamposPermitidos(t *testing.T) {
-	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 0)
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 159.90)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -126,13 +130,19 @@ func TestAtualizarProdutoUseCaseAtualizaCamposPermitidos(t *testing.T) {
 			ID:        produto.ID(),
 			Descricao: "Mouse",
 			Saldo:     12,
+			Valor:     249.90,
 		},
 	)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
-	if atualizado.Descricao() != "MOUSE" || atualizado.Saldo() != 12 {
-		t.Fatalf("produto nao foi atualizado: descricao=%s saldo=%d", atualizado.Descricao(), atualizado.Saldo())
+	if atualizado.Descricao() != "MOUSE" || atualizado.Saldo() != 12 || atualizado.Valor() != 249.90 {
+		t.Fatalf(
+			"produto nao foi atualizado: descricao=%s saldo=%d valor=%.2f",
+			atualizado.Descricao(),
+			atualizado.Saldo(),
+			atualizado.Valor(),
+		)
 	}
 	if repository.atualizado != produto {
 		t.Fatal("produto atualizado deveria ser persistido")

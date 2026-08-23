@@ -7,7 +7,7 @@ import (
 )
 
 func TestProdutoConversionRoundTrip(t *testing.T) {
-	produto, err := domain.NewProduto("sku-001", "teclado", 5, 0)
+	produto, err := domain.NewProduto("sku-001", "teclado", 5, 159.90)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -18,7 +18,7 @@ func TestProdutoConversionRoundTrip(t *testing.T) {
 	}
 	if restored.ID() != produto.ID() || restored.Codigo() != produto.Codigo() ||
 		restored.Descricao() != produto.Descricao() || restored.Saldo() != produto.Saldo() ||
-		restored.Ativo() != produto.Ativo() {
+		restored.Valor() != produto.Valor() || restored.Ativo() != produto.Ativo() {
 		t.Fatalf("conversao alterou o produto: esperado %+v, recebido %+v", produto, restored)
 	}
 }

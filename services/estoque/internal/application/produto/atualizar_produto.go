@@ -22,7 +22,10 @@ func NewAtualizarProdutoUseCase(repository domain.Repository) *AtualizarProdutoU
 	return &AtualizarProdutoUseCase{repository: repository}
 }
 
-func (useCase *AtualizarProdutoUseCase) Execute(ctx context.Context, input AtualizarProdutoInput) (*domain.Produto, error) {
+func (useCase *AtualizarProdutoUseCase) Execute(
+	ctx context.Context,
+	input AtualizarProdutoInput,
+) (*domain.Produto, error) {
 	produto, err := useCase.repository.BuscarPorID(ctx, input.ID)
 	if err != nil {
 		return nil, err

@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-type databasePinger interface{ PingContext(context.Context) error }
+type databasePinger interface {
+	PingContext(context.Context) error
+}
 
 func NewRouter(database databasePinger, handler *NotaFiscalHandler) nethttp.Handler {
 	router := gin.New()
@@ -28,6 +30,10 @@ func healthHandler(database databasePinger) gin.HandlerFunc {
 			response.Error(c, nethttp.StatusServiceUnavailable, "SERVICO_INDISPONIVEL", "banco de dados indisponivel")
 			return
 		}
-		response.OK(c, gin.H{"status": "healthy", "service": "faturamento-service", "database": "available"})
+		response.OK(c, gin.H{
+			"status":   "healthy",
+			"service":  "faturamento-service",
+			"database": "available",
+		})
 	}
 }

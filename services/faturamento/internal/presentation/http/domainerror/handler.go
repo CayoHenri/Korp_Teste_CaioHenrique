@@ -2,11 +2,12 @@ package domainerror
 
 import (
 	"errors"
+	"net/http"
+
 	application "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/application/nota_fiscal"
 	domain "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/domain/nota_fiscal"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/presentation/http/response"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type Mapping struct {
@@ -15,24 +16,61 @@ type Mapping struct {
 	Message string
 }
 
-var mappings = []struct {
+type mappingEntry struct {
 	Target  error
 	Mapping Mapping
-}{
-	{domain.ErrNotaNaoEncontrada, Mapping{http.StatusNotFound, "NOTA_NAO_ENCONTRADA", domain.ErrNotaNaoEncontrada.Error()}},
-	{domain.ErrNotaNaoEstaAberta, Mapping{http.StatusConflict, "NOTA_NAO_ESTA_ABERTA", domain.ErrNotaNaoEstaAberta.Error()}},
-	{domain.ErrNotaNaoEstaProcessando, Mapping{http.StatusConflict, "NOTA_NAO_ESTA_PROCESSANDO", domain.ErrNotaNaoEstaProcessando.Error()}},
-	{domain.ErrNotaSemItens, Mapping{http.StatusBadRequest, "NOTA_SEM_ITENS", domain.ErrNotaSemItens.Error()}},
-	{domain.ErrQuantidadeInvalida, Mapping{http.StatusBadRequest, "QUANTIDADE_INVALIDA", domain.ErrQuantidadeInvalida.Error()}},
-	{domain.ErrProdutoInvalido, Mapping{http.StatusBadRequest, "PRODUTO_INVALIDO", domain.ErrProdutoInvalido.Error()}},
-	{domain.ErrCodigoObrigatorio, Mapping{http.StatusBadRequest, "CODIGO_PRODUTO_OBRIGATORIO", domain.ErrCodigoObrigatorio.Error()}},
-	{domain.ErrDescricaoObrigatoria, Mapping{http.StatusBadRequest, "DESCRICAO_PRODUTO_OBRIGATORIA", domain.ErrDescricaoObrigatoria.Error()}},
-	{domain.ErrValorInvalido, Mapping{http.StatusBadRequest, "VALOR_INVALIDO", domain.ErrValorInvalido.Error()}},
-	{domain.ErrProdutoInativo, Mapping{http.StatusConflict, "PRODUTO_INATIVO", domain.ErrProdutoInativo.Error()}},
-	{domain.ErrNomeClienteObrigatorio, Mapping{http.StatusBadRequest, "NOME_CLIENTE_OBRIGATORIO", domain.ErrNomeClienteObrigatorio.Error()}},
-	{domain.ErrEnderecoClienteObrigatorio, Mapping{http.StatusBadRequest, "ENDERECO_CLIENTE_OBRIGATORIO", domain.ErrEnderecoClienteObrigatorio.Error()}},
-	{application.ErrProdutoNaoEncontrado, Mapping{http.StatusUnprocessableEntity, "PRODUTO_NAO_ENCONTRADO", application.ErrProdutoNaoEncontrado.Error()}},
-	{application.ErrEstoqueIndisponivel, Mapping{http.StatusBadGateway, "ESTOQUE_INDISPONIVEL", application.ErrEstoqueIndisponivel.Error()}},
+}
+
+var mappings = []mappingEntry{
+	newMappingEntry(domain.ErrNotaNaoEncontrada, http.StatusNotFound, "NOTA_NAO_ENCONTRADA"),
+	newMappingEntry(domain.ErrNotaNaoEstaAberta, http.StatusConflict, "NOTA_NAO_ESTA_ABERTA"),
+	newMappingEntry(
+		domain.ErrNotaNaoEstaProcessando,
+		http.StatusConflict,
+		"NOTA_NAO_ESTA_PROCESSANDO",
+	),
+	newMappingEntry(domain.ErrNotaSemItens, http.StatusBadRequest, "NOTA_SEM_ITENS"),
+	newMappingEntry(domain.ErrQuantidadeInvalida, http.StatusBadRequest, "QUANTIDADE_INVALIDA"),
+	newMappingEntry(domain.ErrProdutoInvalido, http.StatusBadRequest, "PRODUTO_INVALIDO"),
+	newMappingEntry(domain.ErrCodigoObrigatorio, http.StatusBadRequest, "CODIGO_PRODUTO_OBRIGATORIO"),
+	newMappingEntry(
+		domain.ErrDescricaoObrigatoria,
+		http.StatusBadRequest,
+		"DESCRICAO_PRODUTO_OBRIGATORIA",
+	),
+	newMappingEntry(domain.ErrValorInvalido, http.StatusBadRequest, "VALOR_INVALIDO"),
+	newMappingEntry(domain.ErrProdutoInativo, http.StatusConflict, "PRODUTO_INATIVO"),
+	newMappingEntry(
+		domain.ErrNomeClienteObrigatorio,
+		http.StatusBadRequest,
+		"NOME_CLIENTE_OBRIGATORIO",
+	),
+	newMappingEntry(
+		domain.ErrEnderecoClienteObrigatorio,
+		http.StatusBadRequest,
+		"ENDERECO_CLIENTE_OBRIGATORIO",
+	),
+	newMappingEntry(
+		application.ErrProdutoNaoEncontrado,
+		http.StatusUnprocessableEntity,
+		"PRODUTO_NAO_ENCONTRADO",
+	),
+	newMappingEntry(
+		application.ErrEstoqueIndisponivel,
+		http.StatusBadGateway,
+		"ESTOQUE_INDISPONIVEL",
+	),
+}
+
+func newMappingEntry(target error, status int, code string) mappingEntry {
+	return mappingEntry{
+		Target: target,
+		Mapping: Mapping{
+			Status:  status,
+			Code:    code,
+			Message: target.Error(),
+		},
+	}
 }
 
 func Map(err error) Mapping {
@@ -41,8 +79,13 @@ func Map(err error) Mapping {
 			return entry.Mapping
 		}
 	}
-	return Mapping{http.StatusInternalServerError, "ERRO_INTERNO", "erro interno do servidor"}
+	return Mapping{
+		Status:  http.StatusInternalServerError,
+		Code:    "ERRO_INTERNO",
+		Message: "erro interno do servidor",
+	}
 }
+
 func Respond(c *gin.Context, err error) {
 	mapping := Map(err)
 	response.Error(c, mapping.Status, mapping.Code, mapping.Message)

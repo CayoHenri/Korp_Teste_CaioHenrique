@@ -380,6 +380,7 @@ fechamento com uma Transactional Outbox.
 - inclusão permitida somente para produtos ativos;
 - snapshot do ID, código, descrição e valor unitário em cada item;
 - nome e endereço do cliente no cabeçalho;
+- normalização compartilhada de código, descrição, nome e endereço com trim e uppercase;
 - totalizadores de quantidade e valor calculados pelo domínio;
 - listagem e consulta de notas;
 - transição `ABERTA` para `PROCESSANDO`;

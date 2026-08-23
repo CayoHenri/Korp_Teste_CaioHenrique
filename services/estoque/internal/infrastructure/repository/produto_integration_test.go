@@ -40,7 +40,7 @@ func integrationRepository(t *testing.T) (*ProdutoRepository, func([]uuid.UUID, 
 
 func createProduct(t *testing.T, repository *ProdutoRepository, code string, balance int) *domain.Produto {
 	t.Helper()
-	produto, err := domain.NewProduto(code, "Produto de integracao", balance)
+	produto, err := domain.NewProduto(code, "Produto de integracao", balance, 159.90)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,6 +163,9 @@ func TestIntegrationCadastroSaldoCreatesAuditMovement(t *testing.T) {
 	if err := produto.AtualizarSaldo(9); err != nil {
 		t.Fatal(err)
 	}
+	if err := produto.AtualizarValor(249.90); err != nil {
+		t.Fatal(err)
+	}
 	if err := repository.Atualizar(context.Background(), produto); err != nil {
 		t.Fatal(err)
 	}
@@ -173,5 +176,12 @@ func TestIntegrationCadastroSaldoCreatesAuditMovement(t *testing.T) {
 	}
 	if len(movimentacoes) != 1 || string(movimentacoes[0].Tipo()) != "ENTRADA" || movimentacoes[0].Quantidade() != 4 {
 		t.Fatalf("movimentacao de ajuste inesperada: %+v", movimentacoes)
+	}
+	persistido, err := repository.BuscarPorID(context.Background(), produto.ID())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if persistido.Valor() != 249.90 {
+		t.Fatalf("esperava valor persistido 249.90, recebeu %.2f", persistido.Valor())
 	}
 }

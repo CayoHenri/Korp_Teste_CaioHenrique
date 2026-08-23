@@ -3,9 +3,10 @@ package notafiscal
 import (
 	"context"
 	"errors"
+	"testing"
+
 	domain "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/domain/nota_fiscal"
 	"github.com/google/uuid"
-	"testing"
 )
 
 type repositoryStub struct {
@@ -17,14 +18,32 @@ type repositoryStub struct {
 
 func TestCriarNotaFiscalRejeitaProdutoInativo(t *testing.T) {
 	repository := &repositoryStub{numero: 1}
-	catalogo := &catalogoStub{produto: &ProdutoCatalogo{ID: uuid.New(), Codigo: "SKU", Descricao: "Produto", Ativo: false, Valor: 2500}}
-	_, err := NewCriarNotaFiscalUseCase(repository, catalogo).Execute(context.Background(), CriarNotaFiscalInput{NomeCliente: "Cliente", EnderecoCliente: "Rua A", Itens: []CriarNotaFiscalItemInput{{CodigoProduto: "SKU", Quantidade: 1}}})
+	catalogo := &catalogoStub{
+		produto: &ProdutoCatalogo{
+			ID:        uuid.New(),
+			Codigo:    "SKU",
+			Descricao: "Produto",
+			Ativo:     false,
+			Valor:     25.00,
+		},
+	}
+	input := CriarNotaFiscalInput{
+		NomeCliente:     "Cliente",
+		EnderecoCliente: "Rua A",
+		Itens: []CriarNotaFiscalItemInput{
+			{CodigoProduto: "SKU", Quantidade: 1},
+		},
+	}
+	_, err := NewCriarNotaFiscalUseCase(repository, catalogo).
+		Execute(context.Background(), input)
 	if !errors.Is(err, domain.ErrProdutoInativo) {
 		t.Fatalf("esperava produto inativo, recebeu %v", err)
 	}
 }
 
-type catalogoStub struct{ produto *ProdutoCatalogo }
+type catalogoStub struct {
+	produto *ProdutoCatalogo
+}
 
 func (catalogo *catalogoStub) BuscarPorCodigo(context.Context, string) (*ProdutoCatalogo, error) {
 	return catalogo.produto, nil
@@ -40,7 +59,9 @@ func (repository *repositoryStub) Criar(_ context.Context, nota *domain.NotaFisc
 func (repository *repositoryStub) BuscarPorID(context.Context, uuid.UUID) (*domain.NotaFiscal, error) {
 	return repository.nota, nil
 }
-func (*repositoryStub) Listar(context.Context) ([]domain.NotaFiscal, error) { return nil, nil }
+func (*repositoryStub) Listar(context.Context) ([]domain.NotaFiscal, error) {
+	return nil, nil
+}
 func (repository *repositoryStub) IniciarFechamento(_ context.Context, nota *domain.NotaFiscal) error {
 	repository.fechamento = nota
 	return nil
@@ -48,8 +69,24 @@ func (repository *repositoryStub) IniciarFechamento(_ context.Context, nota *dom
 
 func TestCriarNotaFiscalUsaNumeroDoRepository(t *testing.T) {
 	repository := &repositoryStub{numero: 42}
-	catalogo := &catalogoStub{produto: &ProdutoCatalogo{ID: uuid.New(), Codigo: "SKU", Descricao: "Produto", Ativo: true, Valor: 2500}}
-	nota, err := NewCriarNotaFiscalUseCase(repository, catalogo).Execute(context.Background(), CriarNotaFiscalInput{NomeCliente: "Cliente", EnderecoCliente: "Rua A", Itens: []CriarNotaFiscalItemInput{{CodigoProduto: "SKU", Quantidade: 1}}})
+	catalogo := &catalogoStub{
+		produto: &ProdutoCatalogo{
+			ID:        uuid.New(),
+			Codigo:    "SKU",
+			Descricao: "Produto",
+			Ativo:     true,
+			Valor:     25.00,
+		},
+	}
+	input := CriarNotaFiscalInput{
+		NomeCliente:     "Cliente",
+		EnderecoCliente: "Rua A",
+		Itens: []CriarNotaFiscalItemInput{
+			{CodigoProduto: "SKU", Quantidade: 1},
+		},
+	}
+	nota, err := NewCriarNotaFiscalUseCase(repository, catalogo).
+		Execute(context.Background(), input)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,10 +96,16 @@ func TestCriarNotaFiscalUsaNumeroDoRepository(t *testing.T) {
 }
 
 func TestIniciarFechamentoOrquestraDominioEPersistencia(t *testing.T) {
-	item, _ := domain.NewItemNotaFiscal(uuid.New(), "SKU", "Produto", 1, 2500)
-	nota, _ := domain.NewNotaFiscal(1, "Cliente", "Rua A", []domain.ItemNotaFiscal{*item})
+	item, _ := domain.NewItemNotaFiscal(uuid.New(), "SKU", "Produto", 1, 25.00)
+	nota, _ := domain.NewNotaFiscal(
+		1,
+		"Cliente",
+		"Rua A",
+		[]domain.ItemNotaFiscal{*item},
+	)
 	repository := &repositoryStub{nota: nota}
-	result, err := NewIniciarFechamentoUseCase(repository).Execute(context.Background(), nota.ID())
+	result, err := NewIniciarFechamentoUseCase(repository).
+		Execute(context.Background(), nota.ID())
 	if err != nil {
 		t.Fatal(err)
 	}

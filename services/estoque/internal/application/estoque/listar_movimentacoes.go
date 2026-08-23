@@ -19,6 +19,9 @@ func NewListarMovimentacoesUseCase(repository movimentacaoRepository) *ListarMov
 	return &ListarMovimentacoesUseCase{repository: repository}
 }
 
-func (useCase *ListarMovimentacoesUseCase) Execute(ctx context.Context, produtoID uuid.UUID) ([]movimentacao.Movimentacao, error) {
+func (useCase *ListarMovimentacoesUseCase) Execute(
+	ctx context.Context,
+	produtoID uuid.UUID,
+) ([]movimentacao.Movimentacao, error) {
 	return useCase.repository.ListarMovimentacoes(ctx, produtoID)
 }

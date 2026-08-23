@@ -3,8 +3,10 @@ definitions:
   dto.CriarNotaFiscalItemRequest:
     properties:
       codigoProduto:
+        example: SKU-001
         type: string
       quantidade:
+        example: 2
         type: integer
     required:
     - codigoProduto
@@ -13,17 +15,84 @@ definitions:
   dto.CriarNotaFiscalRequest:
     properties:
       enderecoCliente:
+        example: RUA DAS FLORES, 100 - CURITIBA/PR
         type: string
       itens:
         items:
           $ref: '#/definitions/dto.CriarNotaFiscalItemRequest'
         type: array
       nomeCliente:
+        example: MARIA DA SILVA
         type: string
     required:
     - enderecoCliente
     - itens
     - nomeCliente
+    type: object
+  dto.ItemNotaFiscalResponse:
+    properties:
+      codigoProduto:
+        example: SKU-001
+        type: string
+      descricaoProduto:
+        example: TECLADO MECANICO
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      produtoId:
+        example: 550e8400-e29b-41d4-a716-446655440002
+        type: string
+      quantidade:
+        example: 2
+        type: integer
+      valor:
+        example: 159.9
+        type: number
+      valorTotal:
+        example: 319.8
+        type: number
+    type: object
+  dto.NotaFiscalResponse:
+    properties:
+      dataAtualizacao:
+        example: "2026-08-23T12:00:00Z"
+        type: string
+      dataCadastro:
+        example: "2026-08-23T12:00:00Z"
+        type: string
+      dataFechamento:
+        example: "2026-08-23T12:05:00Z"
+        type: string
+      enderecoCliente:
+        example: RUA DAS FLORES, 100 - CURITIBA/PR
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      itens:
+        items:
+          $ref: '#/definitions/dto.ItemNotaFiscalResponse'
+        type: array
+      nomeCliente:
+        example: MARIA DA SILVA
+        type: string
+      numero:
+        example: 1001
+        type: integer
+      quantidadeTotal:
+        example: 2
+        type: integer
+      status:
+        enum:
+        - ABERTA
+        - PROCESSANDO
+        - FECHADA
+        example: ABERTA
+        type: string
+      valorTotal:
+        example: 319.8
+        type: number
     type: object
   response.ErrorData:
     properties:
@@ -61,7 +130,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.SuccessResponse'
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.NotaFiscalResponse'
+                  type: array
+              type: object
       summary: Lista notas fiscais
       tags:
       - Notas Fiscais
@@ -81,7 +157,12 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/response.SuccessResponse'
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.NotaFiscalResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -103,7 +184,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.SuccessResponse'
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.NotaFiscalResponse'
+              type: object
         "404":
           description: Not Found
           schema:
@@ -125,7 +211,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.SuccessResponse'
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.NotaFiscalResponse'
+              type: object
         "409":
           description: Conflict
           schema:

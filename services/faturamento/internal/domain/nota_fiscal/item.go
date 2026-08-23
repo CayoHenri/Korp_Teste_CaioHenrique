@@ -2,8 +2,8 @@ package notafiscal
 
 import (
 	"errors"
-	"strings"
 
+	sharedtext "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/text"
 	"github.com/google/uuid"
 )
 
@@ -40,8 +40,8 @@ func NewItemNotaFiscalWithState(
 	quantidade int,
 	valor float64,
 ) (*ItemNotaFiscal, error) {
-	codigo = strings.ToUpper(strings.TrimSpace(codigo))
-	descricao = strings.ToUpper(strings.TrimSpace(descricao))
+	codigo = sharedtext.NormalizeUpper(codigo)
+	descricao = sharedtext.NormalizeUpper(descricao)
 	if id == uuid.Nil || produtoID == uuid.Nil {
 		return nil, ErrProdutoInvalido
 	}

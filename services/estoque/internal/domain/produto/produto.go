@@ -62,7 +62,7 @@ func NewProdutoWithState(
 	if saldo < 0 {
 		return nil, ErrSaldoInvalido
 	}
-	if valor < 0 {
+	if valor <= 0 {
 		return nil, ErrValorInvalido
 	}
 

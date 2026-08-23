@@ -1,13 +1,14 @@
 package http
 
 import (
+	"net/http"
+
 	application "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/application/nota_fiscal"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/presentation/http/domainerror"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/presentation/http/dto"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/presentation/http/response"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 type NotaFiscalHandler struct {
@@ -17,9 +18,20 @@ type NotaFiscalHandler struct {
 	iniciarFechamento *application.IniciarFechamentoUseCase
 }
 
-func NewNotaFiscalHandler(criar *application.CriarNotaFiscalUseCase, buscar *application.BuscarNotaFiscalUseCase, listar *application.ListarNotasFiscaisUseCase, iniciar *application.IniciarFechamentoUseCase) *NotaFiscalHandler {
-	return &NotaFiscalHandler{criar: criar, buscar: buscar, listar: listar, iniciarFechamento: iniciar}
+func NewNotaFiscalHandler(
+	criar *application.CriarNotaFiscalUseCase,
+	buscar *application.BuscarNotaFiscalUseCase,
+	listar *application.ListarNotasFiscaisUseCase,
+	iniciar *application.IniciarFechamentoUseCase,
+) *NotaFiscalHandler {
+	return &NotaFiscalHandler{
+		criar:             criar,
+		buscar:            buscar,
+		listar:            listar,
+		iniciarFechamento: iniciar,
+	}
 }
+
 func (handler *NotaFiscalHandler) RegisterRoutes(router *gin.Engine) {
 	notas := router.Group("/notas-fiscais")
 	notas.POST("", handler.criarNota)
@@ -34,7 +46,7 @@ func (handler *NotaFiscalHandler) RegisterRoutes(router *gin.Engine) {
 // @Accept json
 // @Produce json
 // @Param request body dto.CriarNotaFiscalRequest true "Dados da nota"
-// @Success 201 {object} response.SuccessResponse
+// @Success 201 {object} response.SuccessResponse{data=dto.NotaFiscalResponse}
 // @Failure 400 {object} response.ErrorResponse
 // @Router /notas-fiscais [post]
 func (handler *NotaFiscalHandler) criarNota(c *gin.Context) {
@@ -66,7 +78,7 @@ func (handler *NotaFiscalHandler) criarNota(c *gin.Context) {
 // @Summary Lista notas fiscais
 // @Tags Notas Fiscais
 // @Produce json
-// @Success 200 {object} response.SuccessResponse
+// @Success 200 {object} response.SuccessResponse{data=[]dto.NotaFiscalResponse}
 // @Router /notas-fiscais [get]
 func (handler *NotaFiscalHandler) listarNotas(c *gin.Context) {
 	notas, err := handler.listar.Execute(c.Request.Context())
@@ -86,7 +98,7 @@ func (handler *NotaFiscalHandler) listarNotas(c *gin.Context) {
 // @Tags Notas Fiscais
 // @Produce json
 // @Param id path string true "UUID da nota"
-// @Success 200 {object} response.SuccessResponse
+// @Success 200 {object} response.SuccessResponse{data=dto.NotaFiscalResponse}
 // @Failure 404 {object} response.ErrorResponse
 // @Router /notas-fiscais/{id} [get]
 func (handler *NotaFiscalHandler) buscarNota(c *gin.Context) {
@@ -107,7 +119,7 @@ func (handler *NotaFiscalHandler) buscarNota(c *gin.Context) {
 // @Tags Notas Fiscais
 // @Produce json
 // @Param id path string true "UUID da nota"
-// @Success 200 {object} response.SuccessResponse
+// @Success 200 {object} response.SuccessResponse{data=dto.NotaFiscalResponse}
 // @Failure 409 {object} response.ErrorResponse
 // @Router /notas-fiscais/{id}/fechamento [post]
 func (handler *NotaFiscalHandler) iniciarFechamentoNota(c *gin.Context) {

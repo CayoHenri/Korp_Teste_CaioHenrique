@@ -16,7 +16,12 @@ func itemValido(t *testing.T) ItemNotaFiscal {
 }
 
 func TestNewNotaFiscalIniciaAberta(t *testing.T) {
-	nota, err := NewNotaFiscal(1, "Cliente", "Rua A", []ItemNotaFiscal{itemValido(t)})
+	nota, err := NewNotaFiscal(
+		1,
+		"  Maria da Silva  ",
+		"  Rua das Flores, 100  ",
+		[]ItemNotaFiscal{itemValido(t)},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,6 +30,12 @@ func TestNewNotaFiscalIniciaAberta(t *testing.T) {
 	}
 	if nota.Numero() != 1 {
 		t.Fatalf("esperava numero 1, recebeu %d", nota.Numero())
+	}
+	if nota.NomeCliente() != "MARIA DA SILVA" {
+		t.Fatalf("nome do cliente nao foi normalizado: %q", nota.NomeCliente())
+	}
+	if nota.EnderecoCliente() != "RUA DAS FLORES, 100" {
+		t.Fatalf("endereco do cliente nao foi normalizado: %q", nota.EnderecoCliente())
 	}
 }
 
