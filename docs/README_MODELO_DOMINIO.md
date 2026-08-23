@@ -784,6 +784,14 @@ created_at TIMESTAMP NOT NULL
 published_at TIMESTAMP NULL
 ```
 
+### mensagens_processadas
+
+```text
+correlation_id UUID PK
+event_id UUID UNIQUE NOT NULL
+processed_at TIMESTAMP NOT NULL
+```
+
 ---
 
 # 22. Invariantes

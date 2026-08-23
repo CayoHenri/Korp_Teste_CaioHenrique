@@ -403,6 +403,9 @@ fechamento com uma Transactional Outbox.
 - worker periódico para publicação dos eventos pendentes da Outbox;
 - publicação persistente de `estoque.baixa.solicitada` no RabbitMQ;
 - confirmação do broker antes de marcar `published_at`, com retry na próxima execução;
+- consumo idempotente de `estoque.baixa.realizada` e `estoque.baixa.rejeitada`;
+- fechamento da nota no sucesso e reabertura na rejeição;
+- DLQ `faturamento.baixa.resultado.dlq` para resultados inválidos ou terminais;
 - DTOs, respostas HTTP e tradução de erros separados;
 - injeção de dependências centralizada e encerramento gracioso.
 
@@ -524,8 +527,11 @@ transacional e publica `estoque.baixa.realizada` ou `estoque.baixa.rejeitada`.
 Mensagens com JSON inválido são preservadas em
 `estoque.baixa.solicitada.dlq`; falhas técnicas são recolocadas na fila.
 
-O consumo desses resultados pelo Faturamento, fechando ou reabrindo a nota, é a
-próxima etapa da integração assíncrona.
+O Faturamento consome os resultados com confirmação manual. No sucesso, a nota
+passa de `PROCESSANDO` para `FECHADA` e recebe `dataFechamento`; na rejeição,
+volta para `ABERTA`. A tabela `faturamento.mensagens_processadas` usa o
+`correlationId` da solicitação como chave idempotente, impedindo que respostas
+republicadas executem a transição mais de uma vez.
 
 ## Frontend Angular
 

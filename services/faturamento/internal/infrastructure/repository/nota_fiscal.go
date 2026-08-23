@@ -13,6 +13,7 @@ import (
 	sharedtext "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/text"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type NotaFiscalRepository struct {
@@ -21,6 +22,55 @@ type NotaFiscalRepository struct {
 
 func NewNotaFiscalRepository(db *gorm.DB) *NotaFiscalRepository {
 	return &NotaFiscalRepository{db: db}
+}
+
+func (r *NotaFiscalRepository) ProcessarResultadoBaixa(
+	ctx context.Context,
+	eventID, correlationID, notaFiscalID uuid.UUID,
+	transition func(*notafiscal.NotaFiscal) error,
+) (bool, error) {
+	processed := false
+	err := r.db.WithContext(ctx).Transaction(func(transaction *gorm.DB) error {
+		message := models.MensagemProcessada{
+			CorrelationID: correlationID,
+			EventID:       eventID,
+			ProcessedAt:   time.Now().UTC(),
+		}
+		result := transaction.Clauses(clause.OnConflict{DoNothing: true}).Create(&message)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return nil
+		}
+		var model models.NotaFiscal
+		if err := transaction.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Preload("Itens").First(&model, "id = ?", notaFiscalID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return notafiscal.ErrNotaNaoEncontrada
+			}
+			return err
+		}
+		nota, err := model.ToDomain()
+		if err != nil {
+			return err
+		}
+		if err := transition(nota); err != nil {
+			return err
+		}
+		if err := transaction.Model(&models.NotaFiscal{}).
+			Where("id = ?", nota.ID()).
+			Updates(map[string]any{
+				"status":           nota.Status(),
+				"data_atualizacao": nota.DataAtualizacao(),
+				"data_fechamento":  nota.DataFechamento(),
+			}).Error; err != nil {
+			return err
+		}
+		processed = true
+		return nil
+	})
+	return processed, err
 }
 
 func (r *NotaFiscalRepository) ProximoNumero(ctx context.Context) (int64, error) {

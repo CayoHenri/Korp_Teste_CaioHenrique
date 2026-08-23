@@ -50,6 +50,7 @@ func main() {
 	)
 	defer stop()
 	go container.OutboxWorker.Run(shutdownSignal)
+	go container.ResultadoBaixaWorker.Run(shutdownSignal)
 	server := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
 		Handler:           container.HTTPHandler,

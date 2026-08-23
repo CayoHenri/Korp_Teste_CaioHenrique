@@ -117,6 +117,9 @@ func TestIntegrationCriarEIniciarFechamento(t *testing.T) {
 	if eventID == uuid.Nil {
 		t.Fatal("evento da nota nao foi encontrado entre os pendentes")
 	}
+	t.Cleanup(func() {
+		connection.Gorm.Delete(&models.MensagemProcessada{}, "correlation_id = ?", eventID)
+	})
 	if err := outboxRepository.MarcarPublicado(
 		context.Background(),
 		eventID,
@@ -130,5 +133,32 @@ func TestIntegrationCriarEIniciarFechamento(t *testing.T) {
 	}
 	if published.PublishedAt == nil {
 		t.Fatal("evento deveria estar marcado como publicado")
+	}
+	processed, err := repository.ProcessarResultadoBaixa(
+		context.Background(),
+		uuid.New(),
+		eventID,
+		nota.ID(),
+		func(nota *domain.NotaFiscal) error { return nota.ConfirmarFechamento() },
+	)
+	if err != nil || !processed {
+		t.Fatalf("resultado deveria fechar a nota: processed=%v err=%v", processed, err)
+	}
+	processed, err = repository.ProcessarResultadoBaixa(
+		context.Background(),
+		uuid.New(),
+		eventID,
+		nota.ID(),
+		func(nota *domain.NotaFiscal) error { return nota.ConfirmarFechamento() },
+	)
+	if err != nil || processed {
+		t.Fatalf("resultado duplicado deveria ser ignorado: processed=%v err=%v", processed, err)
+	}
+	finalizada, err := repository.BuscarPorID(context.Background(), nota.ID())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if finalizada.Status() != domain.StatusFechada {
+		t.Fatalf("nota deveria estar fechada: status=%v", finalizada.Status())
 	}
 }

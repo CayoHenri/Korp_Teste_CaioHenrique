@@ -18,9 +18,10 @@ import (
 )
 
 type Container struct {
-	HTTPHandler  http.Handler
-	OutboxWorker *worker.OutboxWorker
-	publisher    *messaging.RabbitMQPublisher
+	HTTPHandler          http.Handler
+	OutboxWorker         *worker.OutboxWorker
+	ResultadoBaixaWorker *worker.ResultadoBaixaWorker
+	publisher            *messaging.RabbitMQPublisher
 }
 
 func NewContainer(
@@ -50,10 +51,14 @@ func NewContainer(
 		publisher,
 		100,
 	)
+	processarResultado := notafiscalApplication.NewProcessarResultadoBaixaUseCase(
+		notaRepository,
+	)
 	return &Container{
-		HTTPHandler:  httpPresentation.NewRouter(connection.SQL, handler),
-		OutboxWorker: worker.NewOutboxWorker(publicarEventos, cfg.OutboxInterval, logger),
-		publisher:    publisher,
+		HTTPHandler:          httpPresentation.NewRouter(connection.SQL, handler),
+		OutboxWorker:         worker.NewOutboxWorker(publicarEventos, cfg.OutboxInterval, logger),
+		ResultadoBaixaWorker: worker.NewResultadoBaixaWorker(publisher, processarResultado, logger),
+		publisher:            publisher,
 	}, nil
 }
 
