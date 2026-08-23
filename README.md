@@ -396,6 +396,9 @@ fechamento com uma Transactional Outbox.
 - listagem e consulta de notas;
 - transição `ABERTA` para `PROCESSANDO`;
 - criação do evento Outbox na mesma transação da mudança de estado;
+- worker periódico para publicação dos eventos pendentes da Outbox;
+- publicação persistente de `estoque.baixa.solicitada` no RabbitMQ;
+- confirmação do broker antes de marcar `published_at`, com retry na próxima execução;
 - DTOs, respostas HTTP e tradução de erros separados;
 - injeção de dependências centralizada e encerramento gracioso.
 
@@ -405,6 +408,8 @@ fechamento com uma Transactional Outbox.
 FATURAMENTO_HTTP_PORT
 FATURAMENTO_DATABASE_URL
 FATURAMENTO_ESTOQUE_BASE_URL
+FATURAMENTO_RABBITMQ_URL
+FATURAMENTO_OUTBOX_INTERVAL
 ```
 
 ### Dependências e validação
@@ -504,8 +509,14 @@ consultados novamente no Estoque, precisam continuar ativos e seus snapshots sã
 renovados. A operação substitui todos os itens e retorna conflito (`409`) se a
 nota já estiver `PROCESSANDO` ou `FECHADA`.
 
-A publicação da Outbox no RabbitMQ e o consumo do resultado do Estoque são a
-próxima etapa da integração assíncrona.
+Ao iniciar a API, o worker consulta periodicamente os registros com
+`published_at IS NULL`, publica mensagens persistentes na exchange durável
+`korp.events` usando a routing key `estoque.baixa.solicitada` e somente marca o
+evento como publicado depois da confirmação do RabbitMQ. Em caso de falha, ele
+permanece pendente para uma nova tentativa.
+
+O consumo da solicitação pelo Estoque e a publicação dos eventos de sucesso ou
+rejeição são a próxima etapa da integração assíncrona.
 
 ## Frontend Angular
 

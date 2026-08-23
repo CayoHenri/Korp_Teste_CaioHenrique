@@ -33,7 +33,23 @@ func main() {
 		os.Exit(1)
 	}
 	defer connection.Close()
-	container := dependency.NewContainer(connection, cfg)
+	container, err := dependency.NewContainer(connection, cfg, logger)
+	if err != nil {
+		logger.Error("nao foi possivel montar as dependencias", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := container.Close(); err != nil {
+			logger.Error("falha ao encerrar RabbitMQ", "error", err)
+		}
+	}()
+	shutdownSignal, stop := signal.NotifyContext(
+		context.Background(),
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
+	go container.OutboxWorker.Run(shutdownSignal)
 	server := &http.Server{
 		Addr:              ":" + cfg.HTTPPort,
 		Handler:           container.HTTPHandler,
@@ -47,8 +63,6 @@ func main() {
 		logger.Info("faturamento-service iniciado", "port", cfg.HTTPPort)
 		serverErrors <- server.ListenAndServe()
 	}()
-	shutdownSignal, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
 	select {
 	case <-shutdownSignal.Done():
 		logger.Info("encerrando faturamento-service")

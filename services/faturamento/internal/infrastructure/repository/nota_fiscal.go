@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	outboxApplication "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/application/outbox"
 	notafiscal "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/domain/nota_fiscal"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/infrastructure/database/models"
 	sharedquery "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/query"
@@ -137,7 +138,7 @@ func (r *NotaFiscalRepository) IniciarFechamento(ctx context.Context, nota *nota
 		}
 		event := models.OutboxEvent{
 			ID:          eventID,
-			EventType:   "faturamento.nota.fechamento_solicitado",
+			EventType:   outboxApplication.EventTypeBaixaSolicitada,
 			AggregateID: nota.ID(),
 			Payload:     payload,
 			CreatedAt:   time.Now().UTC()}

@@ -756,7 +756,7 @@ processed_at TIMESTAMP NOT NULL
 ```text
 id UUID PK
 numero BIGINT UNIQUE NOT NULL
-status VARCHAR NOT NULL
+status faturamento.nota_fiscal_status NOT NULL
 data_cadastro TIMESTAMP NOT NULL
 data_atualizacao TIMESTAMP NOT NULL
 data_fechamento TIMESTAMP NULL

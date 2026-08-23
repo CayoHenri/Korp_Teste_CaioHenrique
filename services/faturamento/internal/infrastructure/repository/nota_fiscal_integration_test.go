@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"testing"
+	"time"
 
 	domain "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/domain/nota_fiscal"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/infrastructure/config"
@@ -95,5 +96,39 @@ func TestIntegrationCriarEIniciarFechamento(t *testing.T) {
 	}
 	if events != 1 {
 		t.Fatalf("esperava um evento Outbox, recebeu %d", events)
+	}
+	outboxRepository := NewOutboxRepository(connection.Gorm)
+	pendentes, err := outboxRepository.ListarPendentes(context.Background(), 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var eventID uuid.UUID
+	for _, event := range pendentes {
+		if event.ID == uuid.Nil || event.Type != "estoque.baixa.solicitada" {
+			continue
+		}
+		var record models.OutboxEvent
+		if err := connection.Gorm.First(&record, "id = ?", event.ID).Error; err == nil &&
+			record.AggregateID == nota.ID() {
+			eventID = event.ID
+			break
+		}
+	}
+	if eventID == uuid.Nil {
+		t.Fatal("evento da nota nao foi encontrado entre os pendentes")
+	}
+	if err := outboxRepository.MarcarPublicado(
+		context.Background(),
+		eventID,
+		time.Now().UTC(),
+	); err != nil {
+		t.Fatal(err)
+	}
+	var published models.OutboxEvent
+	if err := connection.Gorm.First(&published, "id = ?", eventID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if published.PublishedAt == nil {
+		t.Fatal("evento deveria estar marcado como publicado")
 	}
 }
