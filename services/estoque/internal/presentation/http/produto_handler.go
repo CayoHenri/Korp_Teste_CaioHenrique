@@ -5,9 +5,11 @@ import (
 
 	estoqueApplication "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/estoque"
 	application "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/produto"
+	domain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/produto"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/presentation/http/domainerror"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/presentation/http/dto"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/presentation/http/response"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/estoque/internal/shared/query"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -213,19 +215,48 @@ func (handler *ProdutoHandler) criar(c *gin.Context) {
 // @Summary Lista produtos
 // @Tags Produtos
 // @Produce json
-// @Success 200 {object} response.SuccessResponse{data=[]dto.ProdutoResponse}
+// @Param pagina query int false "Pagina" default(1)
+// @Param tamanhoPagina query int false "Itens por pagina (maximo 100)" default(20)
+// @Param codigo query string false "Trecho do codigo"
+// @Param descricao query string false "Trecho da descricao"
+// @Param ativo query bool false "Status ativo"
+// @Success 200 {object} response.SuccessResponse{data=dto.ProdutosPaginadosResponse}
 // @Failure 500 {object} response.ErrorResponse
 // @Router /produtos [get]
 func (handler *ProdutoHandler) listar(c *gin.Context) {
-	produtos, err := handler.listarProdutos.Execute(c.Request.Context())
+	var request dto.ListarProdutosQuery
+	if err := c.ShouldBindQuery(&request); err != nil {
+		response.Error(c, http.StatusBadRequest, "FILTROS_INVALIDOS", "filtros da requisicao invalidos")
+		return
+	}
+	pagina, err := handler.listarProdutos.Execute(
+		c.Request.Context(),
+		sharedquery.Criteria[domain.ListFilters]{
+			Filters: domain.ListFilters{
+				Codigo:    request.Codigo,
+				Descricao: request.Descricao,
+				Ativo:     request.Ativo,
+			},
+			Pagination: sharedquery.Pagination{
+				Page:     request.Pagina,
+				PageSize: request.TamanhoPagina,
+			},
+		},
+	)
 	if err != nil {
 		domainerror.Respond(c, err)
 		return
 	}
 
-	result := make([]dto.ProdutoResponse, 0, len(produtos))
-	for index := range produtos {
-		result = append(result, dto.NewProdutoResponse(&produtos[index]))
+	result := dto.ProdutosPaginadosResponse{
+		Itens:         make([]dto.ProdutoResponse, 0, len(pagina.Items)),
+		Total:         pagina.Total,
+		Pagina:        pagina.Page,
+		TamanhoPagina: pagina.PageSize,
+		TotalPaginas:  pagina.TotalPages,
+	}
+	for index := range pagina.Items {
+		result.Itens = append(result.Itens, dto.NewProdutoResponse(&pagina.Items[index]))
 	}
 	response.OK(c, result)
 }

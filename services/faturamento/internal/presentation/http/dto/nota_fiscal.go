@@ -24,6 +24,14 @@ type AtualizarNotaFiscalRequest struct {
 	Itens           []CriarNotaFiscalItemRequest `json:"itens" binding:"required,min=1"`
 }
 
+type ListarNotasFiscaisQuery struct {
+	Pagina        int    `form:"pagina" example:"1"`
+	TamanhoPagina int    `form:"tamanhoPagina" example:"20"`
+	Numero        *int64 `form:"numero" example:"1001"`
+	Status        string `form:"status" example:"ABERTA"`
+	NomeCliente   string `form:"nomeCliente" example:"MARIA"`
+}
+
 type ItemNotaFiscalResponse struct {
 	ID               uuid.UUID `json:"id" example:"550e8400-e29b-41d4-a716-446655440001"`
 	ProdutoID        uuid.UUID `json:"produtoId" example:"550e8400-e29b-41d4-a716-446655440002"`
@@ -46,6 +54,14 @@ type NotaFiscalResponse struct {
 	DataCadastro    time.Time                `json:"dataCadastro" example:"2026-08-23T12:00:00Z"`
 	DataAtualizacao time.Time                `json:"dataAtualizacao" example:"2026-08-23T12:00:00Z"`
 	DataFechamento  *time.Time               `json:"dataFechamento,omitempty" example:"2026-08-23T12:05:00Z"`
+}
+
+type NotasFiscaisPaginadasResponse struct {
+	Itens         []NotaFiscalResponse `json:"itens"`
+	Total         int64                `json:"total" example:"42"`
+	Pagina        int                  `json:"pagina" example:"1"`
+	TamanhoPagina int                  `json:"tamanhoPagina" example:"20"`
+	TotalPaginas  int                  `json:"totalPaginas" example:"3"`
 }
 
 func NewNotaFiscalResponse(nota *domain.NotaFiscal) NotaFiscalResponse {

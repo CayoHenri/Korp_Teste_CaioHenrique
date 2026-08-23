@@ -67,6 +67,25 @@ definitions:
       valor:
         type: number
     type: object
+  dto.ProdutosPaginadosResponse:
+    properties:
+      itens:
+        items:
+          $ref: '#/definitions/dto.ProdutoResponse'
+        type: array
+      pagina:
+        example: 1
+        type: integer
+      tamanhoPagina:
+        example: 20
+        type: integer
+      total:
+        example: 42
+        type: integer
+      totalPaginas:
+        example: 3
+        type: integer
+    type: object
   response.ErrorData:
     properties:
       code:
@@ -116,6 +135,29 @@ paths:
       - Health
   /produtos:
     get:
+      parameters:
+      - default: 1
+        description: Pagina
+        in: query
+        name: pagina
+        type: integer
+      - default: 20
+        description: Itens por pagina (maximo 100)
+        in: query
+        name: tamanhoPagina
+        type: integer
+      - description: Trecho do codigo
+        in: query
+        name: codigo
+        type: string
+      - description: Trecho da descricao
+        in: query
+        name: descricao
+        type: string
+      - description: Status ativo
+        in: query
+        name: ativo
+        type: boolean
       produces:
       - application/json
       responses:
@@ -126,9 +168,7 @@ paths:
             - $ref: '#/definitions/response.SuccessResponse'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/dto.ProdutoResponse'
-                  type: array
+                  $ref: '#/definitions/dto.ProdutosPaginadosResponse'
               type: object
         "500":
           description: Internal Server Error
@@ -248,7 +288,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.ErrorResponse'
-      summary: Atualiza descricao e saldo de um produto
+      summary: Atualiza descricao, valor e saldo de um produto
       tags:
       - Produtos
   /produtos/{id}/ativar:

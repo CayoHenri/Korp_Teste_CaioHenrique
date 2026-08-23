@@ -20,6 +20,14 @@ type AtualizarProdutoRequest struct {
 	Valor     *float64 `json:"valor" binding:"required" example:"15990"`
 }
 
+type ListarProdutosQuery struct {
+	Pagina        int    `form:"pagina" example:"1"`
+	TamanhoPagina int    `form:"tamanhoPagina" example:"20"`
+	Codigo        string `form:"codigo" example:"SKU"`
+	Descricao     string `form:"descricao" example:"TECLADO"`
+	Ativo         *bool  `form:"ativo" example:"true"`
+}
+
 type ProdutoResponse struct {
 	ID              uuid.UUID `json:"id"`
 	Codigo          string    `json:"codigo"`
@@ -29,6 +37,14 @@ type ProdutoResponse struct {
 	Ativo           bool      `json:"ativo"`
 	DataCadastro    time.Time `json:"dataCadastro"`
 	DataAtualizacao time.Time `json:"dataAtualizacao"`
+}
+
+type ProdutosPaginadosResponse struct {
+	Itens         []ProdutoResponse `json:"itens"`
+	Total         int64             `json:"total" example:"42"`
+	Pagina        int               `json:"pagina" example:"1"`
+	TamanhoPagina int               `json:"tamanhoPagina" example:"20"`
+	TotalPaginas  int               `json:"totalPaginas" example:"3"`
 }
 
 func NewProdutoResponse(produto *domain.Produto) ProdutoResponse {

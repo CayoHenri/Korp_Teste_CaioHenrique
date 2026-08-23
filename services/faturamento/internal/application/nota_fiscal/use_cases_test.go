@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	domain "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/domain/nota_fiscal"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/query"
 	"github.com/google/uuid"
 )
 
@@ -64,8 +65,11 @@ func (repository *repositoryStub) Atualizar(_ context.Context, nota *domain.Nota
 func (repository *repositoryStub) BuscarPorID(context.Context, uuid.UUID) (*domain.NotaFiscal, error) {
 	return repository.nota, nil
 }
-func (*repositoryStub) Listar(context.Context) ([]domain.NotaFiscal, error) {
-	return nil, nil
+func (*repositoryStub) Listar(
+	context.Context,
+	sharedquery.Criteria[domain.ListFilters],
+) (sharedquery.Page[domain.NotaFiscal], error) {
+	return sharedquery.NewPage([]domain.NotaFiscal{}, 0, sharedquery.NewPagination(1, 20)), nil
 }
 func (repository *repositoryStub) IniciarFechamento(_ context.Context, nota *domain.NotaFiscal) error {
 	repository.fechamento = nota

@@ -50,6 +50,40 @@ const docTemplate = `{
                     "Produtos"
                 ],
                 "summary": "Lista produtos",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Pagina",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Itens por pagina (maximo 100)",
+                        "name": "tamanhoPagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trecho do codigo",
+                        "name": "codigo",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trecho da descricao",
+                        "name": "descricao",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Status ativo",
+                        "name": "ativo",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -62,10 +96,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/dto.ProdutoResponse"
-                                            }
+                                            "$ref": "#/definitions/dto.ProdutosPaginadosResponse"
                                         }
                                     }
                                 }
@@ -261,7 +292,7 @@ const docTemplate = `{
                 "tags": [
                     "Produtos"
                 ],
-                "summary": "Atualiza descricao e saldo de um produto",
+                "summary": "Atualiza descricao, valor e saldo de um produto",
                 "parameters": [
                     {
                         "type": "string",
@@ -588,6 +619,33 @@ const docTemplate = `{
                 },
                 "valor": {
                     "type": "number"
+                }
+            }
+        },
+        "dto.ProdutosPaginadosResponse": {
+            "type": "object",
+            "properties": {
+                "itens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProdutoResponse"
+                    }
+                },
+                "pagina": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "tamanhoPagina": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "totalPaginas": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },

@@ -6,6 +6,7 @@ import (
 
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/movimentacao"
 	domain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/produto"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/estoque/internal/shared/query"
 	"github.com/google/uuid"
 )
 
@@ -40,8 +41,11 @@ func (repository *repositoryStub) BuscarPorCodigo(_ context.Context, codigo stri
 	repository.codigo = codigo
 	return repository.produto, nil
 }
-func (repository *repositoryStub) Listar(context.Context) ([]domain.Produto, error) {
-	return repository.produtos, nil
+func (repository *repositoryStub) Listar(
+	context.Context,
+	sharedquery.Criteria[domain.ListFilters],
+) (sharedquery.Page[domain.Produto], error) {
+	return sharedquery.NewPage(repository.produtos, int64(len(repository.produtos)), sharedquery.NewPagination(1, 20)), nil
 }
 
 func TestCriarProdutoUseCaseValidaEPersiste(t *testing.T) {
@@ -89,9 +93,12 @@ func TestListarProdutosUseCaseRetornaProdutos(t *testing.T) {
 	}
 	repository := &repositoryStub{produtos: []domain.Produto{*produto}}
 
-	produtos, err := NewListarProdutosUseCase(repository).Execute(context.Background())
-	if err != nil || len(produtos) != 1 {
-		t.Fatalf("resultado inesperado: produtos=%d erro=%v", len(produtos), err)
+	pagina, err := NewListarProdutosUseCase(repository).Execute(
+		context.Background(),
+		sharedquery.Criteria[domain.ListFilters]{},
+	)
+	if err != nil || len(pagina.Items) != 1 {
+		t.Fatalf("resultado inesperado: produtos=%d erro=%v", len(pagina.Items), err)
 	}
 }
 

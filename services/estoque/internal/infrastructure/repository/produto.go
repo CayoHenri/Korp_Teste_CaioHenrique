@@ -8,6 +8,7 @@ import (
 	movimentacaoDomain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/movimentacao"
 	domain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/produto"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/infrastructure/database/models"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/estoque/internal/shared/query"
 	sharedtext "github.com/caiog/korp-notas-fiscais/services/estoque/internal/shared/text"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -213,21 +214,46 @@ func (r *ProdutoRepository) BuscarPorCodigo(ctx context.Context, codigo string) 
 	return result(model, err)
 }
 
-func (r *ProdutoRepository) Listar(ctx context.Context) ([]domain.Produto, error) {
+func (r *ProdutoRepository) Listar(
+	ctx context.Context,
+	criteria sharedquery.Criteria[domain.ListFilters],
+) (sharedquery.Page[domain.Produto], error) {
 	var records []models.Produto
-	if err := r.db.WithContext(ctx).Order("codigo ASC").Find(&records).Error; err != nil {
-		return nil, err
+	databaseQuery := r.db.WithContext(ctx).Model(&models.Produto{})
+	if criteria.Filters.Codigo != "" {
+		databaseQuery = databaseQuery.Where(
+			"codigo LIKE ?",
+			"%"+sharedtext.NormalizeUpper(criteria.Filters.Codigo)+"%",
+		)
+	}
+	if criteria.Filters.Descricao != "" {
+		databaseQuery = databaseQuery.Where(
+			"descricao LIKE ?",
+			"%"+sharedtext.NormalizeUpper(criteria.Filters.Descricao)+"%",
+		)
+	}
+	if criteria.Filters.Ativo != nil {
+		databaseQuery = databaseQuery.Where("ativo = ?", *criteria.Filters.Ativo)
+	}
+	var total int64
+	if err := databaseQuery.Count(&total).Error; err != nil {
+		return sharedquery.Page[domain.Produto]{}, err
+	}
+	if err := databaseQuery.Order("codigo ASC").
+		Offset(criteria.Pagination.Offset()).Limit(criteria.Pagination.PageSize).
+		Find(&records).Error; err != nil {
+		return sharedquery.Page[domain.Produto]{}, err
 	}
 
 	produtos := make([]domain.Produto, 0, len(records))
 	for _, model := range records {
 		produto, err := model.ToDomain()
 		if err != nil {
-			return nil, err
+			return sharedquery.Page[domain.Produto]{}, err
 		}
 		produtos = append(produtos, *produto)
 	}
-	return produtos, nil
+	return sharedquery.NewPage(produtos, total, criteria.Pagination), nil
 }
 
 func result(model models.Produto, err error) (*domain.Produto, error) {

@@ -295,6 +295,16 @@ Endpoints implementados:
 | `PATCH` | `/produtos/{id}/inativar` | Inativa sem excluir |
 | `GET` | `/produtos/{id}/movimentacoes` | Lista o histórico de estoque |
 
+A listagem de produtos aceita `pagina`, `tamanhoPagina` e os filtros opcionais
+`codigo`, `descricao` e `ativo`:
+
+```text
+GET /produtos?pagina=1&tamanhoPagina=20&descricao=teclado&ativo=true
+```
+
+Quando omitidos, são usados `pagina=1` e `tamanhoPagina=20`. O tamanho máximo
+permitido por página é 100.
+
 Não existe endpoint `DELETE /produtos/{id}`. Produtos referenciados por
 movimentações ou notas precisam continuar disponíveis para rastreabilidade.
 
@@ -446,6 +456,28 @@ Endpoints implementados:
 | `GET` | `/notas-fiscais` | Lista as notas por número decrescente |
 | `GET` | `/notas-fiscais/{id}` | Consulta uma nota e seus itens |
 | `POST` | `/notas-fiscais/{id}/fechamento` | Muda para `PROCESSANDO` e grava a Outbox |
+
+A listagem de notas fiscais aceita `pagina`, `tamanhoPagina` e os filtros
+opcionais `numero`, `status` e `nomeCliente`:
+
+```text
+GET /notas-fiscais?pagina=1&tamanhoPagina=20&status=ABERTA&nomeCliente=maria
+```
+
+As duas APIs retornam listagens com os itens e os metadados da página:
+
+```json
+{
+  "success": true,
+  "data": {
+    "itens": [],
+    "total": 0,
+    "pagina": 1,
+    "tamanhoPagina": 20,
+    "totalPaginas": 0
+  }
+}
+```
 
 Body mínimo para criar uma nota:
 

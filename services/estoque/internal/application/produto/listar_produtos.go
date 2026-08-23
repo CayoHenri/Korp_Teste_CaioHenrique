@@ -4,6 +4,7 @@ import (
 	"context"
 
 	domain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/produto"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/estoque/internal/shared/query"
 )
 
 type ListarProdutosUseCase struct {
@@ -14,6 +15,13 @@ func NewListarProdutosUseCase(repository domain.Repository) *ListarProdutosUseCa
 	return &ListarProdutosUseCase{repository: repository}
 }
 
-func (useCase *ListarProdutosUseCase) Execute(ctx context.Context) ([]domain.Produto, error) {
-	return useCase.repository.Listar(ctx)
+func (useCase *ListarProdutosUseCase) Execute(
+	ctx context.Context,
+	criteria sharedquery.Criteria[domain.ListFilters],
+) (sharedquery.Page[domain.Produto], error) {
+	criteria.Pagination = sharedquery.NewPagination(
+		criteria.Pagination.Page,
+		criteria.Pagination.PageSize,
+	)
+	return useCase.repository.Listar(ctx, criteria)
 }

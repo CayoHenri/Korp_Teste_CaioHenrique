@@ -4,9 +4,12 @@ import (
 	"net/http"
 
 	application "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/application/nota_fiscal"
+	domain "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/domain/nota_fiscal"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/presentation/http/domainerror"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/presentation/http/dto"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/presentation/http/response"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/query"
+	sharedtext "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/text"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -125,17 +128,55 @@ func (handler *NotaFiscalHandler) criarNota(c *gin.Context) {
 // @Summary Lista notas fiscais
 // @Tags Notas Fiscais
 // @Produce json
-// @Success 200 {object} response.SuccessResponse{data=[]dto.NotaFiscalResponse}
+// @Param pagina query int false "Pagina" default(1)
+// @Param tamanhoPagina query int false "Itens por pagina (maximo 100)" default(20)
+// @Param numero query int false "Numero exato da nota"
+// @Param status query string false "Status da nota" Enums(ABERTA, PROCESSANDO, FECHADA)
+// @Param nomeCliente query string false "Trecho do nome do cliente"
+// @Success 200 {object} response.SuccessResponse{data=dto.NotasFiscaisPaginadasResponse}
 // @Router /notas-fiscais [get]
 func (handler *NotaFiscalHandler) listarNotas(c *gin.Context) {
-	notas, err := handler.listar.Execute(c.Request.Context())
+	var request dto.ListarNotasFiscaisQuery
+	if err := c.ShouldBindQuery(&request); err != nil {
+		response.Error(c, http.StatusBadRequest, "FILTROS_INVALIDOS", "filtros da requisicao invalidos")
+		return
+	}
+	var status *domain.Status
+	if request.Status != "" {
+		value := domain.Status(sharedtext.NormalizeUpper(request.Status))
+		if !value.Valido() {
+			response.Error(c, http.StatusBadRequest, "STATUS_INVALIDO", "status da nota fiscal e invalido")
+			return
+		}
+		status = &value
+	}
+	pagina, err := handler.listar.Execute(
+		c.Request.Context(),
+		sharedquery.Criteria[domain.ListFilters]{
+			Filters: domain.ListFilters{
+				Numero:      request.Numero,
+				Status:      status,
+				NomeCliente: request.NomeCliente,
+			},
+			Pagination: sharedquery.Pagination{
+				Page:     request.Pagina,
+				PageSize: request.TamanhoPagina,
+			},
+		},
+	)
 	if err != nil {
 		domainerror.Respond(c, err)
 		return
 	}
-	result := make([]dto.NotaFiscalResponse, 0, len(notas))
-	for index := range notas {
-		result = append(result, dto.NewNotaFiscalResponse(&notas[index]))
+	result := dto.NotasFiscaisPaginadasResponse{
+		Itens:         make([]dto.NotaFiscalResponse, 0, len(pagina.Items)),
+		Total:         pagina.Total,
+		Pagina:        pagina.Page,
+		TamanhoPagina: pagina.PageSize,
+		TotalPaginas:  pagina.TotalPages,
+	}
+	for index := range pagina.Items {
+		result.Itens = append(result.Itens, dto.NewNotaFiscalResponse(&pagina.Items[index]))
 	}
 	response.OK(c, result)
 }

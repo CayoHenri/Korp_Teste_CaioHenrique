@@ -11,6 +11,7 @@ import (
 	application "github.com/caiog/korp-notas-fiscais/services/estoque/internal/application/produto"
 	"github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/movimentacao"
 	domain "github.com/caiog/korp-notas-fiscais/services/estoque/internal/domain/produto"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/estoque/internal/shared/query"
 	"github.com/google/uuid"
 )
 
@@ -50,8 +51,11 @@ func (*produtoRepositoryStub) BuscarPorID(context.Context, uuid.UUID) (*domain.P
 func (*produtoRepositoryStub) BuscarPorCodigo(context.Context, string) (*domain.Produto, error) {
 	return nil, domain.ErrProdutoNaoEncontrado
 }
-func (repository *produtoRepositoryStub) Listar(context.Context) ([]domain.Produto, error) {
-	return repository.produtos, nil
+func (repository *produtoRepositoryStub) Listar(
+	context.Context,
+	sharedquery.Criteria[domain.ListFilters],
+) (sharedquery.Page[domain.Produto], error) {
+	return sharedquery.NewPage(repository.produtos, int64(len(repository.produtos)), sharedquery.NewPagination(1, 20)), nil
 }
 
 func TestCriarProdutoReturnsCreated(t *testing.T) {

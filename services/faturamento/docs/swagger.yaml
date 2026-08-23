@@ -112,6 +112,25 @@ definitions:
         example: 319.8
         type: number
     type: object
+  dto.NotasFiscaisPaginadasResponse:
+    properties:
+      itens:
+        items:
+          $ref: '#/definitions/dto.NotaFiscalResponse'
+        type: array
+      pagina:
+        example: 1
+        type: integer
+      tamanhoPagina:
+        example: 20
+        type: integer
+      total:
+        example: 42
+        type: integer
+      totalPaginas:
+        example: 3
+        type: integer
+    type: object
   response.ErrorData:
     properties:
       code:
@@ -142,6 +161,33 @@ info:
 paths:
   /notas-fiscais:
     get:
+      parameters:
+      - default: 1
+        description: Pagina
+        in: query
+        name: pagina
+        type: integer
+      - default: 20
+        description: Itens por pagina (maximo 100)
+        in: query
+        name: tamanhoPagina
+        type: integer
+      - description: Numero exato da nota
+        in: query
+        name: numero
+        type: integer
+      - description: Status da nota
+        enum:
+        - ABERTA
+        - PROCESSANDO
+        - FECHADA
+        in: query
+        name: status
+        type: string
+      - description: Trecho do nome do cliente
+        in: query
+        name: nomeCliente
+        type: string
       produces:
       - application/json
       responses:
@@ -152,9 +198,7 @@ paths:
             - $ref: '#/definitions/response.SuccessResponse'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/dto.NotaFiscalResponse'
-                  type: array
+                  $ref: '#/definitions/dto.NotasFiscaisPaginadasResponse'
               type: object
       summary: Lista notas fiscais
       tags:

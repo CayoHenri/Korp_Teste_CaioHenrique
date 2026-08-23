@@ -8,6 +8,8 @@ import (
 
 	notafiscal "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/domain/nota_fiscal"
 	"github.com/caiog/korp-notas-fiscais/services/faturamento/internal/infrastructure/database/models"
+	sharedquery "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/query"
+	sharedtext "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/shared/text"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -76,21 +78,42 @@ func (r *NotaFiscalRepository) BuscarPorID(
 	return model.ToDomain()
 }
 
-func (r *NotaFiscalRepository) Listar(ctx context.Context) ([]notafiscal.NotaFiscal, error) {
+func (r *NotaFiscalRepository) Listar(
+	ctx context.Context,
+	criteria sharedquery.Criteria[notafiscal.ListFilters],
+) (sharedquery.Page[notafiscal.NotaFiscal], error) {
 	var records []models.NotaFiscal
-	if err := r.db.WithContext(ctx).
-		Preload("Itens").Order("numero DESC").Find(&records).Error; err != nil {
-		return nil, err
+	databaseQuery := r.db.WithContext(ctx).Model(&models.NotaFiscal{})
+	if criteria.Filters.Numero != nil {
+		databaseQuery = databaseQuery.Where("numero = ?", *criteria.Filters.Numero)
+	}
+	if criteria.Filters.Status != nil {
+		databaseQuery = databaseQuery.Where("status = ?", string(*criteria.Filters.Status))
+	}
+	if criteria.Filters.NomeCliente != "" {
+		databaseQuery = databaseQuery.Where(
+			"nome_cliente LIKE ?",
+			"%"+sharedtext.NormalizeUpper(criteria.Filters.NomeCliente)+"%",
+		)
+	}
+	var total int64
+	if err := databaseQuery.Count(&total).Error; err != nil {
+		return sharedquery.Page[notafiscal.NotaFiscal]{}, err
+	}
+	if err := databaseQuery.Preload("Itens").Order("numero DESC").
+		Offset(criteria.Pagination.Offset()).Limit(criteria.Pagination.PageSize).
+		Find(&records).Error; err != nil {
+		return sharedquery.Page[notafiscal.NotaFiscal]{}, err
 	}
 	notas := make([]notafiscal.NotaFiscal, 0, len(records))
 	for index := range records {
 		nota, err := records[index].ToDomain()
 		if err != nil {
-			return nil, err
+			return sharedquery.Page[notafiscal.NotaFiscal]{}, err
 		}
 		notas = append(notas, *nota)
 	}
-	return notas, nil
+	return sharedquery.NewPage(notas, total, criteria.Pagination), nil
 }
 
 func (r *NotaFiscalRepository) IniciarFechamento(ctx context.Context, nota *notafiscal.NotaFiscal) error {
