@@ -1,0 +1,208 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API do contexto de Faturamento do Sistema de Emissao de Notas Fiscais.",
+        "title": "Faturamento Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/notas-fiscais": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notas Fiscais"
+                ],
+                "summary": "Lista notas fiscais",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notas Fiscais"
+                ],
+                "summary": "Cria uma nota fiscal",
+                "parameters": [
+                    {
+                        "description": "Dados da nota",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarNotaFiscalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notas-fiscais/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notas Fiscais"
+                ],
+                "summary": "Consulta uma nota fiscal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID da nota",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/notas-fiscais/{id}/fechamento": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notas Fiscais"
+                ],
+                "summary": "Inicia o fechamento de uma nota fiscal",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID da nota",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.CriarNotaFiscalItemRequest": {
+            "type": "object",
+            "required": [
+                "codigoProduto",
+                "quantidade"
+            ],
+            "properties": {
+                "codigoProduto": {
+                    "type": "string"
+                },
+                "quantidade": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.CriarNotaFiscalRequest": {
+            "type": "object",
+            "required": [
+                "enderecoCliente",
+                "itens",
+                "nomeCliente"
+            ],
+            "properties": {
+                "enderecoCliente": {
+                    "type": "string"
+                },
+                "itens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CriarNotaFiscalItemRequest"
+                    }
+                },
+                "nomeCliente": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ErrorData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/response.ErrorData"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "response.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        }
+    }
+}

@@ -6,7 +6,7 @@ import (
 )
 
 func TestNovoProdutoNormalizaDados(t *testing.T) {
-	produto, err := NewProduto("  sku-001  ", "  Teclado Mecânico  ", 10)
+	produto, err := NewProduto("  sku-001  ", "  Teclado Mecânico  ", 10, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -23,7 +23,7 @@ func TestNovoProdutoNormalizaDados(t *testing.T) {
 }
 
 func TestAtivarEInativarProduto(t *testing.T) {
-	produto, err := NewProduto("SKU", "Teclado", 1)
+	produto, err := NewProduto("SKU", "Teclado", 1, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestAtivarEInativarProduto(t *testing.T) {
 }
 
 func TestProdutoValidarBaixa(t *testing.T) {
-	produto, err := NewProduto("SKU", "Teclado", 2)
+	produto, err := NewProduto("SKU", "Teclado", 2, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestProdutoValidarBaixa(t *testing.T) {
 }
 
 func TestAtualizarProdutoPreservaInvariantes(t *testing.T) {
-	produto, err := NewProduto("SKU", "Teclado", 1)
+	produto, err := NewProduto("SKU", "Teclado", 1, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestNovoProdutoValidaInvariantes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := NewProduto(test.codigo, test.descricao, test.saldo)
+			_, err := NewProduto(test.codigo, test.descricao, test.saldo, 0)
 			if !errors.Is(err, test.expected) {
 				t.Fatalf("esperava %v, recebeu %v", test.expected, err)
 			}

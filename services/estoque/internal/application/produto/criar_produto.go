@@ -10,6 +10,7 @@ type CriarProdutoInput struct {
 	Codigo    string
 	Descricao string
 	Saldo     int
+	Valor     float64
 }
 
 type CriarProdutoUseCase struct {
@@ -21,7 +22,7 @@ func NewCriarProdutoUseCase(repository domain.Repository) *CriarProdutoUseCase {
 }
 
 func (useCase *CriarProdutoUseCase) Execute(ctx context.Context, input CriarProdutoInput) (*domain.Produto, error) {
-	produto, err := domain.NewProduto(input.Codigo, input.Descricao, input.Saldo)
+	produto, err := domain.NewProduto(input.Codigo, input.Descricao, input.Saldo, input.Valor)
 	if err != nil {
 		return nil, err
 	}

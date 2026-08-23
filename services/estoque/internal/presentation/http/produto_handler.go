@@ -84,7 +84,7 @@ func (handler *ProdutoHandler) listarHistorico(c *gin.Context) {
 }
 
 // atualizar godoc
-// @Summary Atualiza descricao e saldo de um produto
+// @Summary Atualiza descricao, valor e saldo de um produto
 // @Tags Produtos
 // @Accept json
 // @Produce json
@@ -107,11 +107,14 @@ func (handler *ProdutoHandler) atualizar(c *gin.Context) {
 		return
 	}
 
-	produto, err := handler.atualizarProduto.Execute(c.Request.Context(), application.AtualizarProdutoInput{
-		ID:        id,
-		Descricao: request.Descricao,
-		Saldo:     *request.Saldo,
-	})
+	produto, err := handler.atualizarProduto.Execute(
+		c.Request.Context(), application.AtualizarProdutoInput{
+			ID:        id,
+			Descricao: request.Descricao,
+			Saldo:     *request.Saldo,
+			Valor:     *request.Valor,
+		},
+	)
 	if err != nil {
 		domainerror.Respond(c, err)
 		return
@@ -196,6 +199,7 @@ func (handler *ProdutoHandler) criar(c *gin.Context) {
 		Codigo:    request.Codigo,
 		Descricao: request.Descricao,
 		Saldo:     request.Saldo,
+		Valor:     request.Valor,
 	})
 	if err != nil {
 		domainerror.Respond(c, err)

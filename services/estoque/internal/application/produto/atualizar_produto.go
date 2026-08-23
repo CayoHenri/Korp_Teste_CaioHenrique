@@ -11,6 +11,7 @@ type AtualizarProdutoInput struct {
 	ID        uuid.UUID
 	Descricao string
 	Saldo     int
+	Valor     float64
 }
 
 type AtualizarProdutoUseCase struct {
@@ -32,6 +33,11 @@ func (useCase *AtualizarProdutoUseCase) Execute(ctx context.Context, input Atual
 	}
 	if err := produto.AtualizarSaldo(input.Saldo); err != nil {
 		return nil, err
+	}
+	if input.Valor != 0 {
+		if err := produto.AtualizarValor(input.Valor); err != nil {
+			return nil, err
+		}
 	}
 	if err := useCase.repository.Atualizar(ctx, produto); err != nil {
 		return nil, err

@@ -8,9 +8,13 @@ definitions:
       saldo:
         example: 20
         type: integer
+      valor:
+        example: 15990
+        type: number
     required:
     - descricao
     - saldo
+    - valor
     type: object
   dto.CriarProdutoRequest:
     properties:
@@ -23,6 +27,11 @@ definitions:
       saldo:
         example: 10
         type: integer
+      valor:
+        example: 15990
+        type: number
+    required:
+    - valor
     type: object
   dto.MovimentacaoResponse:
     properties:
@@ -55,6 +64,8 @@ definitions:
         type: string
       saldo:
         type: integer
+      valor:
+        type: number
     type: object
   response.ErrorData:
     properties:

@@ -79,7 +79,7 @@ func TestBuscarProdutoPorCodigoUseCaseDelegaAoRepository(t *testing.T) {
 }
 
 func TestListarProdutosUseCaseRetornaProdutos(t *testing.T) {
-	produto, err := domain.NewProduto("SKU-001", "Teclado", 5)
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -92,7 +92,7 @@ func TestListarProdutosUseCaseRetornaProdutos(t *testing.T) {
 }
 
 func TestInativarEAtivarProdutoUseCases(t *testing.T) {
-	produto, err := domain.NewProduto("SKU-001", "Teclado", 5)
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestInativarEAtivarProdutoUseCases(t *testing.T) {
 }
 
 func TestAtualizarProdutoUseCaseAtualizaCamposPermitidos(t *testing.T) {
-	produto, err := domain.NewProduto("SKU-001", "Teclado", 5)
+	produto, err := domain.NewProduto("SKU-001", "Teclado", 5, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}

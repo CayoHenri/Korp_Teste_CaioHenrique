@@ -18,6 +18,7 @@ var (
 	ErrProdutoInativo       = errors.New("produto esta inativo")
 	ErrEstoqueInsuficiente  = errors.New("estoque insuficiente")
 	ErrQuantidadeInvalida   = errors.New("quantidade deve ser positiva")
+	ErrValorInvalido        = errors.New("valor unitario deve ser maior que zero")
 )
 
 type Produto struct {
@@ -25,14 +26,15 @@ type Produto struct {
 	codigo          string
 	descricao       string
 	saldo           int
+	valor           float64
 	ativo           bool
 	dataCadastro    time.Time
 	dataAtualizacao time.Time
 }
 
-func NewProduto(codigo, descricao string, saldo int) (*Produto, error) {
+func NewProduto(codigo, descricao string, saldo int, valor float64) (*Produto, error) {
 	agora := time.Now().UTC()
-	return NewProdutoWithState(uuid.New(), codigo, descricao, saldo, true, agora, agora)
+	return NewProdutoWithState(uuid.New(), codigo, descricao, saldo, valor, true, agora, agora)
 }
 
 func NewProdutoWithState(
@@ -40,6 +42,7 @@ func NewProdutoWithState(
 	codigo string,
 	descricao string,
 	saldo int,
+	valor float64,
 	ativo bool,
 	dataCadastro time.Time,
 	dataAtualizacao time.Time,
@@ -59,12 +62,16 @@ func NewProdutoWithState(
 	if saldo < 0 {
 		return nil, ErrSaldoInvalido
 	}
+	if valor < 0 {
+		return nil, ErrValorInvalido
+	}
 
 	return &Produto{
 		id:              id,
 		codigo:          codigo,
 		descricao:       descricao,
 		saldo:           saldo,
+		valor:           valor,
 		ativo:           ativo,
 		dataCadastro:    dataCadastro.UTC(),
 		dataAtualizacao: dataAtualizacao.UTC(),
@@ -85,6 +92,10 @@ func (produto *Produto) Descricao() string {
 
 func (produto *Produto) Saldo() int {
 	return produto.saldo
+}
+
+func (produto *Produto) Valor() float64 {
+	return produto.valor
 }
 
 func (produto *Produto) Ativo() bool {
@@ -122,6 +133,18 @@ func (produto *Produto) AtualizarSaldo(saldo int) error {
 	}
 
 	produto.saldo = saldo
+	produto.dataAtualizacao = time.Now().UTC()
+	return nil
+}
+
+func (produto *Produto) AtualizarValor(valor float64) error {
+	if valor <= 0 {
+		return ErrValorInvalido
+	}
+	if valor == produto.valor {
+		return nil
+	}
+	produto.valor = valor
 	produto.dataAtualizacao = time.Now().UTC()
 	return nil
 }

@@ -497,7 +497,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "descricao",
-                "saldo"
+                "saldo",
+                "valor"
             ],
             "properties": {
                 "descricao": {
@@ -507,11 +508,18 @@ const docTemplate = `{
                 "saldo": {
                     "type": "integer",
                     "example": 20
+                },
+                "valor": {
+                    "type": "number",
+                    "example": 15990
                 }
             }
         },
         "dto.CriarProdutoRequest": {
             "type": "object",
+            "required": [
+                "valor"
+            ],
             "properties": {
                 "codigo": {
                     "type": "string",
@@ -524,6 +532,10 @@ const docTemplate = `{
                 "saldo": {
                     "type": "integer",
                     "example": 10
+                },
+                "valor": {
+                    "type": "number",
+                    "example": 15990
                 }
             }
         },
@@ -573,6 +585,9 @@ const docTemplate = `{
                 },
                 "saldo": {
                     "type": "integer"
+                },
+                "valor": {
+                    "type": "number"
                 }
             }
         },

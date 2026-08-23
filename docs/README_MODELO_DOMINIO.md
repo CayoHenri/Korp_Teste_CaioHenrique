@@ -238,6 +238,10 @@ NotaFiscal
 +-- id
 +-- numero
 +-- status
++-- nomeCliente
++-- enderecoCliente
++-- quantidadeTotal
++-- valorTotal
 +-- itens
 +-- dataCadastro
 +-- dataAtualizacao
@@ -339,6 +343,8 @@ ItemNotaFiscal
 +-- codigoProduto
 +-- descricaoProduto
 +-- quantidade
++-- valor
++-- valorTotal
 ```
 
 O `produtoId` referencia logicamente o produto pertencente ao contexto de Estoque.

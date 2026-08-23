@@ -7,7 +7,7 @@ import (
 )
 
 func TestProdutoConversionRoundTrip(t *testing.T) {
-	produto, err := domain.NewProduto("sku-001", "teclado", 5)
+	produto, err := domain.NewProduto("sku-001", "teclado", 5, 0)
 	if err != nil {
 		t.Fatalf("nao esperava erro: %v", err)
 	}

@@ -141,6 +141,9 @@ O `faturamento-service` é responsável pelo contexto de notas fiscais.
 ### Responsabilidades
 
 - Criar notas fiscais;
+- Validar no Estoque produtos informados pelo código e aceitar somente produtos ativos;
+- Armazenar snapshot de descrição e valor unitário nos itens;
+- Calcular quantidade total e valor total da nota;
 - Manter numeração sequencial;
 - Adicionar produtos e quantidades;
 - Consultar notas;

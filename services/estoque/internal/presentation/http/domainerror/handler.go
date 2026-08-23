@@ -22,6 +22,7 @@ var mappings = []struct {
 	{domain.ErrCodigoObrigatorio, Mapping{http.StatusBadRequest, "CODIGO_OBRIGATORIO", domain.ErrCodigoObrigatorio.Error()}},
 	{domain.ErrDescricaoObrigatoria, Mapping{http.StatusBadRequest, "DESCRICAO_OBRIGATORIA", domain.ErrDescricaoObrigatoria.Error()}},
 	{domain.ErrSaldoInvalido, Mapping{http.StatusBadRequest, "SALDO_INVALIDO", domain.ErrSaldoInvalido.Error()}},
+	{domain.ErrValorInvalido, Mapping{http.StatusBadRequest, "VALOR_INVALIDO", domain.ErrValorInvalido.Error()}},
 	{domain.ErrCodigoJaExistente, Mapping{http.StatusConflict, "CODIGO_PRODUTO_JA_EXISTENTE", domain.ErrCodigoJaExistente.Error()}},
 	{domain.ErrProdutoNaoEncontrado, Mapping{http.StatusNotFound, "PRODUTO_NAO_ENCONTRADO", domain.ErrProdutoNaoEncontrado.Error()}},
 }

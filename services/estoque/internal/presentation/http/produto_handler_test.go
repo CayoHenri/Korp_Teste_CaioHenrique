@@ -60,7 +60,7 @@ func TestCriarProdutoReturnsCreated(t *testing.T) {
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/produtos",
-		bytes.NewBufferString(`{"codigo":"SKU-001","descricao":"Teclado","saldo":5}`),
+		bytes.NewBufferString(`{"codigo":"SKU-001","descricao":"Teclado","saldo":5,"valor":159.90}`),
 	)
 	request.Header.Set("Content-Type", "application/json")
 

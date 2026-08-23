@@ -9,8 +9,8 @@ microsserviços Go, PostgreSQL e RabbitMQ.
 | Componente | Estado |
 |---|---|
 | PostgreSQL e RabbitMQ | Implementados no Docker Compose |
-| Estoque Service | Cadastro, listagem e consulta de produtos implementados |
-| Faturamento Service | Planejado, ainda não implementado |
+| Estoque Service | Produtos, movimentações e baixa transacional implementados |
+| Faturamento Service | Notas, itens e início de fechamento com Outbox implementados |
 | Frontend Angular | Planejado, ainda não implementado |
 
 ## Decisões gerais
@@ -165,6 +165,7 @@ Nesta etapa estão implementados:
 - Dados persistidos são reconstituídos por `NewProdutoWithState`, que reaplica as invariantes.
 - Produtos novos iniciam ativos e não possuem operação de exclusão; o ciclo de vida usa `Ativar` e `Inativar`.
 - Alterações manuais de saldo geram movimentações de ajuste do tipo `ENTRADA` ou `SAIDA`.
+- Valores monetários são armazenados como ponto flutuante; o Produto mantém `valor`.
 - Baixas de nota fiscal usam atualização atômica, transação única e idempotência por `eventId`.
 - Repositories usam nomes de negócio, como `ProdutoRepository`, sem prefixo da tecnologia de persistência.
 - O pacote `internal/dependency` concentra a composição de repositories, use cases, handlers e router.
@@ -326,7 +327,7 @@ Exemplo de cadastro, válido em Bash, Zsh e Git Bash:
 ```bash
 curl -X POST http://localhost:8081/produtos \
   -H "Content-Type: application/json" \
-  -d '{"codigo":"SKU-001","descricao":"Teclado mecanico","saldo":10}'
+  -d '{"codigo":"SKU-001","descricao":"Teclado mecanico","saldo":10,"valor":159.90}'
 ```
 
 PowerShell:
@@ -336,6 +337,7 @@ $body = @{
     codigo = "SKU-001"
     descricao = "Teclado mecanico"
     saldo = 10
+    valor = 159.90
 } | ConvertTo-Json
 
 Invoke-RestMethod `
@@ -356,24 +358,114 @@ Os arquivos gerados são `docs/docs.go`, `docs/swagger.json` e
 
 ## Microsserviço de Faturamento
 
-Localização planejada: `services/faturamento`.
+Localização: `services/faturamento`.
 
 ### Responsabilidade
 
-Será responsável por notas fiscais, itens, numeração sequencial, estados
-`ABERTA`, `PROCESSANDO` e `FECHADA`, Transactional Outbox e processamento dos
-resultados publicados pelo Estoque.
+É responsável por notas fiscais, itens, numeração sequencial e pelo ciclo de
+fechamento. Nesta etapa, o serviço cria, lista e consulta notas e inicia o
+fechamento com uma Transactional Outbox.
 
-### Decisões previstas
+### Implementado
 
 - módulo Go independente;
 - Gin, GORM, Swagger e `golang-migrate`, seguindo o padrão do Estoque;
 - propriedade exclusiva do schema `faturamento`;
-- publicação de solicitações de baixa pelo RabbitMQ;
-- confirmação ou reabertura da nota a partir do resultado do Estoque.
+- domínio encapsulado para `NotaFiscal` e `ItemNotaFiscal`;
+- um use case por operação;
+- numeração sequencial por sequence do PostgreSQL;
+- controle de migrations isolado em `faturamento_schema_migrations`;
+- criação de notas no estado `ABERTA` com snapshot dos produtos;
+- validação síncrona do produto pelo código na API do Estoque;
+- inclusão permitida somente para produtos ativos;
+- snapshot do ID, código, descrição e valor unitário em cada item;
+- nome e endereço do cliente no cabeçalho;
+- totalizadores de quantidade e valor calculados pelo domínio;
+- listagem e consulta de notas;
+- transição `ABERTA` para `PROCESSANDO`;
+- criação do evento Outbox na mesma transação da mudança de estado;
+- DTOs, respostas HTTP e tradução de erros separados;
+- injeção de dependências centralizada e encerramento gracioso.
 
-O serviço ainda não foi criado. Portanto, ainda não existem comandos de build,
-migration ou execução para ele. Esta seção será atualizada junto da implementação.
+### Variáveis obrigatórias
+
+```text
+FATURAMENTO_HTTP_PORT
+FATURAMENTO_DATABASE_URL
+FATURAMENTO_ESTOQUE_BASE_URL
+```
+
+### Dependências e validação
+
+PowerShell, Bash, Zsh, Git Bash ou Prompt de Comando:
+
+```console
+cd services/faturamento
+go mod download
+go test ./...
+go vet ./...
+```
+
+Com PostgreSQL ativo e migrations aplicadas:
+
+```console
+go test -tags=integration ./internal/infrastructure/repository -count=1 -v
+```
+
+### Migrations e execução
+
+Execute dentro de `services/faturamento`:
+
+```console
+go run ./cmd/migrate up
+go run ./cmd/migrate version
+go run ./cmd/api
+```
+
+Os comandos adicionais seguem o mesmo padrão do Estoque:
+
+```console
+go run ./cmd/migrate down
+go run ./cmd/migrate force 2
+```
+
+API local:
+
+| Recurso | Endereço |
+|---|---|
+| Health check | <http://localhost:8082/health> |
+| Swagger UI | <http://localhost:8082/swagger/index.html> |
+
+Endpoints implementados:
+
+| Método | Rota | Resultado |
+|---|---|---|
+| `POST` | `/notas-fiscais` | Cria uma nota aberta com seus itens |
+| `GET` | `/notas-fiscais` | Lista as notas por número decrescente |
+| `GET` | `/notas-fiscais/{id}` | Consulta uma nota e seus itens |
+| `POST` | `/notas-fiscais/{id}/fechamento` | Muda para `PROCESSANDO` e grava a Outbox |
+
+Body mínimo para criar uma nota:
+
+```json
+{
+  "nomeCliente": "Maria da Silva",
+  "enderecoCliente": "Rua das Flores, 100 - Curitiba/PR",
+  "itens": [
+    {
+      "codigoProduto": "SKU-001",
+      "quantidade": 2
+    }
+  ]
+}
+```
+
+O Faturamento consulta o Estoque pelo código. O cliente da API não envia ID,
+descrição nem valor: esses dados são copiados do produto ativo e preservados
+como snapshot no item da nota.
+
+A publicação da Outbox no RabbitMQ e o consumo do resultado do Estoque são a
+próxima etapa da integração assíncrona.
 
 ## Frontend Angular
 
@@ -391,6 +483,12 @@ Korp_Teste_CaioHenrique/
 ├── infrastructure/
 │   └── postgres/init/
 ├── services/
+│   ├── faturamento/
+│   │   ├── cmd/api/
+│   │   ├── cmd/migrate/
+│   │   ├── docs/
+│   │   ├── internal/
+│   │   └── migrations/
 │   └── estoque/
 │       ├── cmd/api/
 │       ├── cmd/migrate/

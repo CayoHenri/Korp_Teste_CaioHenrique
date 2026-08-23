@@ -89,6 +89,7 @@ func persistirCadastro(transaction *gorm.DB, produto *domain.Produto) error {
 		Updates(map[string]any{
 			"descricao":        produto.Descricao(),
 			"saldo":            produto.Saldo(),
+			"valor":            produto.Valor(),
 			"ativo":            produto.Ativo(),
 			"data_atualizacao": produto.DataAtualizacao(),
 		}).Error

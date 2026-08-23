@@ -1,0 +1,136 @@
+basePath: /
+definitions:
+  dto.CriarNotaFiscalItemRequest:
+    properties:
+      codigoProduto:
+        type: string
+      quantidade:
+        type: integer
+    required:
+    - codigoProduto
+    - quantidade
+    type: object
+  dto.CriarNotaFiscalRequest:
+    properties:
+      enderecoCliente:
+        type: string
+      itens:
+        items:
+          $ref: '#/definitions/dto.CriarNotaFiscalItemRequest'
+        type: array
+      nomeCliente:
+        type: string
+    required:
+    - enderecoCliente
+    - itens
+    - nomeCliente
+    type: object
+  response.ErrorData:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/response.ErrorData'
+      success:
+        example: false
+        type: boolean
+    type: object
+  response.SuccessResponse:
+    properties:
+      data: {}
+      success:
+        example: true
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: API do contexto de Faturamento do Sistema de Emissao de Notas Fiscais.
+  title: Faturamento Service API
+  version: "1.0"
+paths:
+  /notas-fiscais:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+      summary: Lista notas fiscais
+      tags:
+      - Notas Fiscais
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dados da nota
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CriarNotaFiscalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Cria uma nota fiscal
+      tags:
+      - Notas Fiscais
+  /notas-fiscais/{id}:
+    get:
+      parameters:
+      - description: UUID da nota
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Consulta uma nota fiscal
+      tags:
+      - Notas Fiscais
+  /notas-fiscais/{id}/fechamento:
+    post:
+      parameters:
+      - description: UUID da nota
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Inicia o fechamento de uma nota fiscal
+      tags:
+      - Notas Fiscais
+swagger: "2.0"
