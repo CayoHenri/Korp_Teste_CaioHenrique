@@ -146,6 +146,9 @@ Nesta etapa estão implementados:
 - ativação e inativação sem exclusão física;
 - movimentações auditáveis de entrada e saída;
 - baixa transacional, concorrente e idempotente preparada para mensageria;
+- consumo de `estoque.baixa.solicitada` pelo RabbitMQ;
+- publicação confirmada de `estoque.baixa.realizada` ou `estoque.baixa.rejeitada`;
+- confirmação manual, requeue de falhas técnicas e DLQ para mensagens inválidas;
 - encerramento gracioso da API.
 
 ### Decisões técnicas
@@ -178,6 +181,7 @@ Nesta etapa estão implementados:
 ```text
 ESTOQUE_HTTP_PORT
 ESTOQUE_DATABASE_URL
+ESTOQUE_RABBITMQ_URL
 ```
 
 Opcionalmente, as variáveis podem ser sobrescritas apenas na sessão atual.
@@ -515,8 +519,13 @@ Ao iniciar a API, o worker consulta periodicamente os registros com
 evento como publicado depois da confirmação do RabbitMQ. Em caso de falha, ele
 permanece pendente para uma nova tentativa.
 
-O consumo da solicitação pelo Estoque e a publicação dos eventos de sucesso ou
-rejeição são a próxima etapa da integração assíncrona.
+O Estoque consome a solicitação com confirmação manual, executa a baixa
+transacional e publica `estoque.baixa.realizada` ou `estoque.baixa.rejeitada`.
+Mensagens com JSON inválido são preservadas em
+`estoque.baixa.solicitada.dlq`; falhas técnicas são recolocadas na fila.
+
+O consumo desses resultados pelo Faturamento, fechando ou reabrindo a nota, é a
+próxima etapa da integração assíncrona.
 
 ## Frontend Angular
 

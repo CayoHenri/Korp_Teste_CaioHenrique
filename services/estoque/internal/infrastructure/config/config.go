@@ -12,6 +12,7 @@ import (
 type Config struct {
 	HTTPPort    string
 	DatabaseURL string
+	RabbitMQURL string
 }
 
 func Load() (Config, error) {
@@ -26,10 +27,15 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	rabbitMQURL, err := requiredEnv("ESTOQUE_RABBITMQ_URL")
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		HTTPPort:    httpPort,
 		DatabaseURL: databaseURL,
+		RabbitMQURL: rabbitMQURL,
 	}, nil
 }
 
