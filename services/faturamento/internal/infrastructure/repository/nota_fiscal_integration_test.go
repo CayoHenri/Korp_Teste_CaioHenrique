@@ -139,17 +139,21 @@ func TestIntegrationCriarEIniciarFechamento(t *testing.T) {
 		uuid.New(),
 		eventID,
 		nota.ID(),
-		func(nota *domain.NotaFiscal) error { return nota.ConfirmarFechamento() },
+		func(nota *domain.NotaFiscal) error {
+			return nota.ReabrirAposRejeicao("ESTOQUE_INSUFICIENTE")
+		},
 	)
 	if err != nil || !processed {
-		t.Fatalf("resultado deveria fechar a nota: processed=%v err=%v", processed, err)
+		t.Fatalf("resultado deveria reabrir a nota: processed=%v err=%v", processed, err)
 	}
 	processed, err = repository.ProcessarResultadoBaixa(
 		context.Background(),
 		uuid.New(),
 		eventID,
 		nota.ID(),
-		func(nota *domain.NotaFiscal) error { return nota.ConfirmarFechamento() },
+		func(nota *domain.NotaFiscal) error {
+			return nota.ReabrirAposRejeicao("ESTOQUE_INSUFICIENTE")
+		},
 	)
 	if err != nil || processed {
 		t.Fatalf("resultado duplicado deveria ser ignorado: processed=%v err=%v", processed, err)
@@ -158,7 +162,25 @@ func TestIntegrationCriarEIniciarFechamento(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if finalizada.Status() != domain.StatusFechada {
-		t.Fatalf("nota deveria estar fechada: status=%v", finalizada.Status())
+	if finalizada.Status() != domain.StatusAberta ||
+		finalizada.MotivoRejeicao() != "ESTOQUE_INSUFICIENTE" {
+		t.Fatalf(
+			"nota deveria estar aberta com motivo: status=%v motivo=%s",
+			finalizada.Status(),
+			finalizada.MotivoRejeicao(),
+		)
+	}
+	if err := finalizada.IniciarFechamento(); err != nil {
+		t.Fatal(err)
+	}
+	if err := repository.IniciarFechamento(context.Background(), finalizada); err != nil {
+		t.Fatal(err)
+	}
+	reprocessada, err := repository.BuscarPorID(context.Background(), nota.ID())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reprocessada.MotivoRejeicao() != "" {
+		t.Fatal("novo fechamento deveria limpar o motivo persistido")
 	}
 }

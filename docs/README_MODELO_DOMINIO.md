@@ -757,6 +757,7 @@ processed_at TIMESTAMP NOT NULL
 id UUID PK
 numero BIGINT UNIQUE NOT NULL
 status faturamento.nota_fiscal_status NOT NULL
+motivo_rejeicao VARCHAR NULL
 data_cadastro TIMESTAMP NOT NULL
 data_atualizacao TIMESTAMP NOT NULL
 data_fechamento TIMESTAMP NULL

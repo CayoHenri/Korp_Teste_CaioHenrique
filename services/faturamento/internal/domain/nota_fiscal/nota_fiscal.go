@@ -26,6 +26,7 @@ var (
 	ErrNotaNaoEstaProcessando     = errors.New("nota fiscal nao esta processando")
 	ErrNomeClienteObrigatorio     = errors.New("nome do cliente e obrigatorio")
 	ErrEnderecoClienteObrigatorio = errors.New("endereco do cliente e obrigatorio")
+	ErrMotivoRejeicaoObrigatorio  = errors.New("motivo da rejeicao e obrigatorio")
 )
 
 type NotaFiscal struct {
@@ -34,6 +35,7 @@ type NotaFiscal struct {
 	status          Status
 	nomeCliente     string
 	enderecoCliente string
+	motivoRejeicao  string
 	itens           []ItemNotaFiscal
 	dataCadastro    time.Time
 	dataAtualizacao time.Time
@@ -53,6 +55,7 @@ func NewNotaFiscal(
 		nomeCliente,
 		enderecoCliente,
 		itens,
+		"",
 		agora,
 		agora,
 		nil,
@@ -65,6 +68,7 @@ func NewNotaFiscalWithState(
 	status Status,
 	nomeCliente, enderecoCliente string,
 	itens []ItemNotaFiscal,
+	motivoRejeicao string,
 	cadastro, atualizacao time.Time,
 	fechamento *time.Time,
 ) (*NotaFiscal, error) {
@@ -79,6 +83,7 @@ func NewNotaFiscalWithState(
 	}
 	nomeCliente = sharedtext.NormalizeUpper(nomeCliente)
 	enderecoCliente = sharedtext.NormalizeUpper(enderecoCliente)
+	motivoRejeicao = sharedtext.NormalizeUpper(motivoRejeicao)
 	if nomeCliente == "" {
 		return nil, ErrNomeClienteObrigatorio
 	}
@@ -91,6 +96,7 @@ func NewNotaFiscalWithState(
 		status:          status,
 		nomeCliente:     nomeCliente,
 		enderecoCliente: enderecoCliente,
+		motivoRejeicao:  motivoRejeicao,
 		itens:           append([]ItemNotaFiscal(nil), itens...),
 		dataCadastro:    cadastro.UTC(),
 		dataAtualizacao: atualizacao.UTC(),
@@ -120,6 +126,10 @@ func (nota *NotaFiscal) NomeCliente() string {
 
 func (nota *NotaFiscal) EnderecoCliente() string {
 	return nota.enderecoCliente
+}
+
+func (nota *NotaFiscal) MotivoRejeicao() string {
+	return nota.motivoRejeicao
 }
 
 func (nota *NotaFiscal) QuantidadeTotal() int {
@@ -194,6 +204,7 @@ func (nota *NotaFiscal) IniciarFechamento() error {
 		return ErrNotaSemItens
 	}
 	nota.status = StatusProcessando
+	nota.motivoRejeicao = ""
 	nota.dataAtualizacao = time.Now().UTC()
 	return nil
 }
@@ -204,16 +215,22 @@ func (nota *NotaFiscal) ConfirmarFechamento() error {
 	}
 	agora := time.Now().UTC()
 	nota.status = StatusFechada
+	nota.motivoRejeicao = ""
 	nota.dataAtualizacao = agora
 	nota.dataFechamento = &agora
 	return nil
 }
 
-func (nota *NotaFiscal) ReabrirAposRejeicao() error {
+func (nota *NotaFiscal) ReabrirAposRejeicao(motivo string) error {
 	if nota.status != StatusProcessando {
 		return ErrNotaNaoEstaProcessando
 	}
+	motivo = sharedtext.NormalizeUpper(motivo)
+	if motivo == "" {
+		return ErrMotivoRejeicaoObrigatorio
+	}
 	nota.status = StatusAberta
+	nota.motivoRejeicao = motivo
 	nota.dataAtualizacao = time.Now().UTC()
 	return nil
 }

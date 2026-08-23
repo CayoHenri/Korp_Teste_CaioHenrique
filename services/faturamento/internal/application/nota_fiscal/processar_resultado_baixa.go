@@ -55,7 +55,7 @@ func (useCase *ProcessarResultadoBaixaUseCase) Execute(
 		}
 	case EventTypeBaixaRejeitada:
 		transition = func(nota *domain.NotaFiscal) error {
-			return nota.ReabrirAposRejeicao()
+			return nota.ReabrirAposRejeicao(input.Motivo)
 		}
 	default:
 		return false, ErrTipoResultadoInvalido

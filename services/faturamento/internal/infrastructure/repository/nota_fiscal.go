@@ -64,6 +64,7 @@ func (r *NotaFiscalRepository) ProcessarResultadoBaixa(
 				"status":           nota.Status(),
 				"data_atualizacao": nota.DataAtualizacao(),
 				"data_fechamento":  nota.DataFechamento(),
+				"motivo_rejeicao":  optionalStringValue(nota.MotivoRejeicao()),
 			}).Error; err != nil {
 			return err
 		}
@@ -71,6 +72,13 @@ func (r *NotaFiscalRepository) ProcessarResultadoBaixa(
 		return nil
 	})
 	return processed, err
+}
+
+func optionalStringValue(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
 }
 
 func (r *NotaFiscalRepository) ProximoNumero(ctx context.Context) (int64, error) {
@@ -179,6 +187,7 @@ func (r *NotaFiscalRepository) IniciarFechamento(ctx context.Context, nota *nota
 			Updates(map[string]any{
 				"status":           nota.Status(),
 				"data_atualizacao": nota.DataAtualizacao(),
+				"motivo_rejeicao":  nil,
 			})
 		if result.Error != nil {
 			return result.Error

@@ -12,6 +12,7 @@ type NotaFiscal struct {
 	Status          string `gorm:"type:faturamento.nota_fiscal_status"`
 	NomeCliente     string
 	EnderecoCliente string
+	MotivoRejeicao  *string
 	Itens           []ItemNotaFiscal `gorm:"foreignKey:NotaFiscalID"`
 	DataCadastro    time.Time
 	DataAtualizacao time.Time
@@ -34,6 +35,7 @@ func NewNotaFiscalModel(nota *notafiscal.NotaFiscal) NotaFiscal {
 		Status:          string(nota.Status()),
 		NomeCliente:     nota.NomeCliente(),
 		EnderecoCliente: nota.EnderecoCliente(),
+		MotivoRejeicao:  optionalString(nota.MotivoRejeicao()),
 		Itens:           models,
 		DataCadastro:    nota.DataCadastro(),
 		DataAtualizacao: nota.DataAtualizacao(),
@@ -57,10 +59,25 @@ func (model *NotaFiscal) ToDomain() (*notafiscal.NotaFiscal, error) {
 		model.NomeCliente,
 		model.EnderecoCliente,
 		itens,
+		valueOrEmpty(model.MotivoRejeicao),
 		model.DataCadastro,
 		model.DataAtualizacao,
 		model.DataFechamento,
 	)
+}
+
+func optionalString(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func valueOrEmpty(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 type ItemNotaFiscal struct {

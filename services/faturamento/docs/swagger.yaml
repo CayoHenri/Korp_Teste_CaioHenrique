@@ -92,6 +92,9 @@ definitions:
         items:
           $ref: '#/definitions/dto.ItemNotaFiscalResponse'
         type: array
+      motivoRejeicao:
+        example: ESTOQUE_INSUFICIENTE
+        type: string
       nomeCliente:
         example: MARIA DA SILVA
         type: string

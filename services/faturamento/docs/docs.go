@@ -425,6 +425,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/dto.ItemNotaFiscalResponse"
                     }
                 },
+                "motivoRejeicao": {
+                    "type": "string",
+                    "example": "ESTOQUE_INSUFICIENTE"
+                },
                 "nomeCliente": {
                     "type": "string",
                     "example": "MARIA DA SILVA"

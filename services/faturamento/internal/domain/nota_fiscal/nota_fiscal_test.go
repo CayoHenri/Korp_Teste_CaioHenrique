@@ -114,10 +114,19 @@ func TestFechamentoExigeItens(t *testing.T) {
 func TestReabrirAposRejeicao(t *testing.T) {
 	nota, _ := NewNotaFiscal(1, "Cliente", "Rua A", []ItemNotaFiscal{itemValido(t)})
 	_ = nota.IniciarFechamento()
-	if err := nota.ReabrirAposRejeicao(); err != nil {
+	if err := nota.ReabrirAposRejeicao(" estoque insuficiente "); err != nil {
 		t.Fatal(err)
 	}
 	if nota.Status() != StatusAberta {
 		t.Fatalf("esperava ABERTA, recebeu %s", nota.Status())
+	}
+	if nota.MotivoRejeicao() != "ESTOQUE INSUFICIENTE" {
+		t.Fatalf("motivo inesperado: %s", nota.MotivoRejeicao())
+	}
+	if err := nota.IniciarFechamento(); err != nil {
+		t.Fatal(err)
+	}
+	if nota.MotivoRejeicao() != "" {
+		t.Fatal("novo fechamento deveria limpar o motivo anterior")
 	}
 }

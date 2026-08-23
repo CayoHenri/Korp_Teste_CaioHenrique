@@ -48,6 +48,7 @@ type NotaFiscalResponse struct {
 	Status          string                   `json:"status" enums:"ABERTA,PROCESSANDO,FECHADA" example:"ABERTA"`
 	NomeCliente     string                   `json:"nomeCliente" example:"MARIA DA SILVA"`
 	EnderecoCliente string                   `json:"enderecoCliente" example:"RUA DAS FLORES, 100 - CURITIBA/PR"`
+	MotivoRejeicao  string                   `json:"motivoRejeicao,omitempty" example:"ESTOQUE_INSUFICIENTE"`
 	QuantidadeTotal int                      `json:"quantidadeTotal" example:"2"`
 	ValorTotal      float64                  `json:"valorTotal" example:"319.80"`
 	Itens           []ItemNotaFiscalResponse `json:"itens"`
@@ -72,6 +73,7 @@ func NewNotaFiscalResponse(nota *domain.NotaFiscal) NotaFiscalResponse {
 		Status:          string(nota.Status()),
 		NomeCliente:     nota.NomeCliente(),
 		EnderecoCliente: nota.EnderecoCliente(),
+		MotivoRejeicao:  nota.MotivoRejeicao(),
 		QuantidadeTotal: nota.QuantidadeTotal(),
 		ValorTotal:      nota.ValorTotal(),
 		Itens:           make([]ItemNotaFiscalResponse, 0, len(itens)),

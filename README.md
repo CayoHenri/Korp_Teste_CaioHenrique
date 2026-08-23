@@ -405,6 +405,7 @@ fechamento com uma Transactional Outbox.
 - confirmação do broker antes de marcar `published_at`, com retry na próxima execução;
 - consumo idempotente de `estoque.baixa.realizada` e `estoque.baixa.rejeitada`;
 - fechamento da nota no sucesso e reabertura na rejeição;
+- persistência e exposição do motivo da última rejeição;
 - DLQ `faturamento.baixa.resultado.dlq` para resultados inválidos ou terminais;
 - DTOs, respostas HTTP e tradução de erros separados;
 - injeção de dependências centralizada e encerramento gracioso.
@@ -532,6 +533,10 @@ passa de `PROCESSANDO` para `FECHADA` e recebe `dataFechamento`; na rejeição,
 volta para `ABERTA`. A tabela `faturamento.mensagens_processadas` usa o
 `correlationId` da solicitação como chave idempotente, impedindo que respostas
 republicadas executem a transição mais de uma vez.
+
+Quando uma baixa é rejeitada, `motivoRejeicao` é armazenado na nota e retornado
+pelas consultas HTTP. O motivo permanece disponível enquanto a nota estiver
+aberta e é limpo quando um novo fechamento é iniciado.
 
 ## Frontend Angular
 

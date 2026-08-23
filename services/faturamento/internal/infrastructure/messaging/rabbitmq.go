@@ -32,6 +32,13 @@ type RabbitMQPublisher struct {
 	mutex           sync.Mutex
 }
 
+type resultadoBaixaMessage struct {
+	EventID       uuid.UUID `json:"eventId"`
+	CorrelationID uuid.UUID `json:"correlationId"`
+	NotaFiscalID  uuid.UUID `json:"notaFiscalId"`
+	Motivo        string    `json:"motivo,omitempty"`
+}
+
 func NewRabbitMQPublisher(url string) (*RabbitMQPublisher, error) {
 	connection, err := amqp.Dial(url)
 	if err != nil {
@@ -117,13 +124,6 @@ func NewRabbitMQPublisher(url string) (*RabbitMQPublisher, error) {
 	}, nil
 }
 
-type resultadoBaixaMessage struct {
-	EventID       uuid.UUID `json:"eventId"`
-	CorrelationID uuid.UUID `json:"correlationId"`
-	NotaFiscalID  uuid.UUID `json:"notaFiscalId"`
-	Motivo        string    `json:"motivo,omitempty"`
-}
-
 func (publisher *RabbitMQPublisher) ConsumirResultados(
 	ctx context.Context,
 	useCase *notafiscalApplication.ProcessarResultadoBaixaUseCase,
@@ -169,7 +169,8 @@ func (publisher *RabbitMQPublisher) ConsumirResultados(
 func erroResultadoTerminal(err error) bool {
 	return errors.Is(err, notafiscalApplication.ErrTipoResultadoInvalido) ||
 		errors.Is(err, notafiscal.ErrNotaNaoEncontrada) ||
-		errors.Is(err, notafiscal.ErrNotaNaoEstaProcessando)
+		errors.Is(err, notafiscal.ErrNotaNaoEstaProcessando) ||
+		errors.Is(err, notafiscal.ErrMotivoRejeicaoObrigatorio)
 }
 
 func (publisher *RabbitMQPublisher) enviarResultadoParaDLQ(

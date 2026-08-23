@@ -63,9 +63,13 @@ func TestProcessarResultadoBaixaReabreNotaNaRejeicao(t *testing.T) {
 			CorrelationID: uuid.New(),
 			NotaFiscalID:  nota.ID(),
 			Type:          EventTypeBaixaRejeitada,
+			Motivo:        "ESTOQUE_INSUFICIENTE",
 		},
 	)
 	if err != nil || nota.Status() != domain.StatusAberta {
 		t.Fatalf("resultado inesperado: status=%s err=%v", nota.Status(), err)
+	}
+	if nota.MotivoRejeicao() != "ESTOQUE_INSUFICIENTE" {
+		t.Fatalf("motivo inesperado: %s", nota.MotivoRejeicao())
 	}
 }
