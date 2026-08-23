@@ -538,6 +538,41 @@ Quando uma baixa é rejeitada, `motivoRejeicao` é armazenado na nota e retornad
 pelas consultas HTTP. O motivo permanece disponível enquanto a nota estiver
 aberta e é limpo quando um novo fechamento é iniciado.
 
+## Testes end-to-end
+
+Localização: `tests/e2e`.
+
+Os testes exercitam as APIs como clientes externos e validam o fluxo completo
+por HTTP, PostgreSQL e RabbitMQ. Antes de executar, mantenha a infraestrutura e
+as versões atuais das duas APIs em execução nas URLs configuradas no `.env`.
+
+PowerShell:
+
+```powershell
+Set-Location tests/e2e
+go test -count=1 -v ./...
+```
+
+Bash, Zsh, Git Bash ou Prompt de Comando:
+
+```console
+cd tests/e2e
+go test -count=1 -v ./...
+```
+
+Variáveis obrigatórias:
+
+```text
+E2E_ESTOQUE_URL
+E2E_FATURAMENTO_URL
+E2E_TIMEOUT
+```
+
+Os cenários criam dados com códigos únicos e verificam:
+
+- saldo suficiente: nota `FECHADA`, saldo reduzido e movimentação `SAIDA`;
+- saldo insuficiente: nota `ABERTA`, motivo `ESTOQUE_INSUFICIENTE` e saldo preservado.
+
 ## Frontend Angular
 
 Localização planejada: `frontend/web`.
