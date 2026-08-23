@@ -381,6 +381,7 @@ fechamento com uma Transactional Outbox.
 - módulo Go independente;
 - Gin, GORM, Swagger e `golang-migrate`, seguindo o padrão do Estoque;
 - propriedade exclusiva do schema `faturamento`;
+- status da nota persistido no enum PostgreSQL `faturamento.nota_fiscal_status`;
 - domínio encapsulado para `NotaFiscal` e `ItemNotaFiscal`;
 - um use case por operação;
 - numeração sequencial por sequence do PostgreSQL;

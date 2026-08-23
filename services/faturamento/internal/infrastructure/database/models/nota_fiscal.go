@@ -9,7 +9,7 @@ import (
 type NotaFiscal struct {
 	ID              uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Numero          int64
-	Status          string
+	Status          string `gorm:"type:faturamento.nota_fiscal_status"`
 	NomeCliente     string
 	EnderecoCliente string
 	Itens           []ItemNotaFiscal `gorm:"foreignKey:NotaFiscalID"`
