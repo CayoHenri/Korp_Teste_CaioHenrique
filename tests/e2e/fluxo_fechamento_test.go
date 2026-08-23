@@ -19,6 +19,8 @@ import (
 type testConfig struct {
 	estoqueURL     string
 	faturamentoURL string
+	rabbitMQURL    string
+	databaseURL    string
 	timeout        time.Duration
 }
 
@@ -34,9 +36,14 @@ type produtoResponse struct {
 }
 
 type notaFiscalResponse struct {
-	ID             string `json:"id"`
-	Status         string `json:"status"`
-	MotivoRejeicao string `json:"motivoRejeicao"`
+	ID             string                   `json:"id"`
+	Status         string                   `json:"status"`
+	MotivoRejeicao string                   `json:"motivoRejeicao"`
+	Itens          []notaFiscalItemResponse `json:"itens"`
+}
+
+type notaFiscalItemResponse struct {
+	ProdutoID string `json:"produtoId"`
 }
 
 type movimentacaoResponse struct {
@@ -98,6 +105,8 @@ func loadConfig(t *testing.T) testConfig {
 	loadRootEnvironment(t)
 	estoqueURL := requiredEnvironment(t, "E2E_ESTOQUE_URL")
 	faturamentoURL := requiredEnvironment(t, "E2E_FATURAMENTO_URL")
+	rabbitMQURL := requiredEnvironment(t, "E2E_RABBITMQ_URL")
+	databaseURL := requiredEnvironment(t, "E2E_DATABASE_URL")
 	timeoutValue := requiredEnvironment(t, "E2E_TIMEOUT")
 	timeout, err := time.ParseDuration(timeoutValue)
 	if err != nil || timeout <= 0 {
@@ -106,6 +115,8 @@ func loadConfig(t *testing.T) testConfig {
 	return testConfig{
 		estoqueURL:     strings.TrimRight(estoqueURL, "/"),
 		faturamentoURL: strings.TrimRight(faturamentoURL, "/"),
+		rabbitMQURL:    rabbitMQURL,
+		databaseURL:    databaseURL,
 		timeout:        timeout,
 	}
 }

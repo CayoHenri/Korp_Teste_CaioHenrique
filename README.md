@@ -565,6 +565,8 @@ Variáveis obrigatórias:
 ```text
 E2E_ESTOQUE_URL
 E2E_FATURAMENTO_URL
+E2E_RABBITMQ_URL
+E2E_DATABASE_URL
 E2E_TIMEOUT
 ```
 
@@ -572,6 +574,13 @@ Os cenários criam dados com códigos únicos e verificam:
 
 - saldo suficiente: nota `FECHADA`, saldo reduzido e movimentação `SAIDA`;
 - saldo insuficiente: nota `ABERTA`, motivo `ESTOQUE_INSUFICIENTE` e saldo preservado.
+- produto inativado após a criação da nota;
+- rollback completo quando um item de uma baixa múltipla falha;
+- idempotência de solicitações e resultados duplicados;
+- mensagens inválidas encaminhadas para as duas DLQs.
+
+O cenário de indisponibilidade real do RabbitMQ está declarado como disruptivo
+e permanece ignorado até a implementação da reconexão automática dos workers.
 
 ## Frontend Angular
 
