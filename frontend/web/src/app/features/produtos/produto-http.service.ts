@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { EMPTY, expand, map, Observable, reduce } from 'rxjs';
 import { API_CONFIG } from '../../core/config/api.config';
 import { ApiSuccessResponse } from '../../core/http/api-response.model';
 import {
@@ -35,6 +35,27 @@ export class ProdutoHttpService {
     return this.http
       .get<ApiSuccessResponse<ProdutosPaginados>>(this.baseUrl, { params })
       .pipe(map((response) => response.data));
+  }
+
+  listarAtivosParaSelecao(): Observable<Produto[]> {
+    const tamanhoPagina = 100;
+    const carregarPagina = (pagina: number) =>
+      this.listar({
+        codigo: '',
+        descricao: '',
+        ativo: true,
+        pagina,
+        tamanhoPagina,
+      });
+
+    return carregarPagina(1).pipe(
+      expand((resultado) =>
+        resultado.pagina < resultado.totalPaginas
+          ? carregarPagina(resultado.pagina + 1)
+          : EMPTY,
+      ),
+      reduce((produtos, resultado) => [...produtos, ...resultado.itens], [] as Produto[]),
+    );
   }
 
   criar(input: CriarProdutoInput): Observable<Produto> {

@@ -14,13 +14,17 @@
 
     <ng-container matColumnDef="saldo">
       <th mat-header-cell *matHeaderCellDef>Saldo</th>
-      <td mat-cell *matCellDef="let produto" class="number-cell">{{ produto.saldo }}</td>
+      <td mat-cell *matCellDef="let produto" class="number-cell">
+        <span class="numeric-highlight numeric-highlight--quantity">{{ produto.saldo }}</span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="valor">
-      <th mat-header-cell *matHeaderCellDef>Valor</th>
+      <th mat-header-cell *matHeaderCellDef>Valor unitário</th>
       <td mat-cell *matCellDef="let produto" class="number-cell">
-        {{ produto.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+        <span class="numeric-highlight numeric-highlight--value">
+          {{ produto.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+        </span>
       </td>
     </ng-container>
 
@@ -33,9 +37,16 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="cadastrado">
+      <th mat-header-cell *matHeaderCellDef>Cadastrado em</th>
+      <td mat-cell *matCellDef="let produto" class="date-cell">
+        {{ produto.dataCadastro | date: 'dd/MM/yyyy HH:mm' }}
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="atualizado">
       <th mat-header-cell *matHeaderCellDef>Atualizado em</th>
-      <td mat-cell *matCellDef="let produto">
+      <td mat-cell *matCellDef="let produto" class="date-cell">
         {{ produto.dataAtualizacao | date: 'dd/MM/yyyy HH:mm' }}
       </td>
     </ng-container>
@@ -44,15 +55,19 @@
       <th mat-header-cell *matHeaderCellDef><span class="sr-only">Ações</span></th>
       <td mat-cell *matCellDef="let produto" class="actions-cell">
         <div class="action-group">
-          <button mat-icon-button type="button" aria-label="Ver movimentações" matTooltip="Movimentações"
+          <button mat-icon-button class="action-button action-button--history" type="button"
+            aria-label="Ver movimentações" matTooltip="Movimentações"
             (click)="verMovimentacoes.emit(produto)">
             <mat-icon>history</mat-icon>
           </button>
-          <button mat-icon-button type="button" aria-label="Editar produto" matTooltip="Editar"
+          <button mat-icon-button class="action-button action-button--edit" type="button"
+            aria-label="Editar produto" matTooltip="Editar"
             (click)="editar.emit(produto)">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button type="button"
+          <button mat-icon-button class="action-button action-button--status" type="button"
+            [class.action-button--activate]="!produto.ativo"
+            [class.action-button--deactivate]="produto.ativo"
             [attr.aria-label]="produto.ativo ? 'Inativar produto' : 'Ativar produto'"
             [matTooltip]="produto.ativo ? 'Inativar' : 'Ativar'"
             (click)="alterarStatus.emit(produto)">

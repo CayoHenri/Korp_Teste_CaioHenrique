@@ -79,6 +79,47 @@ describe('ProdutoHttpService', () => {
     request.flush({ success: true, data: produto });
   });
 
+  it('carrega todas as páginas de produtos ativos para seleção', () => {
+    const segundoProduto: Produto = {
+      ...produto,
+      id: '01810adc-7723-79dc-97d7-f0bf40f3493b',
+      codigo: 'SKU-002',
+    };
+
+    service
+      .listarAtivosParaSelecao()
+      .subscribe((response) => expect(response).toEqual([produto, segundoProduto]));
+
+    const primeiraPagina = httpController.expectOne(
+      (candidate) =>
+        candidate.url === 'http://localhost:8081/produtos' &&
+        candidate.params.get('pagina') === '1' &&
+        candidate.params.get('tamanhoPagina') === '100' &&
+        candidate.params.get('ativo') === 'true',
+    );
+    primeiraPagina.flush({
+      success: true,
+      data: { itens: [produto], total: 2, pagina: 1, tamanhoPagina: 100, totalPaginas: 2 },
+    });
+
+    const segundaPagina = httpController.expectOne(
+      (candidate) =>
+        candidate.url === 'http://localhost:8081/produtos' &&
+        candidate.params.get('pagina') === '2' &&
+        candidate.params.get('ativo') === 'true',
+    );
+    segundaPagina.flush({
+      success: true,
+      data: {
+        itens: [segundoProduto],
+        total: 2,
+        pagina: 2,
+        tamanhoPagina: 100,
+        totalPaginas: 2,
+      },
+    });
+  });
+
   it('atualiza somente os campos permitidos', () => {
     const input = { descricao: 'TECLADO RGB', saldo: 20, valor: 199.9 };
     service.atualizar(produto.id, input).subscribe();

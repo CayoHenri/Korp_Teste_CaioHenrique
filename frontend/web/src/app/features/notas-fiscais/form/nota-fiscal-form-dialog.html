@@ -28,21 +28,101 @@
     <div class="items-heading">
       <div>
         <h3>Produtos</h3>
-        <p>Descrição e valor serão obtidos pelo código.</p>
+        <p>Selecione produtos ativos e consulte o saldo disponível.</p>
       </div>
-      <button mat-button type="button" (click)="adicionarItem()">
+      <button mat-button type="button" [disabled]="carregandoProdutos() || produtosAtivos().length === 0"
+        (click)="adicionarItem()">
         <mat-icon>add</mat-icon>
         Adicionar item
       </button>
     </div>
 
+    @if (carregandoProdutos()) {
+      <div class="products-feedback" role="status">
+        <mat-spinner diameter="18" />
+        Carregando produtos ativos...
+      </div>
+    } @else if (erroProdutos()) {
+      <div class="products-feedback products-feedback--error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ erroProdutos() }}</span>
+        <button mat-button type="button" (click)="carregarProdutosAtivos()">Tentar novamente</button>
+      </div>
+    } @else if (produtosAtivos().length === 0) {
+      <div class="products-feedback" role="status">
+        <mat-icon>inventory_2</mat-icon>
+        Nenhum produto ativo disponível.
+      </div>
+    }
+
+    @if (possuiProdutosInativos()) {
+      <div class="products-feedback products-feedback--warning" role="alert">
+        <mat-icon>warning_amber</mat-icon>
+        Existem produtos inativos nesta nota. Substitua ou remova os itens destacados para salvar.
+      </div>
+    }
+
     <div formArrayName="itens" class="items-list">
       @for (item of form.controls.itens.controls; track item; let index = $index) {
-        <div class="item-row" [formGroupName]="index">
+        <div class="item-row" [class.item-row--inactive]="!!itemInativo(item.controls.codigoProduto.value)"
+          [formGroupName]="index">
           <span class="item-index">{{ index + 1 }}</span>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Código do produto</mat-label>
-            <input matInput formControlName="codigoProduto" autocomplete="off" />
+            <mat-label>Produto</mat-label>
+            <mat-select formControlName="codigoProduto" panelClass="product-select-panel"
+              (openedChange)="aoAbrirProdutos($event)">
+              <mat-select-trigger>
+                @if (produtoSelecionado(item.controls.codigoProduto.value); as produto) {
+                  <span class="selected-product">
+                    <strong>{{ produto.codigo }}</strong>
+                    <span>{{ produto.descricao }}</span>
+                    <small>Saldo: {{ produto.saldo }}</small>
+                  </span>
+                } @else if (itemInativo(item.controls.codigoProduto.value); as produtoInativo) {
+                  <span class="selected-product selected-product--inactive">
+                    <strong>{{ produtoInativo.codigoProduto }}</strong>
+                    <span>{{ produtoInativo.descricaoProduto }}</span>
+                    <small>Inativo</small>
+                  </span>
+                }
+              </mat-select-trigger>
+
+              <div class="product-search" (click)="$event.stopPropagation()">
+                <mat-icon>search</mat-icon>
+                <input #productSearch type="search" placeholder="Pesquisar por código ou descrição"
+                  aria-label="Pesquisar produtos" [value]="pesquisaProduto()"
+                  (input)="pesquisaProduto.set(productSearch.value)" (keydown)="$event.stopPropagation()" />
+                @if (pesquisaProduto()) {
+                  <button mat-icon-button type="button" aria-label="Limpar pesquisa"
+                    (click)="pesquisaProduto.set(''); productSearch.focus()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </div>
+
+              @for (produto of produtosFiltrados(); track produto.id) {
+                <mat-option [value]="produto.codigo">
+                  <span class="product-option">
+                    <span class="product-option__identity">
+                      <strong>{{ produto.codigo }}</strong>
+                      <small>{{ produto.descricao }}</small>
+                    </span>
+                    <span class="product-option__metadata">
+                      <span class="product-option__stock" [class.product-option__stock--empty]="produto.saldo === 0">
+                        Saldo: <strong>{{ produto.saldo }}</strong>
+                      </span>
+                      <small>{{ produto.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</small>
+                    </span>
+                  </span>
+                </mat-option>
+              } @empty {
+                <mat-option disabled>Nenhum produto encontrado.</mat-option>
+              }
+            </mat-select>
+            <mat-error>Selecione um produto.</mat-error>
+            @if (itemInativo(item.controls.codigoProduto.value)) {
+              <mat-hint class="inactive-product-hint">Produto inativo — selecione outro produto.</mat-hint>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Quantidade</mat-label>
@@ -60,5 +140,8 @@
 
 <mat-dialog-actions align="end">
   <button mat-button type="button" mat-dialog-close>Cancelar</button>
-  <button mat-flat-button type="submit" form="nota-fiscal-form">Salvar nota</button>
+  <button mat-flat-button type="submit" form="nota-fiscal-form"
+    [disabled]="carregandoProdutos() || erroProdutos() !== null || produtosAtivos().length === 0 || possuiProdutosInativos()">
+    Salvar nota
+  </button>
 </mat-dialog-actions>

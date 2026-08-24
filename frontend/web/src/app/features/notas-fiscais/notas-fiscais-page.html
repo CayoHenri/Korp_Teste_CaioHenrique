@@ -1,8 +1,5 @@
-<app-page-header
-  eyebrow="Faturamento"
-  title="Notas fiscais"
-  description="Crie notas e acompanhe o fechamento assíncrono em tempo real."
->
+<app-page-header eyebrow="Faturamento" title="Notas fiscais"
+  description="Crie notas e acompanhe o fechamento assíncrono em tempo real.">
   <button mat-flat-button class="page-action" type="button" (click)="abrirFormulario()">
     <mat-icon>add</mat-icon>
     Nova nota
@@ -10,41 +7,27 @@
 </app-page-header>
 
 @if (store.state$ | async; as state) {
-  <mat-card class="filters-card">
-    <app-notas-fiscais-filters (filterChange)="filtrar($event)" />
-  </mat-card>
+<mat-card class="filters-card">
+  <app-notas-fiscais-filters (filterChange)="filtrar($event)" />
+</mat-card>
 
-  <mat-card class="results-card">
-    @if (state.carregando) {
-      <mat-progress-bar mode="indeterminate" />
-    }
+<mat-card class="results-card">
+  @if (state.carregando) {
+  <mat-progress-bar mode="indeterminate" />
+  }
 
-    @if (state.erro) {
-      <app-data-feedback
-        type="error"
-        title="Não foi possível carregar as notas fiscais"
-        [description]="state.erro"
-        (retry)="store.carregar()"
-      />
-    }
+  @if (state.erro) {
+  <app-data-feedback type="error" title="Não foi possível carregar as notas fiscais" [description]="state.erro"
+    (retry)="store.carregar()" />
+  }
 
-    @if (!state.carregando && !state.erro && state.itens.length === 0) {
-      <app-data-feedback
-        type="empty"
-        title="Nenhuma nota fiscal encontrada"
-        description="Altere os filtros ou crie a primeira nota fiscal."
-      />
-    } @else if (state.itens.length > 0) {
-      <app-notas-fiscais-list
-        [notas]="state.itens"
-        [total]="state.total"
-        [pagina]="state.filtros.pagina"
-        [tamanhoPagina]="state.filtros.tamanhoPagina"
-        [acoesEmAndamento]="state.acoesEmAndamento"
-        (editar)="abrirFormulario($event)"
-        (imprimir)="imprimir($event)"
-        (paginar)="paginar($event)"
-      />
-    }
-  </mat-card>
+  @if (!state.carregando && !state.erro && state.itens.length === 0) {
+  <app-data-feedback type="empty" title="Nenhuma nota fiscal encontrada"
+    description="Altere os filtros ou crie a primeira nota fiscal." />
+  } @else if (state.itens.length > 0) {
+  <app-notas-fiscais-list [notas]="state.itens" [total]="state.total" [pagina]="state.filtros.pagina"
+    [tamanhoPagina]="state.filtros.tamanhoPagina" [acoesEmAndamento]="state.acoesEmAndamento"
+    (editar)="abrirFormulario($event)" (imprimir)="imprimir($event)" (paginar)="paginar($event)" />
+  }
+</mat-card>
 }

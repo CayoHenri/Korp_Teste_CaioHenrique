@@ -5,17 +5,19 @@
 
 table {
   width: 100%;
+  min-width: 76rem;
   font-size: 0.8rem;
   --mat-table-header-container-height: 32px;
   --mat-table-row-item-container-height: 44px;
 }
 
 th {
-  border-bottom: 1px solid #d5deea;
-  background: #f1f5fa;
-  color: #475569;
+  border-bottom: 1px solid #cbd5e1;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef3f9 100%);
+  color: #334155;
   font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.015em;
 }
 
 th,
@@ -29,11 +31,20 @@ td {
 
 tr[mat-row] {
   background: var(--app-surface);
-  transition: background-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+tr[mat-row]:nth-child(even) {
+  background: #f8fafc;
 }
 
 tr[mat-row]:hover {
-  background: #f3f7ff;
+  position: relative;
+  z-index: 1;
+  background: #edf5ff;
+  box-shadow: inset 3px 0 0 var(--app-primary);
 }
 
 .invoice-number {
@@ -66,11 +77,50 @@ tr[mat-row]:hover {
   white-space: nowrap;
 }
 
-.value-cell {
+th.mat-column-itens,
+th.mat-column-quantidade,
+th.mat-column-valor {
+  text-align: right;
+}
+
+th.mat-column-status {
+  text-align: center;
+}
+
+td.mat-column-status {
+  text-align: center;
+}
+
+.numeric-highlight {
+  display: inline-flex;
+  min-width: 2rem;
+  justify-content: center;
+  padding: 0.16rem 0.45rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.4rem;
+  background: #eff6ff;
+  color: #1e40af;
   font-weight: 700;
 }
 
+.numeric-highlight--items {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.numeric-highlight--value {
+  min-width: 5rem;
+  border-color: #bbf7d0;
+  background: #ecfdf5;
+  color: #166534;
+  font-weight: 800;
+}
+
 .date-cell {
+  color: #475569;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -119,17 +169,45 @@ tr[mat-row]:hover {
 
 .action-group {
   display: inline-flex;
-  gap: 0.125rem;
-  padding: 0.125rem;
-  border: 1px solid var(--app-border);
-  border-radius: 0.5rem;
-  background: var(--app-surface-muted);
+  gap: 0.25rem;
+  padding: 0.15rem;
+  border-radius: 0.625rem;
+  background: #eef2f7;
 }
 
-.action-group button {
+.action-group .action-button {
   width: 1.75rem;
   height: 1.75rem;
   padding: 0.2rem;
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.action-group .action-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgb(15 23 42 / 16%);
+}
+
+.action-button--edit {
+  border-color: #fde68a !important;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.action-button--print {
+  border-color: #ddd6fe !important;
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.action-group .action-button:disabled {
+  border-color: #e2e8f0 !important;
+  background: #f8fafc;
+  color: #94a3b8;
+  opacity: 0.72;
 }
 
 .action-group mat-icon {

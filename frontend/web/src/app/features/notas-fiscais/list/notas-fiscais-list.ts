@@ -40,6 +40,7 @@ export class NotasFiscaisList {
     'quantidade',
     'valor',
     'status',
+    'cadastrado',
     'atualizado',
     'acoes',
   ];

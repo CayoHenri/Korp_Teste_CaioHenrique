@@ -5,26 +5,37 @@
 
 table {
   width: 100%;
+  min-width: 72rem;
   font-size: 0.8125rem;
   --mat-table-header-container-height: 32px;
   --mat-table-row-item-container-height: 34px;
 }
 
 th {
-  border-bottom: 1px solid #d5deea;
-  background: #f1f5fa;
-  color: #475569;
+  border-bottom: 1px solid #cbd5e1;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef3f9 100%);
+  color: #334155;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.015em;
 }
 
 tr[mat-row] {
   background: var(--app-surface);
-  transition: background-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+tr[mat-row]:nth-child(even) {
+  background: #f8fafc;
 }
 
 tr[mat-row]:hover {
-  background: #f3f7ff;
+  position: relative;
+  z-index: 1;
+  background: #edf5ff;
+  box-shadow: inset 3px 0 0 var(--app-primary);
 }
 
 th,
@@ -61,8 +72,18 @@ tr[mat-row]:last-of-type td {
   text-align: center;
 }
 
+th.mat-column-saldo,
+th.mat-column-valor {
+  text-align: right;
+}
+
+th.mat-column-status {
+  text-align: center;
+}
+
+.mat-column-cadastrado,
 .mat-column-atualizado {
-  width: 17%;
+  width: 13%;
   white-space: nowrap;
 }
 
@@ -85,6 +106,31 @@ tr[mat-row]:last-of-type td {
 }
 
 .number-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.numeric-highlight {
+  display: inline-flex;
+  min-width: 2rem;
+  justify-content: center;
+  padding: 0.16rem 0.45rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.4rem;
+  background: #eff6ff;
+  color: #1e40af;
+  font-weight: 800;
+}
+
+.numeric-highlight--value {
+  border-color: #bbf7d0;
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.date-cell {
+  color: #475569;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -113,27 +159,53 @@ tr[mat-row]:last-of-type td {
 
 .action-group {
   display: inline-flex;
-  gap: 0.125rem;
+  gap: 0.25rem;
   align-items: center;
-  padding: 0.125rem;
-  border: 1px solid var(--app-border);
-  border-radius: 0.5rem;
-  background: var(--app-surface-muted);
+  padding: 0.15rem;
+  border-radius: 0.625rem;
+  background: #eef2f7;
 }
 
-.actions-cell button {
+.actions-cell .action-button {
   width: 1.75rem;
   height: 1.75rem;
   padding: 0.2rem;
-  color: #475569;
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
   transition:
+    transform 120ms ease,
     color 120ms ease,
-    background-color 120ms ease;
+    background-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
-.actions-cell button:hover {
-  background: var(--app-primary-soft);
-  color: var(--app-primary);
+.actions-cell .action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgb(15 23 42 / 16%);
+}
+
+.action-button--history {
+  border-color: #bfdbfe !important;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.action-button--edit {
+  border-color: #fde68a !important;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.action-button--deactivate {
+  border-color: #fecaca !important;
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.action-button--activate {
+  border-color: #bbf7d0 !important;
+  background: #ecfdf5;
+  color: #15803d;
 }
 
 .actions-cell mat-icon {

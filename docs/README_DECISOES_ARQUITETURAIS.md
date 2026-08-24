@@ -291,6 +291,40 @@ da rejeição sem recarregar a página e sem bloquear outras interações. O cus
 rede fica restrito às notas realmente em processamento. WebSocket ou SSE podem
 substituir o polling se a escala futura justificar infraestrutura adicional.
 
+## ADR-026 — Cores semânticas nas ações das tabelas
+
+**Status:** aceita.
+
+**Decisão:** as tabelas de Produtos e Notas Fiscais usam botões compactos com
+cores consistentes por intenção: azul para consulta, âmbar para edição, verde ou
+vermelho para alteração de situação e roxo para impressão. A cor complementa,
+mas não substitui, ícones, tooltips e rótulos acessíveis. A tabela usa linhas
+alternadas e realce no hover para facilitar a leitura horizontal.
+
+**Consequências:** ações distintas são reconhecidas mais rapidamente sem perder
+acessibilidade. Botões indisponíveis ficam neutros e não sugerem que podem ser
+acionados. Novas tabelas devem reutilizar a mesma semântica visual. Quantidades
+e valores recebem realces compactos e as datas de cadastro e atualização são
+apresentadas separadamente para preservar a leitura temporal dos registros.
+
+## ADR-027 — Seleção de produtos ativos na nota fiscal
+
+**Status:** aceita.
+
+**Decisão:** o formulário de nota fiscal consulta a API de Estoque e oferece um
+select contendo somente produtos ativos. A consulta percorre todas as páginas da
+API, respeitando o limite de 100 registros por requisição. As opções mostram
+código, descrição e saldo, enquanto o comando enviado ao Faturamento preserva
+somente código e quantidade.
+
+**Consequências:** o usuário não precisa digitar ou memorizar códigos e consegue
+avaliar o saldo antes de incluir o item. A API de Faturamento continua responsável
+pela validação definitiva do produto e do estoque, evitando usar o saldo exibido
+no navegador como regra de negócio. A pesquisa por código ou descrição ocorre
+localmente sobre os produtos já carregados, evitando tráfego a cada tecla. Em
+edições, itens cujo produto deixou de estar ativo preservam seu snapshot para
+identificação visual, mas precisam ser substituídos ou removidos antes de salvar.
+
 ## Decisões adiadas
 
 - autenticação e autorização;

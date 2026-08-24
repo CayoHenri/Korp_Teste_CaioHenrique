@@ -141,9 +141,7 @@ export class NotasFiscaisStore implements OnDestroy {
   }
 
   private acompanharFechamento(id: string): void {
-    if (this.notasMonitoradas.has(id)) {
-      return;
-    }
+    if (this.notasMonitoradas.has(id)) return;
 
     this.notasMonitoradas.add(id);
     timer(1500, 1500)

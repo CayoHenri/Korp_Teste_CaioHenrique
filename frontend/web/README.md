@@ -253,6 +253,17 @@ O botão de impressão permanece visível em todos os estados, mas só é habili
 para notas `ABERTA`. Durante o fechamento, spinner e status `Processando`
 fornecem feedback sem bloquear os demais controles da tela.
 
+No formulário, os itens são escolhidos em um select abastecido pela API de
+Estoque. O frontend percorre todas as páginas, apresenta somente produtos ativos
+e mostra código, descrição, saldo disponível e valor. A busca local do select é
+normalizada e filtra código ou descrição sem disparar novas requisições. Para
+manter baixo acoplamento, a nota envia ao Faturamento apenas o código selecionado
+e a quantidade.
+
+Ao editar uma nota antiga, um produto que deixou de estar ativo continua visível
+com os dados gravados no item, mas recebe destaque de advertência. O formulário
+só pode ser salvo depois que esse produto for substituído ou removido.
+
 ## Convenções
 
 - nomes de arquivos em kebab-case;
@@ -265,6 +276,15 @@ fornecem feedback sem bloquear os demais controles da tela.
 - módulos Angular Material importados sob demanda;
 - textos e mensagens de usuário em português;
 - testes próximos aos arquivos testados.
+
+Nas tabelas, ações usam cores semânticas consistentes: azul para consulta,
+âmbar para edição, verde ou vermelho para mudança de situação e roxo para
+impressão. Estados desabilitados permanecem neutros, e cor nunca substitui
+ícone, tooltip e descrição acessível.
+
+Valores monetários e quantidades possuem realces compactos distintos, mantendo
+alinhamento tabular entre cabeçalho e conteúdo. Listagens exibem separadamente
+as datas de cadastro e de última atualização retornadas pelas APIs.
 
 ## Próximas etapas
 

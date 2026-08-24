@@ -40,6 +40,7 @@ export class ProdutosList {
     'saldo',
     'valor',
     'status',
+    'cadastrado',
     'atualizado',
     'acoes',
   ];

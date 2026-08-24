@@ -16,19 +16,25 @@
     </ng-container>
 
     <ng-container matColumnDef="itens">
-      <th mat-header-cell *matHeaderCellDef>Itens</th>
-      <td mat-cell *matCellDef="let nota">{{ nota.itens.length }}</td>
+      <th mat-header-cell *matHeaderCellDef>Nº de itens</th>
+      <td mat-cell *matCellDef="let nota" class="number-cell">
+        <span class="numeric-highlight numeric-highlight--items">{{ nota.itens.length }}</span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="quantidade">
-      <th mat-header-cell *matHeaderCellDef>Quantidade</th>
-      <td mat-cell *matCellDef="let nota" class="number-cell">{{ nota.quantidadeTotal }}</td>
+      <th mat-header-cell *matHeaderCellDef>Qtd. total</th>
+      <td mat-cell *matCellDef="let nota" class="number-cell">
+        <span class="numeric-highlight numeric-highlight--quantity">{{ nota.quantidadeTotal }}</span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="valor">
       <th mat-header-cell *matHeaderCellDef>Total</th>
       <td mat-cell *matCellDef="let nota" class="number-cell value-cell">
-        {{ nota.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+        <span class="numeric-highlight numeric-highlight--value">
+          {{ nota.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+        </span>
       </td>
     </ng-container>
 
@@ -49,6 +55,13 @@
       </td>
     </ng-container>
 
+    <ng-container matColumnDef="cadastrado">
+      <th mat-header-cell *matHeaderCellDef>Cadastrado em</th>
+      <td mat-cell *matCellDef="let nota" class="date-cell">
+        {{ nota.dataCadastro | date: 'dd/MM/yyyy HH:mm' }}
+      </td>
+    </ng-container>
+
     <ng-container matColumnDef="atualizado">
       <th mat-header-cell *matHeaderCellDef>Atualizado em</th>
       <td mat-cell *matCellDef="let nota" class="date-cell">
@@ -60,11 +73,13 @@
       <th mat-header-cell *matHeaderCellDef><span class="sr-only">Ações</span></th>
       <td mat-cell *matCellDef="let nota" class="actions-cell">
         <div class="action-group">
-          <button mat-icon-button type="button" aria-label="Editar nota" matTooltip="Editar nota"
+          <button mat-icon-button class="action-button action-button--edit" type="button"
+            aria-label="Editar nota" matTooltip="Editar nota"
             [disabled]="nota.status !== 'ABERTA' || processando(nota)" (click)="editar.emit(nota)">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button type="button" aria-label="Imprimir nota"
+          <button mat-icon-button class="action-button action-button--print" type="button"
+            aria-label="Imprimir nota"
             [matTooltip]="nota.status === 'ABERTA' ? 'Imprimir nota' : 'Disponível somente para notas abertas'"
             [disabled]="nota.status !== 'ABERTA' || processando(nota)" (click)="imprimir.emit(nota)">
             @if (processando(nota)) {
