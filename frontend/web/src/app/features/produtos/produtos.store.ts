@@ -61,7 +61,7 @@ export class ProdutosStore implements OnDestroy {
         switchMap(() =>
           this.service.listar(this.stateSubject.value.filtros).pipe(
             catchError((error: unknown) => {
-              this.patch({ erro: apiErrorMessage(error) });
+              this.patch({ erro: apiErrorMessage(error, 'Estoque') });
               return EMPTY;
             }),
             finalize(() => this.patch({ carregando: false })),

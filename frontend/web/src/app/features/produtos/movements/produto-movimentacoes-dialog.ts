@@ -55,7 +55,7 @@ export class ProdutoMovimentacoesDialog {
           of<MovimentacoesState>({
             carregando: false,
             itens: [],
-            erro: apiErrorMessage(error),
+            erro: apiErrorMessage(error, 'Estoque'),
           }),
         ),
         startWith<MovimentacoesState>({ carregando: true, itens: [], erro: null }),

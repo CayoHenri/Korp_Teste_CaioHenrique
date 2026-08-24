@@ -1,0 +1,90 @@
+<div class="table-scroll">
+  <table mat-table [dataSource]="notas()">
+    <ng-container matColumnDef="numero">
+      <th mat-header-cell *matHeaderCellDef>Número</th>
+      <td mat-cell *matCellDef="let nota">
+        <span class="invoice-number">#{{ nota.numero }}</span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="cliente">
+      <th mat-header-cell *matHeaderCellDef>Cliente</th>
+      <td mat-cell *matCellDef="let nota" class="customer-cell">
+        <strong [matTooltip]="nota.nomeCliente">{{ nota.nomeCliente }}</strong>
+        <span [matTooltip]="nota.enderecoCliente">{{ nota.enderecoCliente }}</span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="itens">
+      <th mat-header-cell *matHeaderCellDef>Itens</th>
+      <td mat-cell *matCellDef="let nota">{{ nota.itens.length }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="quantidade">
+      <th mat-header-cell *matHeaderCellDef>Quantidade</th>
+      <td mat-cell *matCellDef="let nota" class="number-cell">{{ nota.quantidadeTotal }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="valor">
+      <th mat-header-cell *matHeaderCellDef>Total</th>
+      <td mat-cell *matCellDef="let nota" class="number-cell value-cell">
+        {{ nota.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let nota">
+        <span class="status" [class.status--processing]="nota.status === 'PROCESSANDO'"
+          [class.status--closed]="nota.status === 'FECHADA'"
+          [class.status--rejected]="nota.status === 'ABERTA' && !!nota.motivoRejeicao"
+          [matTooltip]="nota.motivoRejeicao || ''">
+          @if (nota.status === 'PROCESSANDO') {
+            <mat-spinner diameter="12" />
+          } @else if (nota.motivoRejeicao) {
+            <mat-icon>warning_amber</mat-icon>
+          }
+          {{ statusLabel(nota.status) }}
+        </span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="atualizado">
+      <th mat-header-cell *matHeaderCellDef>Atualizado em</th>
+      <td mat-cell *matCellDef="let nota" class="date-cell">
+        {{ nota.dataAtualizacao | date: 'dd/MM/yyyy HH:mm' }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="acoes">
+      <th mat-header-cell *matHeaderCellDef><span class="sr-only">Ações</span></th>
+      <td mat-cell *matCellDef="let nota" class="actions-cell">
+        <div class="action-group">
+          <button mat-icon-button type="button" aria-label="Editar nota" matTooltip="Editar nota"
+            [disabled]="nota.status !== 'ABERTA' || processando(nota)" (click)="editar.emit(nota)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button type="button" aria-label="Imprimir nota"
+            [matTooltip]="nota.status === 'ABERTA' ? 'Imprimir nota' : 'Disponível somente para notas abertas'"
+            [disabled]="nota.status !== 'ABERTA' || processando(nota)" (click)="imprimir.emit(nota)">
+            @if (processando(nota)) {
+              <mat-spinner diameter="16" />
+            } @else {
+              <mat-icon>print</mat-icon>
+            }
+          </button>
+        </div>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+    <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+  </table>
+</div>
+
+<app-pagination
+  [total]="total()"
+  [pagina]="pagina()"
+  [tamanhoPagina]="tamanhoPagina()"
+  (mudou)="paginar.emit($event)"
+/>

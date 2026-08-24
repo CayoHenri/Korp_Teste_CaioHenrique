@@ -1,0 +1,14 @@
+.filters-card,
+.results-card {
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: 0.625rem;
+  box-shadow: var(--app-shadow-sm);
+}
+
+.page-action {
+  height: 2rem;
+  padding-inline: 0.875rem;
+  font-size: 0.8rem;
+}

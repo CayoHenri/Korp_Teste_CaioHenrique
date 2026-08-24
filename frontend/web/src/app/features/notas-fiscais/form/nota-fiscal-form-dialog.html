@@ -1,0 +1,64 @@
+<header class="dialog-header">
+  <span class="dialog-header__icon" aria-hidden="true">
+    <mat-icon>{{ editando ? 'edit_note' : 'note_add' }}</mat-icon>
+  </span>
+  <div>
+    <span class="dialog-header__eyebrow">Faturamento</span>
+    <h2 mat-dialog-title>{{ editando ? 'Editar nota fiscal' : 'Nova nota fiscal' }}</h2>
+    <p>Informe o cliente e os produtos da nota.</p>
+  </div>
+</header>
+
+<mat-dialog-content>
+  <form id="nota-fiscal-form" [formGroup]="form" (ngSubmit)="salvar()">
+    <section class="customer-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome do cliente</mat-label>
+        <input matInput formControlName="nomeCliente" autocomplete="off" />
+        <mat-error>Informe o nome do cliente.</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Endereço do cliente</mat-label>
+        <input matInput formControlName="enderecoCliente" autocomplete="off" />
+        <mat-error>Informe o endereço do cliente.</mat-error>
+      </mat-form-field>
+    </section>
+
+    <div class="items-heading">
+      <div>
+        <h3>Produtos</h3>
+        <p>Descrição e valor serão obtidos pelo código.</p>
+      </div>
+      <button mat-button type="button" (click)="adicionarItem()">
+        <mat-icon>add</mat-icon>
+        Adicionar item
+      </button>
+    </div>
+
+    <div formArrayName="itens" class="items-list">
+      @for (item of form.controls.itens.controls; track item; let index = $index) {
+        <div class="item-row" [formGroupName]="index">
+          <span class="item-index">{{ index + 1 }}</span>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Código do produto</mat-label>
+            <input matInput formControlName="codigoProduto" autocomplete="off" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Quantidade</mat-label>
+            <input matInput type="number" min="1" step="1" formControlName="quantidade" />
+          </mat-form-field>
+          <button mat-icon-button type="button" aria-label="Remover item"
+            [disabled]="form.controls.itens.length === 1" (click)="removerItem(index)">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+      }
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cancelar</button>
+  <button mat-flat-button type="submit" form="nota-fiscal-form">Salvar nota</button>
+</mat-dialog-actions>

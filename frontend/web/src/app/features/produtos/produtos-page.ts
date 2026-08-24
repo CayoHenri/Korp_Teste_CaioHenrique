@@ -148,7 +148,7 @@ export class ProdutosPage implements OnInit {
   }
 
   private mostrarErro(error: unknown): void {
-    this.snackBar.open(apiErrorMessage(error), 'Fechar', {
+    this.snackBar.open(apiErrorMessage(error, 'Estoque'), 'Fechar', {
       duration: 5000,
       panelClass: ['error-snackbar'],
     });

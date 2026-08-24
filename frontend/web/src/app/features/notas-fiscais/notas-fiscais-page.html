@@ -1,19 +1,50 @@
 <app-page-header
   eyebrow="Faturamento"
   title="Notas fiscais"
-  description="Criação e acompanhamento do fluxo de fechamento."
+  description="Crie notas e acompanhe o fechamento assíncrono em tempo real."
 >
-  <button mat-flat-button type="button">
+  <button mat-flat-button class="page-action" type="button" (click)="abrirFormulario()">
     <mat-icon>add</mat-icon>
     Nova nota
   </button>
 </app-page-header>
 
-<mat-card>
-  <div class="empty-state">
-    <mat-icon>description</mat-icon>
-    <h2>Feature preparada</h2>
-    <p>O store RxJS iniciou com {{ (store.itens$ | async)?.length ?? 0 }} notas.</p>
-    <span>A integração com a API será implementada no próximo passo.</span>
-  </div>
-</mat-card>
+@if (store.state$ | async; as state) {
+  <mat-card class="filters-card">
+    <app-notas-fiscais-filters (filterChange)="filtrar($event)" />
+  </mat-card>
+
+  <mat-card class="results-card">
+    @if (state.carregando) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (state.erro) {
+      <app-data-feedback
+        type="error"
+        title="Não foi possível carregar as notas fiscais"
+        [description]="state.erro"
+        (retry)="store.carregar()"
+      />
+    }
+
+    @if (!state.carregando && !state.erro && state.itens.length === 0) {
+      <app-data-feedback
+        type="empty"
+        title="Nenhuma nota fiscal encontrada"
+        description="Altere os filtros ou crie a primeira nota fiscal."
+      />
+    } @else if (state.itens.length > 0) {
+      <app-notas-fiscais-list
+        [notas]="state.itens"
+        [total]="state.total"
+        [pagina]="state.filtros.pagina"
+        [tamanhoPagina]="state.filtros.tamanhoPagina"
+        [acoesEmAndamento]="state.acoesEmAndamento"
+        (editar)="abrirFormulario($event)"
+        (imprimir)="imprimir($event)"
+        (paginar)="paginar($event)"
+      />
+    }
+  </mat-card>
+}

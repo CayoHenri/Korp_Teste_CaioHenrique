@@ -1,0 +1,29 @@
+<form class="filters" [formGroup]="form" (ngSubmit)="filtrar()">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Número</mat-label>
+    <input matInput type="number" min="1" formControlName="numero" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Cliente</mat-label>
+    <input matInput formControlName="nomeCliente" autocomplete="off" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Status</mat-label>
+    <mat-select formControlName="status">
+      <mat-option [value]="null">Todos</mat-option>
+      <mat-option value="ABERTA">Aberta</mat-option>
+      <mat-option value="PROCESSANDO">Processando</mat-option>
+      <mat-option value="FECHADA">Fechada</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <div class="filter-actions">
+    <button mat-button type="button" (click)="limpar()">Limpar</button>
+    <button mat-flat-button type="submit">
+      <mat-icon>search</mat-icon>
+      Filtrar
+    </button>
+  </div>
+</form>

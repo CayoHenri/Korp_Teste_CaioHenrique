@@ -33,7 +33,12 @@ Implementado nesta etapa:
 - consulta do histórico de movimentações de cada produto em diálogo;
 - feedback de carregamento, estado vazio, sucesso e erro;
 - testes unitários do contrato HTTP de Produtos;
-- página inicial de Notas Fiscais;
+- página de Notas Fiscais integrada à API de Faturamento;
+- listagem, filtros, paginação, criação e edição de notas abertas;
+- impressão representada pelo fechamento assíncrono da nota;
+- atualização automática de notas em processamento sem bloquear a tela;
+- feedback visual de fechamento e rejeição;
+- testes unitários do contrato HTTP de Faturamento;
 - configuração central das URLs das APIs;
 - store global e stores isolados por feature usando RxJS;
 - configuração inicial de build e testes.
@@ -44,10 +49,7 @@ Implementado nesta etapa:
 
 Ainda não implementado:
 
-- integração da página de Notas Fiscais com a API;
-- listagem, filtros, paginação e formulário de notas;
-- acompanhamento do fechamento;
-- tratamento visual dos erros retornados pelos serviços;
+- testes unitários dos stores e componentes visuais;
 - container Docker do frontend.
 
 ## Pré-requisitos
@@ -98,7 +100,11 @@ src/app/
 │   │   ├── list/                tabela e ações da listagem
 │   │   ├── movements/           histórico de entradas e saídas
 │   │   └── *.ts                 página, model, store e cliente HTTP
-│   └── notas-fiscais/           model, store e página
+│   └── notas-fiscais/
+│       ├── filters/             filtros por número, cliente e status
+│       ├── form/                cliente, endereço e itens da nota
+│       ├── list/                tabela, edição e impressão
+│       └── *.ts                 página, model, store e cliente HTTP
 ├── layout/                      shell e navegação
 ├── shared/
 │   └── ui/
@@ -225,6 +231,28 @@ como `form/`, `list/` e `details/`. Componentes sem conhecimento do domínio,
 como paginação e feedback de dados, ficam em `shared/ui` e recebem toda a
 configuração por inputs, comunicando eventos por outputs.
 
+## Fluxo da feature Notas Fiscais
+
+```text
+NotasFiscaisPage → NotasFiscaisStore → NotaFiscalHttpService → API de Faturamento
+```
+
+O botão de impressão não gera documento nesta etapa. Ele confirma a operação e
+chama `POST /notas-fiscais/{id}/fechamento`. A resposta muda a nota para
+`PROCESSANDO` e o store inicia um polling RxJS a cada 1,5 segundo:
+
+1. apenas notas em processamento são monitoradas;
+2. cada ID possui no máximo um fluxo de acompanhamento;
+3. `exhaustMap` impede requisições sobrepostas quando a API demora;
+4. somente a linha consultada é atualizada, preservando filtros e paginação;
+5. o fluxo termina em `FECHADA` ou quando a rejeição devolve a nota para
+   `ABERTA` com `motivoRejeicao`;
+6. `takeUntil` cancela todos os acompanhamentos ao sair da página.
+
+O botão de impressão permanece visível em todos os estados, mas só é habilitado
+para notas `ABERTA`. Durante o fechamento, spinner e status `Processando`
+fornecem feedback sem bloquear os demais controles da tela.
+
 ## Convenções
 
 - nomes de arquivos em kebab-case;
@@ -240,7 +268,5 @@ configuração por inputs, comunicando eventos por outputs.
 
 ## Próximas etapas
 
-1. implementar listagem, criação e edição de notas;
-2. acompanhar notas `PROCESSANDO` até o resultado;
-3. criar testes do store e dos componentes de Produtos;
-4. adicionar o frontend ao Docker Compose.
+1. criar testes dos stores e dos componentes visuais;
+2. adicionar o frontend ao Docker Compose.

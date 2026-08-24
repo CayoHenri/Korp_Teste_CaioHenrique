@@ -277,9 +277,22 @@ novas features herdam paginação e diálogos consistentes. Alterações de iden
 visual devem começar nas variáveis globais; estilos locais ficam reservados às
 necessidades específicas de cada componente.
 
+## ADR-025 — Polling não bloqueante do fechamento de notas
+
+**Status:** aceita.
+
+**Decisão:** após iniciar a impressão/fechamento, o frontend acompanha cada nota
+`PROCESSANDO` com um fluxo RxJS independente a cada 1,5 segundo. IDs são
+deduplicados e `exhaustMap` evita sobreposição de requisições. O fluxo termina no
+estado final ou quando o componente é destruído.
+
+**Consequências:** a linha muda para `FECHADA` ou volta para `ABERTA` com o motivo
+da rejeição sem recarregar a página e sem bloquear outras interações. O custo de
+rede fica restrito às notas realmente em processamento. WebSocket ou SSE podem
+substituir o polling se a escala futura justificar infraestrutura adicional.
+
 ## Decisões adiadas
 
-- integração HTTP das Notas Fiscais no frontend Angular;
 - autenticação e autorização;
 - API Gateway;
 - métricas, tracing e agregação de logs;
