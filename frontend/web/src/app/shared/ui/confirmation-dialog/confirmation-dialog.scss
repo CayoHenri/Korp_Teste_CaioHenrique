@@ -1,0 +1,39 @@
+:host {
+  display: block;
+  width: min(26rem, 88vw);
+}
+
+.dialog-heading {
+  display: flex;
+  gap: 0.875rem;
+  padding: 1.25rem 1.25rem 0.75rem;
+}
+
+.dialog-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+h2[mat-dialog-title] {
+  margin: 0 0 0.25rem;
+  padding: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+p {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+mat-dialog-actions {
+  padding: 0.75rem 1.25rem 1.25rem;
+}

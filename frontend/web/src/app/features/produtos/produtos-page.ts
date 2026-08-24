@@ -8,7 +8,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { filter, switchMap } from 'rxjs';
+import { apiErrorMessage } from '../../core/http/api-error';
 import { DataFeedback } from '../../shared/ui/data-feedback/data-feedback';
+import {
+  ConfirmationDialog,
+  ConfirmationDialogData,
+} from '../../shared/ui/confirmation-dialog/confirmation-dialog';
 import { PaginationChange } from '../../shared/ui/pagination/pagination';
 import { PageHeader } from '../../shared/ui/page-header/page-header';
 import { ProdutoFilterValue, ProdutosFilters } from './filters/produtos-filters';
@@ -18,6 +23,20 @@ import { AtualizarProdutoInput, CriarProdutoInput, Produto } from './produto.mod
 import { ProdutosStore } from './produtos.store';
 
 type ProdutoFormValue = CriarProdutoInput;
+
+function isProdutoFormValue(value: unknown): value is ProdutoFormValue {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<ProdutoFormValue>;
+  return (
+    typeof candidate.codigo === 'string' &&
+    typeof candidate.descricao === 'string' &&
+    typeof candidate.saldo === 'number' &&
+    typeof candidate.valor === 'number'
+  );
+}
 
 @Component({
   selector: 'app-produtos-page',
@@ -62,10 +81,13 @@ export class ProdutosPage implements OnInit {
       .open<ProdutoFormDialog, Produto | null, ProdutoFormValue>(ProdutoFormDialog, {
         data: produto,
         disableClose: true,
+        width: '36rem',
+        maxWidth: 'calc(100vw - 2rem)',
+        autoFocus: false,
       })
       .afterClosed()
       .pipe(
-        filter((value): value is ProdutoFormValue => value !== undefined),
+        filter(isProdutoFormValue),
         switchMap((value) => {
           if (!produto) {
             return this.store.criar(value);
@@ -82,26 +104,43 @@ export class ProdutosPage implements OnInit {
       )
       .subscribe({
         next: () => this.mostrarSucesso(produto ? 'Produto atualizado.' : 'Produto cadastrado.'),
-        error: () => undefined,
+        error: (error: unknown) => this.mostrarErro(error),
       });
   }
 
   protected alterarStatus(produto: Produto): void {
     const acao = produto.ativo ? 'inativar' : 'ativar';
-    if (!window.confirm(`Deseja ${acao} o produto ${produto.codigo}?`)) {
-      return;
-    }
 
-    this.store
-      .alterarStatus(produto)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.dialog
+      .open<ConfirmationDialog, ConfirmationDialogData, boolean>(ConfirmationDialog, {
+        data: {
+          title: `${produto.ativo ? 'Inativar' : 'Ativar'} produto`,
+          message: `Deseja ${acao} o produto ${produto.codigo}?`,
+          confirmLabel: produto.ativo ? 'Inativar' : 'Ativar',
+          icon: produto.ativo ? 'toggle_off' : 'toggle_on',
+        },
+        autoFocus: false,
+      })
+      .afterClosed()
+      .pipe(
+        filter((confirmed) => confirmed === true),
+        switchMap(() => this.store.alterarStatus(produto)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
         next: () => this.mostrarSucesso(`Produto ${acao === 'ativar' ? 'ativado' : 'inativado'}.`),
-        error: () => undefined,
+        error: (error: unknown) => this.mostrarErro(error),
       });
   }
 
   private mostrarSucesso(message: string): void {
     this.snackBar.open(message, 'Fechar', { duration: 3500 });
+  }
+
+  private mostrarErro(error: unknown): void {
+    this.snackBar.open(apiErrorMessage(error), 'Fechar', {
+      duration: 5000,
+      panelClass: ['error-snackbar'],
+    });
   }
 }

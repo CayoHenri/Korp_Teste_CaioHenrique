@@ -3,6 +3,7 @@ import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   Pagination,
   PaginationChange,
@@ -11,7 +12,15 @@ import { Produto } from '../produto.model';
 
 @Component({
   selector: 'app-produtos-list',
-  imports: [CurrencyPipe, DatePipe, MatButtonModule, MatIconModule, MatTableModule, Pagination],
+  imports: [
+    CurrencyPipe,
+    DatePipe,
+    MatButtonModule,
+    MatIconModule,
+    MatTableModule,
+    MatTooltipModule,
+    Pagination,
+  ],
   templateUrl: './produtos-list.html',
   styleUrl: './produtos-list.scss',
 })

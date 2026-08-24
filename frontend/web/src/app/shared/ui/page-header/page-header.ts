@@ -4,10 +4,10 @@ import { Component, input } from '@angular/core';
   selector: 'app-page-header',
   template: `
     <header class="page-header">
-      <div>
-        <p>{{ eyebrow() }}</p>
-        <h1>{{ title() }}</h1>
-        <span>{{ description() }}</span>
+      <div class="page-header__content">
+        <p class="page-header__eyebrow">{{ eyebrow() }}</p>
+        <h1 class="page-header__title">{{ title() }}</h1>
+        <span class="page-header__description">{{ description() }}</span>
       </div>
       <ng-content />
     </header>

@@ -1,29 +1,135 @@
 .table-scroll {
   overflow-x: auto;
+  background: var(--app-surface);
 }
 
 table {
   width: 100%;
+  font-size: 0.8125rem;
+  --mat-table-header-container-height: 32px;
+  --mat-table-row-item-container-height: 34px;
+}
+
+th {
+  border-bottom: 1px solid #d5deea;
+  background: #f1f5fa;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+tr[mat-row] {
+  background: var(--app-surface);
+  transition: background-color 120ms ease;
+}
+
+tr[mat-row]:hover {
+  background: #f3f7ff;
+}
+
+th,
+td {
+  padding-inline: 0.75rem;
+}
+
+td {
+  border-bottom-color: #e7ecf3;
+  color: var(--app-text);
+}
+
+tr[mat-row]:last-of-type td {
+  border-bottom: 0;
+}
+
+.mat-column-codigo {
+  width: 31%;
+  max-width: 23rem;
+}
+
+.mat-column-descricao {
+  width: 18%;
+}
+
+.mat-column-saldo,
+.mat-column-valor {
+  width: 8%;
+  text-align: right;
+}
+
+.mat-column-status {
+  width: 9%;
+  text-align: center;
+}
+
+.mat-column-atualizado {
+  width: 17%;
+  white-space: nowrap;
+}
+
+.mat-column-acoes {
+  width: 6rem;
+}
+
+.product-code {
+  display: block;
+  overflow: hidden;
+  color: #334155;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.description-cell {
+  font-weight: 500;
+}
+
+.number-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .status {
   display: inline-flex;
-  padding: 0.25rem 0.625rem;
+  padding: 0.18rem 0.5rem;
   border-radius: 999px;
-  background: #d7f5df;
-  color: #176b32;
+  border: 1px solid #bbf7d0;
+  background: #ecfdf3;
+  color: #15803d;
   font-size: 0.75rem;
   font-weight: 700;
 }
 
 .status--inactive {
-  background: #eceef2;
-  color: var(--app-muted);
+  border-color: #e2e8f0;
+  background: #f1f5f9;
+  color: #64748b;
 }
 
 .actions-cell {
   white-space: nowrap;
   text-align: right;
+}
+
+.actions-cell button {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0.2rem;
+  color: #475569;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.actions-cell button:hover {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.actions-cell mat-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
 }
 
 .sr-only {

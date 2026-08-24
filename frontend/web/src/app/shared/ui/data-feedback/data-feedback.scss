@@ -1,6 +1,6 @@
 .feedback {
   display: grid;
-  min-height: 18rem;
+  min-height: 13rem;
   place-items: center;
   align-content: center;
   padding: 1rem;
@@ -31,9 +31,10 @@
   justify-items: start;
   text-align: left;
   margin: 1rem;
-  border-radius: 0.5rem;
-  background: #ffdad6;
-  color: #93000a;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+  background: #fff1f2;
+  color: #9f1239;
 }
 
 .feedback--error mat-icon {

@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { Produto } from '../produto.model';
 
 @Component({
@@ -13,6 +14,7 @@ import { Produto } from '../produto.model';
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatIconModule,
     ReactiveFormsModule,
   ],
   templateUrl: './produto-form-dialog.html',

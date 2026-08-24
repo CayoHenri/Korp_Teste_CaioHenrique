@@ -4,9 +4,26 @@
   gap: 1rem;
 }
 
+.context-grid mat-card {
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: 0.875rem;
+  box-shadow: var(--app-shadow-sm);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.context-grid mat-card:hover {
+  border-color: color-mix(in srgb, var(--app-primary) 28%, var(--app-border));
+  box-shadow: var(--app-shadow-md);
+  transform: translateY(-2px);
+}
+
 .card-visual {
   display: grid;
-  min-height: 8rem;
+  min-height: 6rem;
   place-items: center;
   border-radius: 0.75rem 0.75rem 0 0;
   font-size: 3rem;
@@ -36,8 +53,9 @@
   margin-top: 1rem;
   padding: 1.5rem;
   border: 1px solid var(--app-border);
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
   background: var(--app-surface);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .architecture-note h2 {

@@ -10,7 +10,6 @@ import {
   switchMap,
   takeUntil,
   tap,
-  throwError,
 } from 'rxjs';
 import { apiErrorMessage } from '../../core/http/api-error';
 import { AtualizarProdutoInput, CriarProdutoInput, Produto, ProdutoFiltros } from './produto.model';
@@ -117,14 +116,10 @@ export class ProdutosStore implements OnDestroy {
   }
 
   private executarMutacao(operacao: Observable<Produto>): Observable<Produto> {
-    this.patch({ salvando: true, erro: null });
+    this.patch({ salvando: true });
 
     return operacao.pipe(
       tap(() => this.carregar()),
-      catchError((error: unknown) => {
-        this.patch({ erro: apiErrorMessage(error) });
-        return throwError(() => error);
-      }),
       finalize(() => this.patch({ salvando: false })),
     );
   }

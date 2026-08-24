@@ -1,6 +1,10 @@
 .empty-state {
   display: grid;
-  min-height: 18rem;
+  min-height: 13rem;
+  padding: 1.5rem;
+  border: 1px dashed color-mix(in srgb, var(--app-primary) 25%, var(--app-border));
+  border-radius: 0.875rem;
+  background: var(--app-surface-muted);
   place-items: center;
   align-content: center;
   text-align: center;

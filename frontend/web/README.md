@@ -100,6 +100,7 @@ src/app/
 ├── layout/                      shell e navegação
 ├── shared/
 │   └── ui/
+│       ├── confirmation-dialog/ diálogo reutilizável de confirmação
 │       ├── data-feedback/       estados vazio e de erro
 │       ├── page-header/         cabeçalho das páginas
 │       └── pagination/          paginação independente da feature
@@ -141,6 +142,12 @@ O serviço HTTP faz o transporte e converte o envelope da API. O store orquestra
 estado, carregamento, filtros, paginação e mutações. Componentes ficam
 responsáveis por eventos e exibição.
 
+Erros de carregamento pertencem ao estado da listagem e aparecem no card de
+feedback. Erros de mutações, como cadastrar, editar ou alterar status, retornam
+ao componente e aparecem em snackbar; eles não substituem a tabela por uma
+mensagem de falha de carregamento. Resultados cancelados de diálogos devem ser
+validados antes de iniciar qualquer chamada HTTP.
+
 ## Angular Material
 
 Angular Material usa o tema `azure-blue` configurado no `angular.json`.
@@ -150,6 +157,22 @@ componente standalone, evitando um módulo global com toda a biblioteca.
 Customizações devem usar primeiro o sistema de temas e as variáveis próprias da
 aplicação. `::ng-deep` deve ser evitado porque cria acoplamento com detalhes
 internos dos componentes.
+
+O layout adota densidade compacta para priorizar os dados operacionais: toolbar
+de 48px, contexto, título e descrição na mesma linha, filtros de 36px, linhas de
+tabela de 34px e paginador de 40px. Estados de hover, bordas e contraste mantêm
+a leitura clara com menos espaço. Em telas estreitas, os componentes voltam a
+empilhar os controles para preservar legibilidade e área de toque.
+
+Tabelas usam separadores suaves, colunas numéricas alinhadas, códigos em fonte
+monoespaçada com truncamento e tooltip, além de ações compactas com descrição.
+Formulários em diálogo definem a largura pelo `MatDialog`, nunca pelo conteúdo
+interno, evitando rolagem horizontal e mantendo cabeçalho e ações consistentes.
+
+`PortuguesePaginatorIntl` traduz rótulos, navegação e intervalos de todas as
+paginações. Confirmações de ações não usam `window.confirm`: devem abrir
+`ConfirmationDialog`, mantendo aparência, acessibilidade e textos consistentes
+com o restante da aplicação.
 
 Documentação oficial: <https://material.angular.dev/>.
 

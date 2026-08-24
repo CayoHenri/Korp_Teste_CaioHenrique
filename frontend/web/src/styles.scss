@@ -1,11 +1,16 @@
 :root {
   color-scheme: light;
-  --app-background: #f6f7fb;
+  --app-background: #f4f7fb;
   --app-surface: #ffffff;
-  --app-border: #dfe3eb;
-  --app-text: #1b1b1f;
-  --app-muted: #5f6368;
-  --app-primary: #005cbb;
+  --app-surface-muted: #f8fafc;
+  --app-border: #dce3ed;
+  --app-text: #172033;
+  --app-muted: #64748b;
+  --app-primary: #1769d2;
+  --app-primary-hover: #0f56b3;
+  --app-primary-soft: #e8f1ff;
+  --app-shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
+  --app-shadow-md: 0 10px 30px rgb(15 23 42 / 10%);
   font-family: Roboto, ui-sans-serif, system-ui, sans-serif;
   background: var(--app-background);
   color: var(--app-text);
@@ -19,7 +24,52 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: var(--app-background);
+  background:
+    radial-gradient(circle at 15% 0%, rgb(219 234 254 / 45%), transparent 28rem),
+    var(--app-background);
+}
+
+.mat-mdc-card {
+  border-color: var(--app-border);
+  background: color-mix(in srgb, var(--app-surface) 96%, transparent);
+}
+
+.mat-mdc-button-base {
+  border-radius: 0.55rem !important;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.mat-mdc-unelevated-button:not(:disabled) {
+  background: linear-gradient(135deg, var(--app-primary), #0879df);
+  box-shadow: 0 4px 12px rgb(23 105 210 / 18%);
+}
+
+.mat-mdc-unelevated-button:not(:disabled):hover {
+  background: linear-gradient(135deg, var(--app-primary-hover), var(--app-primary));
+}
+
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-container-shape: 0.5rem;
+  --mdc-outlined-text-field-outline-color: #cbd5e1;
+  --mdc-outlined-text-field-hover-outline-color: #94a3b8;
+}
+
+.mat-mdc-dialog-surface {
+  border: 1px solid var(--app-border);
+  border-radius: 1rem !important;
+  box-shadow: var(--app-shadow-md) !important;
+}
+
+.mat-mdc-snack-bar-container .mdc-snackbar__surface {
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 0.75rem !important;
+  box-shadow: var(--app-shadow-md);
+}
+
+.error-snackbar .mdc-snackbar__surface {
+  background: #9f1239 !important;
+  color: white !important;
 }
 
 button,

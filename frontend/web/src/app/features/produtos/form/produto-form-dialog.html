@@ -1,8 +1,17 @@
-<h2 mat-dialog-title>{{ editando ? 'Editar produto' : 'Novo produto' }}</h2>
+<header class="dialog-header">
+  <span class="dialog-header__icon" aria-hidden="true">
+    <mat-icon>{{ editando ? 'edit' : 'add_box' }}</mat-icon>
+  </span>
+  <div>
+    <span class="dialog-header__eyebrow">Estoque</span>
+    <h2 mat-dialog-title>{{ editando ? 'Editar produto' : 'Novo produto' }}</h2>
+    <p>{{ editando ? 'Atualize os dados permitidos do produto.' : 'Preencha os dados do novo produto.' }}</p>
+  </div>
+</header>
 
 <mat-dialog-content>
   <form id="produto-form" class="produto-form" [formGroup]="form" (ngSubmit)="salvar()">
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="full-row">
       <mat-label>Código</mat-label>
       <input matInput formControlName="codigo" autocomplete="off" />
       @if (form.controls.codigo.hasError('required')) {

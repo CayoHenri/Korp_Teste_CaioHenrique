@@ -1,15 +1,15 @@
 <form class="filters" [formGroup]="form" (ngSubmit)="filtrar()">
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Código</mat-label>
     <input matInput formControlName="codigo" autocomplete="off" />
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Descrição</mat-label>
     <input matInput formControlName="descricao" autocomplete="off" />
   </mat-form-field>
 
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>Status</mat-label>
     <mat-select formControlName="ativo">
       <mat-option [value]="null">Todos</mat-option>

@@ -263,6 +263,20 @@ cliente web autorizado, não apenas para `ng serve`. Novas origens precisam ser
 declaradas explicitamente no ambiente; preflights de origens desconhecidas
 recebem HTTP 403.
 
+## ADR-024 — Sistema visual compacto e confirmações Material
+
+**Status:** aceita.
+
+**Decisão:** componentes usam uma identidade visual global baseada em variáveis
+de cor, superfícies, sombras e densidade compacta. Paginações do Angular Material
+são traduzidas globalmente para português. Perguntas de confirmação usam o
+componente compartilhado `ConfirmationDialog`, nunca caixas nativas do browser.
+
+**Consequências:** telas exibem mais informação sem perder hierarquia visual e
+novas features herdam paginação e diálogos consistentes. Alterações de identidade
+visual devem começar nas variáveis globais; estilos locais ficam reservados às
+necessidades específicas de cada componente.
+
 ## Decisões adiadas
 
 - integração HTTP das Notas Fiscais no frontend Angular;

@@ -8,13 +8,17 @@
   position: sticky;
   z-index: 10;
   top: 0;
+  box-shadow: 0 1px 8px rgb(15 23 42 / 5%);
 }
 
 mat-toolbar {
-  min-height: 4.5rem;
-  gap: 2rem;
+  min-height: 3rem;
+  height: 3rem;
+  gap: 1rem;
+  padding-inline: 0.75rem;
   border-bottom: 1px solid var(--app-border);
-  background: var(--app-surface);
+  background: rgb(255 255 255 / 88%);
+  backdrop-filter: blur(14px);
 }
 
 nav {
@@ -28,25 +32,26 @@ nav a {
 }
 
 .active-link {
-  background: color-mix(in srgb, var(--app-primary) 10%, transparent);
+  background: var(--app-primary-soft);
   color: var(--app-primary);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
   color: inherit;
   text-decoration: none;
 }
 
 .brand__mark {
   display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
   place-items: center;
   border-radius: 0.65rem;
-  background: var(--app-primary);
+  background: linear-gradient(145deg, var(--app-primary), #0b87e8);
+  box-shadow: 0 5px 14px rgb(23 105 210 / 22%);
   color: white;
   font-weight: 800;
 }
@@ -57,30 +62,30 @@ nav a {
 }
 
 .brand small {
-  color: var(--app-muted);
-  font-size: 0.72rem;
+  display: none;
 }
 
 .app-content {
-  width: min(1180px, calc(100% - 2rem));
+  width: min(1240px, calc(100% - 1.5rem));
   margin: 0 auto;
-  padding: 2rem 0 3rem;
+  padding: 0.75rem 0 1.5rem;
 }
 
 .app-footer {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem max(1rem, calc((100% - 1180px) / 2));
+  padding: 0.625rem max(1rem, calc((100% - 1240px) / 2));
   border-top: 1px solid var(--app-border);
   color: var(--app-muted);
-  font-size: 0.8rem;
+  background: rgb(255 255 255 / 55%);
+  font-size: 0.75rem;
 }
 
 @media (max-width: 640px) {
   .app-content {
     width: min(100% - 1rem, 1180px);
-    padding-top: 1rem;
+    padding-top: 0.75rem;
   }
 
   mat-toolbar {
