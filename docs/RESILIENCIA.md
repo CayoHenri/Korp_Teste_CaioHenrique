@@ -20,6 +20,29 @@ um evento e o processamento continua pelos workers e pelo RabbitMQ.
 
 ## Decisões adotadas
 
+### Topologia RabbitMQ
+
+| Recurso | Nome | Uso |
+|---|---|---|
+| Exchange principal | `korp.events` | Eventos válidos e retorno de retries |
+| Exchange de erro | `korp.events.dlx` | Encaminhamento para DLQ |
+| Fila principal | `estoque.baixa.solicitada` | Solicitações consumidas pelo Estoque |
+| Retry | `estoque.baixa.solicitada.retry` | Falhas técnicas da solicitação |
+| DLQ | `estoque.baixa.solicitada.dlq` | Solicitações inválidas ou esgotadas |
+| Fila principal | `faturamento.baixa.resultado` | Resultados consumidos pelo Faturamento |
+| Retry | `faturamento.baixa.resultado.retry` | Falhas técnicas do resultado |
+| DLQ | `faturamento.baixa.resultado.dlq` | Resultados inválidos ou esgotados |
+
+Routing keys de negócio:
+
+```text
+estoque.baixa.solicitada
+estoque.baixa.realizada
+estoque.baixa.rejeitada
+```
+
+As mensagens são persistentes e os publishers aguardam confirmação do broker.
+
 ### Outbox transacional
 
 A mudança de estado da nota e a criação do evento acontecem na mesma transação
@@ -50,6 +73,10 @@ processa a operação, mas perde a conexão antes de confirmar o `Ack`.
 Para impedir efeitos duplicados, os identificadores das mensagens processadas
 são persistidos. Uma mensagem repetida é reconhecida e não baixa o estoque nem
 altera a nota novamente.
+
+No Estoque, a chave é o `eventId` da solicitação. No Faturamento, o
+`correlationId` relaciona o resultado à solicitação original. O registro de
+idempotência participa da mesma transação do efeito de negócio.
 
 ### DLQ para mensagens inválidas
 
@@ -88,6 +115,11 @@ infinito consumindo CPU e gerando logs repetidos.
 O Estoque possui uma fila de retry para solicitações de baixa. O Faturamento
 possui uma fila de retry para os resultados, independentemente de o resultado
 ser sucesso ou rejeição.
+
+O header `x-retry-count` acompanha a quantidade de tentativas. A mensagem recebe
+uma expiração igual a `RABBITMQ_MESSAGE_RETRY_DELAY`; ao expirar, a configuração
+de dead letter da fila de retry devolve a mensagem à fila principal. Quando o
+contador alcança o limite, a publicação ocorre na exchange de erro.
 
 ## Simplificações conscientes
 

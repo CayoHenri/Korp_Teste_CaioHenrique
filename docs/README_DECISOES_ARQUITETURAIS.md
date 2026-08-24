@@ -1,872 +1,198 @@
-# Decisões Arquiteturais
+# Decisões arquiteturais
 
-## 1. Objetivo
+Este documento registra escolhas implementadas e seus efeitos. Os registros
+usam um formato ADR simplificado: contexto, decisão e consequências.
 
-Este documento registra as principais decisões arquiteturais tomadas para o projeto de emissão de notas fiscais.
+## ADR-001 — Dois microsserviços em monorepo
 
-O objetivo é deixar explícito:
+**Status:** aceita.
 
-- o contexto de cada decisão;
-- a alternativa escolhida;
-- as alternativas rejeitadas;
-- as consequências da decisão;
-- os possíveis caminhos de evolução.
+**Contexto:** Estoque e Faturamento possuem regras e dados distintos, mas a
+entrega e a avaliação ocorrem como um único projeto.
 
-O formato segue uma abordagem simplificada de **Architecture Decision Records (ADR)**.
+**Decisão:** manter dois módulos Go independentes em `services/estoque` e
+`services/faturamento`, no mesmo repositório.
 
----
+**Consequências:** responsabilidades e dependências ficam isoladas; execução e
+documentação permanecem simples. A integração e a consistência eventual elevam
+a complexidade em relação a um monólito.
 
-# ADR-001 — Utilizar dois microsserviços
+## ADR-002 — Go, Gin e Clean Architecture pragmática
 
-## Status
+**Status:** aceita.
 
-Aceita.
+**Decisão:** usar Go com Gin na borda HTTP e organizar cada serviço em domain,
+application, infrastructure e presentation.
 
-## Contexto
+**Consequências:** domínio e use cases não dependem do framework. A estrutura
+cria mais arquivos, mas cada responsabilidade tem localização previsível. Não
+são criadas abstrações que não protejam uma fronteira real.
 
-O desafio exige no mínimo:
+## ADR-003 — PostgreSQL compartilhado com schemas exclusivos
 
-- Serviço de Estoque;
-- Serviço de Faturamento.
+**Status:** aceita para o escopo local.
 
-Os domínios possuem responsabilidades diferentes.
+**Decisão:** usar uma instância e dois schemas, `estoque` e `faturamento`.
 
-## Decisão
+**Restrição:** acesso cruzado às tabelas não é permitido. Integração ocorre por
+HTTP ou evento.
 
-Criar dois microsserviços independentes:
+**Consequências:** menor custo operacional com isolamento lógico. Não existe
+isolamento físico; uma evolução pode mover os schemas para bancos diferentes.
 
-```text
-estoque-service
-faturamento-service
-```
+## ADR-004 — GORM sem AutoMigrate
 
-## Responsabilidades
+**Status:** aceita.
 
-### Estoque
+**Decisão:** GORM implementa repositórios e transações. Models ficam na
+infraestrutura e são convertidos explicitamente para entidades.
 
-- produtos;
-- saldos;
-- movimentações;
-- baixa de estoque;
-- concorrência;
-- idempotência da baixa.
+**Consequências:** reduz código SQL repetitivo sem acoplar o domínio. Alterações
+de schema não podem acontecer implicitamente pela API.
 
-### Faturamento
+## ADR-005 — Migrations SQL com golang-migrate
 
-- notas fiscais;
-- numeração;
-- itens;
-- estado da nota;
-- fechamento;
-- coordenação da emissão.
+**Status:** aceita.
 
-## Consequências positivas
+**Decisão:** cada módulo mantém pares `up` e `down` e um comando próprio de
+migration. No Docker, migrations rodam em containers de execução única.
 
-- separação de responsabilidades;
-- baixo acoplamento;
-- maior clareza do domínio;
-- facilita demonstrar arquitetura de microsserviços.
+**Consequências:** histórico auditável e startup da API sem alteração de schema.
+O autor precisa manter reversões coerentes e controlar estados `dirty`.
 
-## Consequências negativas
+## ADR-006 — Configuração explícita, sem fallback
 
-- aumenta complexidade de integração;
-- exige lidar com falhas parciais;
-- exige consistência eventual.
+**Status:** aceita.
 
----
+**Decisão:** toda variável necessária é validada. Ausência ou formato inválido
+interrompe o processo. `.env.example` documenta o contrato.
 
-# ADR-002 — Utilizar Go no backend
+**Consequências:** erros de ambiente aparecem cedo e não há conexão silenciosa
+com recursos incorretos. A execução exige preparação do `.env`.
 
-## Status
+## ADR-007 — HTTP para consulta e RabbitMQ para fechamento
 
-Aceita.
+**Status:** aceita.
 
-## Contexto
+**Decisão:** HTTP atende operações que precisam de resposta imediata. RabbitMQ
+transporta solicitação e resultado da baixa.
 
-O desafio permite backend em Go ou C#.
+**Consequências:** criação de nota falha rapidamente se o Estoque não puder
+validar produtos. Depois que o fechamento é aceito, Estoque e Faturamento não
+precisam estar disponíveis ao mesmo tempo.
 
-## Decisão
+## ADR-008 — Estado PROCESSANDO
 
-Utilizar Go.
+**Status:** aceita.
 
-## Motivos
+**Contexto:** existe tempo entre solicitar baixa e receber o resultado.
 
-- baixo overhead;
-- bom suporte para concorrência;
-- fácil containerização;
-- ecossistema maduro para HTTP;
-- excelente integração com PostgreSQL;
-- bom suporte para RabbitMQ;
-- tratamento explícito de erros.
+**Decisão:** usar `ABERTA`, `PROCESSANDO` e `FECHADA`.
 
-## Framework HTTP
+**Consequências:** o sistema representa a consistência eventual e impede edição
+ou nova solicitação durante o processamento. O cliente precisa acompanhar o
+resultado depois da resposta inicial.
 
-Preferência:
+## ADR-009 — Transactional Outbox
 
-```text
-Gin
-```
+**Status:** aceita.
 
-## Consequências
+**Decisão:** status `PROCESSANDO` e evento são persistidos na mesma transação. Um
+worker publica registros pendentes e aguarda confirmação do RabbitMQ.
 
-A aplicação continuará estruturada para não depender do Gin no domínio.
+**Consequências:** evita nota processando sem solicitação persistida. Ainda pode
+haver publicação duplicada entre a confirmação do broker e `published_at`, por
+isso idempotência continua obrigatória.
 
----
+## ADR-010 — Entrega pelo menos uma vez e idempotência
 
-# ADR-003 — Utilizar Angular no frontend
+**Status:** aceita.
 
-## Status
+**Decisão:** consumidores registram identificadores processados na mesma
+transação do efeito de negócio.
 
-Aceita.
+**Consequências:** reentrega não duplica baixa ou transição. Há armazenamento e
+lógica adicionais, mas não se promete “exactly once”, que seria inadequado para
+esse fluxo distribuído.
 
-## Contexto
+## ADR-011 — Concorrência resolvida no PostgreSQL
 
-Angular é requisito explícito do desafio.
+**Status:** aceita.
 
-## Decisão
+**Decisão:** baixa usa atualização atômica condicionada a saldo suficiente, na
+mesma transação das movimentações e idempotência.
 
-Utilizar Angular com:
+**Consequências:** duas notas concorrentes não tornam saldo negativo. A regra
+permanece no domínio e a garantia de corrida fica na persistência.
 
-- Reactive Forms;
-- HttpClient;
-- RxJS;
-- Angular Material.
+## ADR-012 — Retry fixo, limitado e DLQ
 
-## Justificativa
+**Status:** aceita.
 
-Essa combinação permite demonstrar claramente os pontos solicitados na apresentação técnica:
+**Decisão:** falhas temporárias passam por fila de retry com atraso fixo e limite
+configurável. Mensagens inválidas, terminais ou esgotadas seguem para DLQ.
 
-- ciclos de vida;
-- uso de RxJS;
-- bibliotecas adicionais;
-- biblioteca visual.
+**Consequências:** evita loop quente e mantém a solução compreensível. Backoff
+exponencial e múltiplas filas foram evitados por excederem o escopo atual.
 
----
+## ADR-013 — Produto inativo em vez de exclusão
 
-# ADR-004 — Utilizar PostgreSQL
+**Status:** aceita.
 
-## Status
+**Decisão:** produtos são ativados ou inativados; não existe endpoint de delete.
 
-Aceita.
+**Consequências:** notas e movimentações preservam rastreabilidade. Consultas e
+criação de notas precisam considerar o estado ativo.
 
-## Contexto
+## ADR-014 — Snapshot do produto na nota
 
-O desafio exige conexão real com banco.
+**Status:** aceita.
 
-## Decisão
+**Decisão:** item guarda ID, código, descrição e valor unitário obtidos do
+Estoque durante criação ou edição.
 
-Utilizar PostgreSQL.
+**Consequências:** histórico não muda junto ao cadastro. Existe duplicação
+intencional e não há foreign key cruzando schemas.
 
-## Motivos
+## ADR-015 — Valores monetários em ponto flutuante
 
-- banco relacional consolidado;
-- bom suporte a transações;
-- constraints;
-- JSONB;
-- UUID;
-- locking;
-- concorrência;
-- excelente suporte em Go;
-- simples de executar via Docker.
+**Status:** aceita por requisito de implementação.
 
----
+**Decisão:** produto, item e totais usam valor decimal representado em ponto
+flutuante, sem o antigo sufixo `em_centavos`.
 
-# ADR-005 — Compartilhar a mesma instância física do PostgreSQL
+**Consequências:** API mais direta para o exercício. Em um sistema fiscal real,
+`NUMERIC`/decimal ou inteiros em unidade mínima seriam preferíveis para evitar
+imprecisão binária.
 
-## Status
+## ADR-016 — Swagger versionado
 
-Aceita para o desafio técnico.
+**Status:** aceita.
 
-## Contexto
+**Decisão:** anotações Gin geram OpenAPI e Swagger UI em cada serviço; artefatos
+gerados ficam versionados.
 
-Uma implantação completa de microsserviços normalmente tende a utilizar isolamento físico maior de dados.
+**Consequências:** contrato pode ser consultado sem instalar o gerador. Mudanças
+de handlers exigem regeneração explícita.
 
-Entretanto, para um desafio técnico pequeno, manter duas instâncias PostgreSQL aumenta a infraestrutura sem necessariamente agregar valor proporcional.
+## ADR-017 — Docker Compose completo
 
-## Decisão
+**Status:** aceita.
 
-Usar uma única instância física:
+**Decisão:** imagens multi-stage e sem root, migrations separadas, health checks
+e dependências explícitas.
 
-```text
-postgres
-```
+**Consequências:** o projeto sobe com poucos comandos e reproduz a topologia. A
+primeira compilação consome mais tempo e recursos que a execução local direta.
 
-com um banco:
+## Decisões adiadas
 
-```text
-korp_db
-```
+- frontend Angular;
+- autenticação e autorização;
+- API Gateway;
+- métricas, tracing e agregação de logs;
+- múltiplas instâncias do worker de Outbox;
+- bancos físicos separados;
+- geração de documento fiscal ou integração governamental.
 
-e dois schemas:
-
-```text
-estoque
-faturamento
-```
-
-## Regra
-
-Cada microsserviço é proprietário de seu schema.
-
-O Faturamento não manipula tabelas de Estoque.
-
-O Estoque não manipula tabelas de Faturamento.
-
-## Consequência
-
-Existe isolamento lógico, mas não isolamento físico.
-
-## Evolução futura
-
-Migrar facilmente para:
-
-```text
-estoque_db
-faturamento_db
-```
-
-sem alterar o modelo de comunicação entre os serviços.
-
----
-
-# ADR-006 — Utilizar RabbitMQ
-
-## Status
-
-Aceita.
-
-## Contexto
-
-O fechamento de uma nota exige baixa de estoque.
-
-Poderíamos usar HTTP síncrono ou mensageria.
-
-## Decisão
-
-Utilizar RabbitMQ para comunicação entre Faturamento e Estoque no fluxo de fechamento.
-
-## Motivos
-
-- desacoplamento temporal;
-- possibilidade de recuperação após indisponibilidade;
-- filas persistentes;
-- acknowledgements;
-- retries;
-- suporte a DLQ;
-- simples execução via Docker.
-
-## Alternativa rejeitada
-
-HTTP síncrono como única forma de integração.
-
-### Problema
-
-Se Estoque estiver indisponível:
-
-```text
-Faturamento -> Estoque -> falha
-```
-
-a operação inteira precisa ser tratada imediatamente.
-
-Com RabbitMQ, a mensagem pode aguardar o retorno do consumidor.
-
----
-
-# ADR-007 — Utilizar comunicação HTTP e mensageria
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Nem toda comunicação utilizará RabbitMQ.
-
-### HTTP
-
-Utilizado para operações que precisam de resposta direta ao frontend:
-
-```text
-cadastrar produto
-listar produto
-criar nota
-consultar nota
-```
-
-### RabbitMQ
-
-Utilizado para integração assíncrona:
-
-```text
-solicitar baixa
-confirmar baixa
-rejeitar baixa
-```
-
-## Motivo
-
-Evita aplicar mensageria onde ela não traz benefício real.
-
----
-
-# ADR-008 — Não permitir acesso cruzado entre schemas
-
-## Status
-
-Aceita.
-
-## Contexto
-
-Como os serviços usam a mesma instância PostgreSQL, tecnicamente seria possível um serviço consultar as tabelas do outro.
-
-## Decisão
-
-Proibir esse acoplamento.
-
-## Exemplo não permitido
-
-```sql
-SELECT *
-FROM estoque.produtos;
-```
-
-executado pelo Faturamento.
-
-## Forma correta
-
-```text
-Faturamento
-    |
-    +-- API ou evento
-           |
-           v
-        Estoque
-```
-
-## Motivo
-
-Preserva a autonomia dos microsserviços.
-
----
-
-# ADR-009 — Utilizar estado interno PROCESSANDO
-
-## Status
-
-Aceita.
-
-## Contexto
-
-O desafio define:
-
-- Aberta;
-- Fechada.
-
-Entretanto, a comunicação assíncrona cria um intervalo entre solicitação e conclusão.
-
-## Decisão
-
-Utilizar internamente:
-
-```text
-ABERTA
-PROCESSANDO
-FECHADA
-```
-
-## Fluxo
-
-```text
-ABERTA
-   |
-   v
-PROCESSANDO
-   |
-   +-- sucesso --> FECHADA
-   |
-   +-- erro ----> ABERTA
-```
-
-## Motivo
-
-Permite:
-
-- impedir dupla solicitação;
-- exibir loading corretamente;
-- representar operação assíncrona;
-- identificar notas presas.
-
----
-
-# ADR-010 — Utilizar Transactional Outbox
-
-## Status
-
-Aceita.
-
-## Contexto
-
-Salvar no PostgreSQL e publicar no RabbitMQ são operações independentes.
-
-Existe risco de:
-
-```text
-commit banco OK
-publicação RabbitMQ falha
-```
-
-## Decisão
-
-Persistir o evento na mesma transação da nota.
-
-Exemplo:
-
-```text
-BEGIN
-
-UPDATE notas_fiscais ...
-INSERT INTO outbox_events ...
-
-COMMIT
-```
-
-Um worker publica posteriormente.
-
-## Benefício
-
-Reduz o risco de perda de mensagens.
-
----
-
-# ADR-011 — Implementar idempotência
-
-## Status
-
-Aceita.
-
-## Contexto
-
-Mensageria normalmente opera com entrega "at least once".
-
-Isso significa que uma mensagem pode ser consumida mais de uma vez.
-
-## Problema
-
-Sem idempotência:
-
-```text
-saldo 10
-
-mensagem 1:
-10 -> 8
-
-mesma mensagem novamente:
-8 -> 6
-```
-
-## Decisão
-
-Registrar IDs processados.
-
-```text
-estoque.mensagens_processadas
-```
-
-## Resultado
-
-A mesma mensagem não produz um segundo efeito.
-
----
-
-# ADR-012 — Controle de concorrência no PostgreSQL
-
-## Status
-
-Aceita.
-
-## Contexto
-
-O desafio apresenta como cenário opcional:
-
-```text
-saldo = 1
-
-nota A usa 1
-nota B usa 1
-```
-
-## Decisão
-
-Utilizar atualização atômica:
-
-```sql
-UPDATE estoque.produtos
-SET saldo = saldo - $1
-WHERE id = $2
-  AND saldo >= $1;
-```
-
-## Interpretação
-
-```text
-RowsAffected = 1
-    sucesso
-
-RowsAffected = 0
-    saldo insuficiente
-```
-
-## Benefício
-
-Evita saldo negativo.
-
----
-
-# ADR-013 — Utilizar monorepo
-
-## Status
-
-Aceita.
-
-## Contexto
-
-Embora os serviços sejam separados logicamente, o projeto será avaliado como uma única entrega.
-
-## Decisão
-
-Utilizar monorepo.
-
-```text
-Korp_Teste_CaioHenrique/
-|
-+-- frontend/
-+-- services/
-|   +-- estoque/
-|   +-- faturamento/
-+-- infrastructure/
-+-- docs/
-```
-
-## Motivos
-
-- facilidade de clonagem;
-- facilidade de avaliação;
-- Docker Compose centralizado;
-- documentação única;
-- entrega simples.
-
----
-
-# ADR-014 — Cada serviço possui seu próprio módulo Go
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Cada serviço possuirá seu próprio:
-
-```text
-go.mod
-go.sum
-```
-
-Exemplo:
-
-```text
-services/estoque/go.mod
-services/faturamento/go.mod
-```
-
-## Benefícios
-
-- dependências independentes;
-- maior isolamento;
-- possibilidade de deploy independente;
-- evita acoplamento acidental.
-
----
-
-# ADR-015 — Estrutura interna inspirada em Clean Architecture
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Utilizar:
-
-```text
-domain
-application
-infrastructure
-presentation
-```
-
-## Responsabilidades
-
-### domain
-
-Regras de negócio.
-
-### application
-
-Casos de uso e orquestração.
-
-### infrastructure
-
-PostgreSQL, RabbitMQ, clientes externos.
-
-### presentation
-
-HTTP, handlers, requests e responses.
-
-## Observação
-
-A estrutura será pragmática.
-
-Não será criada abstração apenas por abstração.
-
----
-
-# ADR-016 — Angular Material para componentes visuais
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Utilizar Angular Material.
-
-## Componentes esperados
-
-```text
-MatTable
-MatFormField
-MatInput
-MatButton
-MatSelect
-MatIcon
-MatDialog
-MatSnackBar
-MatProgressSpinner
-```
-
-## Motivo
-
-Permite construir rapidamente uma UI consistente e profissional.
-
----
-
-# ADR-017 — RxJS para operações assíncronas
-
-## Status
-
-Aceita.
-
-## Aplicações
-
-- requisições HTTP;
-- loading;
-- tratamento de erro;
-- composição de streams;
-- `finalize`;
-- `switchMap` quando apropriado;
-- cancelamento automático de subscriptions.
-
-## Exemplo
-
-```typescript
-this.service.fechar(id)
-  .pipe(
-    finalize(() => this.loading = false)
-  )
-  .subscribe(...);
-```
-
----
-
-# ADR-018 — Docker Compose para ambiente local
-
-## Status
-
-Aceita.
-
-## Decisão
-
-A infraestrutura será executável com Docker Compose.
-
-Serviços previstos:
-
-```text
-postgres
-rabbitmq
-estoque-service
-faturamento-service
-frontend
-```
-
-## Benefício
-
-O avaliador consegue subir o projeto com poucos comandos.
-
----
-
-# ADR-019 — Não utilizar Kafka
-
-## Status
-
-Rejeitada.
-
-## Motivo
-
-Kafka seria tecnicamente possível, mas adicionaria complexidade desnecessária para o tamanho do projeto.
-
-RabbitMQ atende melhor ao caso de:
-
-- comandos;
-- filas;
-- processamento assíncrono;
-- retries;
-- mensagens de integração.
-
----
-
-# ADR-020 — IA não será prioridade
-
-## Status
-
-Adiada.
-
-## Contexto
-
-IA é opcional.
-
-## Decisão
-
-Priorizar:
-
-1. microsserviços;
-2. falhas;
-3. concorrência;
-4. idempotência;
-5. qualidade arquitetural.
-
-## Motivo
-
-Esses itens possuem relação direta com o problema de negócio e demonstram melhor maturidade técnica.
-
----
-
-# ADR-021 — Utilizar GORM para persistência
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Utilizar GORM nos repositórios, consultas e transações dos microsserviços Go.
-
-O domínio e os casos de uso não dependerão diretamente do GORM. Os models e a
-implementação concreta dos repositórios permanecerão na infraestrutura.
-
-## Restrição
-
-Não utilizar `AutoMigrate`. A evolução do schema deve ser explícita e versionada.
-
----
-
-# ADR-022 — Utilizar golang-migrate
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Cada microsserviço possuirá migrations SQL `up` e `down` próprias, controladas
-por um comando separado baseado em `golang-migrate`.
-
-## Motivos
-
-- histórico de alterações auditável;
-- aplicação e reversão controladas;
-- separação entre inicialização da API e alteração de schema;
-- compatibilidade com execução local, CI e deploy.
-
----
-
-# ADR-023 — Documentar APIs com Swagger/OpenAPI
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Gerar a especificação Swagger a partir de anotações nos endpoints Gin e expor
-uma interface Swagger UI em cada microsserviço.
-
-Os artefatos gerados serão versionados para que o contrato possa ser consultado
-sem exigir o gerador durante a execução da aplicação.
-
----
-
-# ADR-024 — Exigir configuração explícita
-
-## Status
-
-Aceita.
-
-## Decisão
-
-Variáveis necessárias não possuirão fallback no código nem no Docker Compose.
-A aplicação deve falhar imediatamente quando uma configuração obrigatória
-estiver ausente ou vazia.
-
-O carregamento e a validação de configuração pertencem à infraestrutura.
-
-## Motivo
-
-Evitar conexões silenciosas com banco, porta ou credenciais incorretas e tornar
-o contrato de execução explícito por meio do `.env.example`.
-
----
-
-# Resumo das decisões
-
-| Decisão | Escolha |
-|---|---|
-| Frontend | Angular |
-| UI | Angular Material |
-| Backend | Go |
-| HTTP | Gin |
-| Persistência Go | GORM |
-| Evolução do schema | golang-migrate |
-| Documentação HTTP | Swagger/OpenAPI |
-| Configuração | Variáveis obrigatórias, sem fallback |
-| Banco | PostgreSQL |
-| Separação de dados | Schemas |
-| Mensageria | RabbitMQ |
-| Comunicação crítica | Assíncrona |
-| Persistência de eventos | Transactional Outbox |
-| Idempotência | Event ID |
-| Concorrência | UPDATE atômico |
-| Organização | Monorepo |
-| Infra local | Docker Compose |
-| Arquitetura interna | Clean Architecture pragmática |
-
----
-
-# Princípio principal
-
-A principal diretriz da arquitetura é:
-
-> Mesmo compartilhando infraestrutura física, cada microsserviço continua sendo proprietário de seus dados e de suas regras de negócio.
-
-Isso permite manter uma solução simples para o desafio sem abandonar os princípios fundamentais de uma arquitetura distribuída.
+Itens adiados não devem ser lidos como parte implementada da solução atual.

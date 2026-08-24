@@ -1,961 +1,210 @@
-# Modelo de Domínio
+# Modelo de domínio
 
-## 1. Objetivo
-
-Este documento descreve o modelo de domínio inicial do sistema de emissão de notas fiscais.
-
-O modelo foi derivado diretamente dos requisitos do desafio e complementado apenas com estruturas técnicas necessárias para suportar:
-
-- microsserviços;
-- processamento assíncrono;
-- falhas;
-- concorrência;
-- idempotência.
-
-Os dois contextos principais são:
-
-```text
-Estoque
-Faturamento
-```
-
----
-
-# 2. Bounded Contexts
-
-## 2.1 Estoque
-
-Responsável por:
-
-- Produto;
-- Saldo;
-- Baixa de estoque;
-- Movimentação;
-- Concorrência;
-- Idempotência de processamento.
-
-## 2.2 Faturamento
-
-Responsável por:
-
-- Nota Fiscal;
-- Numeração;
-- Itens;
-- Estado da nota;
-- Processo de fechamento.
+## Contextos delimitados
 
 ```mermaid
 flowchart LR
-    F[Faturamento] -->|Solicitação de baixa| M[Mensageria]
+    F[Faturamento] -->|solicitação de baixa| M[Mensageria]
     M --> E[Estoque]
-
-    E -->|Resultado da baixa| M
+    E -->|resultado| M
     M --> F
 ```
 
----
-
-# 3. Contexto de Estoque
-
-## 3.1 Aggregate Root Produto
-
-Produto é a principal raiz de agregado do contexto de Estoque.
-
-Campos:
-
-```text
-Produto
-|
-+-- id
-+-- codigo
-+-- descricao
-+-- saldo
-+-- ativo
-+-- dataCadastro
-+-- dataAtualizacao
-```
-
-### Regras
-
-1. Código é obrigatório.
-2. Código deve ser único.
-3. Descrição é obrigatória.
-4. Saldo é obrigatório.
-5. Saldo não pode ser negativo.
-6. Uma baixa não pode resultar em saldo negativo.
-7. Um produto novo inicia ativo.
-8. Produtos não são excluídos; podem ser ativados ou inativados.
-9. Somente descrição e saldo podem ser atualizados pelo cadastro.
-10. A atualização valida todos os campos antes de alterar a entidade.
-
----
-
-## 3.2 Modelo conceitual
-
-```mermaid
-classDiagram
-    class Produto {
-        +UUID id
-        +string codigo
-        +string descricao
-        +int saldo
-        +bool ativo
-        +datetime dataCadastro
-        +datetime dataAtualizacao
-        +BaixarSaldo(quantidade)
-    }
-
-    class MovimentacaoEstoque {
-        +UUID id
-        +UUID produtoId
-        +TipoMovimentacao tipo
-        +int quantidade
-        +string referencia
-        +datetime dataMovimentacao
-    }
-
-    Produto "1" --> "*" MovimentacaoEstoque
-```
-
----
-
-# 4. Produto
-
-Exemplo conceitual em Go:
-
-```go
-type Produto struct {
-    id              uuid.UUID
-    codigo          string
-    descricao       string
-    saldo           int
-    dataCadastro    time.Time
-    dataAtualizacao time.Time
-}
-```
-
-A regra de saldo deve permanecer dentro do domínio ou do caso de uso responsável pela baixa.
-
-Exemplo:
-
-```go
-func (p *Produto) BaixarSaldo(quantidade int) error {
-    if quantidade <= 0 {
-        return ErrQuantidadeInvalida
-    }
-
-    if p.saldo < quantidade {
-        return ErrEstoqueInsuficiente
-    }
-
-    p.saldo -= quantidade
-    return nil
-}
-```
-
-Mesmo utilizando um `UPDATE` atômico no repositório para concorrência, a regra de negócio continua sendo:
-
-```text
-saldo final >= 0
-```
-
----
-
-# 5. Movimentação de estoque
-
-Movimentação é recomendada para rastreabilidade.
-
-Campos:
-
-```text
-MovimentacaoEstoque
-|
-+-- id
-+-- produtoId
-+-- tipo
-+-- quantidade
-+-- referencia
-+-- dataMovimentacao
-```
-
-Possível enum:
-
-```text
-ENTRADA
-SAIDA
-```
-
-Para o desafio, a principal movimentação será:
-
-```text
-SAIDA
-```
-
-originada pelo fechamento de uma nota fiscal.
-
-A referência pode ser o ID da Nota Fiscal.
-
----
-
-# 6. Idempotência no Estoque
-
-A idempotência não precisa fazer parte da entidade Produto.
-
-Ela é uma responsabilidade da camada de aplicação/infraestrutura que processa mensagens.
-
-Modelo técnico:
-
-```text
-MensagemProcessada
-|
-+-- eventId
-+-- processedAt
-```
-
-Objetivo:
-
-```text
-evento repetido
-    |
-    +-- já processado?
-          |
-          +-- sim -> nenhum novo efeito
-```
-
----
-
-# 7. Contexto de Faturamento
-
-## 7.1 Aggregate Root Nota Fiscal
-
-A Nota Fiscal é a raiz de agregado principal.
-
-Campos:
-
-```text
-NotaFiscal
-|
-+-- id
-+-- numero
-+-- status
-+-- nomeCliente
-+-- enderecoCliente
-+-- quantidadeTotal
-+-- valorTotal
-+-- itens
-+-- dataCadastro
-+-- dataAtualizacao
-+-- dataFechamento
-```
-
----
-
-# 8. Status da Nota Fiscal
-
-Estados funcionais exigidos pelo desafio:
-
-```text
-ABERTA
-FECHADA
-```
-
-Estado técnico recomendado:
-
-```text
-PROCESSANDO
-```
-
-Enum:
-
-```go
-type StatusNotaFiscal string
-
-const (
-    StatusAberta      StatusNotaFiscal = "ABERTA"
-    StatusProcessando StatusNotaFiscal = "PROCESSANDO"
-    StatusFechada     StatusNotaFiscal = "FECHADA"
-)
-```
-
----
-
-# 9. Regras da Nota Fiscal
-
-## Criação
-
-Toda nota nova deve:
-
-```text
-receber numeração sequencial
-iniciar como ABERTA
-```
-
-## Inclusão de itens
-
-Uma nota pode possuir múltiplos produtos.
-
-Cada item deve conter:
-
-```text
-produto
-quantidade
-```
-
-A quantidade deve ser maior que zero.
-
-## Impressão/fechamento
-
-Uma nota só pode iniciar fechamento quando:
-
-```text
-status == ABERTA
-```
-
-Após iniciar:
-
-```text
-ABERTA -> PROCESSANDO
-```
-
-Depois da confirmação do Estoque:
-
-```text
-PROCESSANDO -> FECHADA
-```
-
-Em caso de rejeição:
-
-```text
-PROCESSANDO -> ABERTA
-```
-
----
-
-# 10. Item da Nota Fiscal
-
-Modelo:
-
-```text
-ItemNotaFiscal
-|
-+-- id
-+-- produtoId
-+-- codigoProduto
-+-- descricaoProduto
-+-- quantidade
-+-- valor
-+-- valorTotal
-```
-
-O `produtoId` referencia logicamente o produto pertencente ao contexto de Estoque.
-
-Não existe foreign key obrigatória entre os schemas.
-
-Isso é intencional.
-
----
-
-# 11. Por que armazenar código e descrição no item?
-
-Mesmo que esses dados pertençam ao Produto, é útil manter um snapshot no item.
-
-Exemplo:
-
-```text
-Hoje:
-Produto 123 = "Mouse Gamer"
-
-Nota 100 foi fechada.
-
-Amanhã:
-Produto 123 = "Mouse Gamer RGB"
-```
-
-A nota antiga deveria continuar representando:
-
-```text
-Mouse Gamer
-```
-
-em vez de mudar historicamente junto com o cadastro do Produto.
-
-Essa decisão pode ser aplicada durante a criação ou fechamento da nota.
-
----
-
-# 12. Diagrama do domínio
-
-```mermaid
-classDiagram
-    direction LR
-
-    class Produto {
-        +UUID id
-        +string codigo
-        +string descricao
-        +int saldo
-        +BaixarSaldo()
-    }
-
-    class MovimentacaoEstoque {
-        +UUID id
-        +UUID produtoId
-        +int quantidade
-        +TipoMovimentacao tipo
-        +string referencia
-    }
-
-    class NotaFiscal {
-        +UUID id
-        +long numero
-        +StatusNotaFiscal status
-        +List~ItemNotaFiscal~ itens
-        +IniciarFechamento()
-        +ConfirmarFechamento()
-        +ReabrirAposFalha()
-    }
-
-    class ItemNotaFiscal {
-        +UUID id
-        +UUID produtoId
-        +string codigoProduto
-        +string descricaoProduto
-        +int quantidade
-    }
-
-    Produto "1" --> "*" MovimentacaoEstoque
-    NotaFiscal "1" *-- "1..*" ItemNotaFiscal
-```
-
----
-
-# 13. Relacionamento entre contextos
-
-É importante diferenciar relacionamento de domínio e relacionamento de banco.
-
-A Nota Fiscal contém:
-
-```text
-produtoId
-```
-
-mas o Faturamento não possui uma entidade Produto própria.
-
-```text
-Faturamento                        Estoque
-
-NotaFiscal                         Produto
-   |
-   +-- ItemNotaFiscal
-          |
-          +-- produtoId ----------> identificação lógica
-```
-
-A validação real do saldo acontece no Estoque.
-
----
-
-# 14. Fluxo de criação de produto
-
-```mermaid
-sequenceDiagram
-    participant UI as Angular
-    participant API as Estoque Service
-    participant DB as PostgreSQL
-
-    UI->>API: POST /produtos
-    API->>API: valida domínio
-    API->>DB: INSERT produto
-    DB-->>API: sucesso
-    API-->>UI: produto criado
-```
-
----
-
-# 15. Fluxo de criação de nota
-
-```mermaid
-sequenceDiagram
-    participant UI as Angular
-    participant FAT as Faturamento
-    participant DB as PostgreSQL
-
-    UI->>FAT: POST /notas-fiscais
-    FAT->>FAT: gera próxima numeração
-    FAT->>FAT: status ABERTA
-    FAT->>DB: INSERT nota + itens
-    DB-->>FAT: sucesso
-    FAT-->>UI: nota criada
-```
-
----
-
-# 16. Fluxo de fechamento
-
-```mermaid
-sequenceDiagram
-    participant UI as Angular
-    participant FAT as Faturamento
-    participant MQ as RabbitMQ
-    participant EST as Estoque
-    participant DB as PostgreSQL
-
-    UI->>FAT: fechar nota
-    FAT->>DB: status PROCESSANDO
-    FAT->>DB: outbox evento
-    FAT-->>UI: processamento iniciado
-
-    FAT->>MQ: estoque.baixa.solicitada
-    MQ->>EST: entrega evento
-
-    EST->>DB: baixa atômica
-    EST->>MQ: estoque.baixa.realizada
-
-    MQ->>FAT: resultado
-    FAT->>DB: status FECHADA
-```
-
----
-
-# 17. Fluxo com estoque insuficiente
-
-```mermaid
-sequenceDiagram
-    participant FAT as Faturamento
-    participant MQ as RabbitMQ
-    participant EST as Estoque
-    participant DB as PostgreSQL
-
-    FAT->>MQ: estoque.baixa.solicitada
-    MQ->>EST: mensagem
-    EST->>DB: tenta baixar saldo
-    DB-->>EST: saldo insuficiente
-    EST->>MQ: estoque.baixa.rejeitada
-    MQ->>FAT: rejeição
-    FAT->>FAT: retorna nota para ABERTA
-```
-
----
-
-# 18. Casos de uso — Estoque
-
-## CriarProduto
-
-Entrada:
-
-```text
-codigo
-descricao
-saldo
-```
-
-Saída:
-
-```text
-produto criado
-```
-
-Regras:
-
-- código obrigatório;
-- descrição obrigatória;
-- saldo não negativo.
-
----
-
-## ConsultarProduto
-
-Permite consultar:
-
-- por ID;
-- por código.
-
----
-
-## ListarProdutos
-
-Permite alimentar:
-
-- tela de produtos;
-- seleção de produtos na nota.
-
----
-
-## BaixarEstoque
-
-Entrada:
-
-```text
-notaFiscalId
-eventId
-itens[]
-```
-
-Responsabilidades:
-
-1. verificar idempotência;
-2. validar itens;
-3. garantir saldo;
-4. atualizar saldo;
-5. registrar movimentações;
-6. registrar eventId processado;
-7. publicar resultado.
-
----
-
-# 19. Casos de uso — Faturamento
-
-## CriarNotaFiscal
-
-Responsabilidades:
-
-1. gerar número sequencial;
-2. criar nota ABERTA;
-3. adicionar itens;
-4. persistir.
-
----
-
-## ConsultarNotaFiscal
-
-Retorna:
-
-- número;
-- status;
-- itens;
-- datas.
-
----
-
-## ListarNotasFiscais
-
-Utilizado na tela principal.
-
----
-
-## IniciarFechamentoNotaFiscal
-
-Responsabilidades:
-
-1. buscar nota;
-2. validar status ABERTA;
-3. alterar para PROCESSANDO;
-4. criar evento Outbox;
-5. persistir tudo na mesma transação.
-
----
-
-## ConfirmarBaixaEstoque
-
-Consumidor do evento:
-
-```text
-estoque.baixa.realizada
-```
-
-Responsabilidades:
-
-1. buscar nota;
-2. validar PROCESSANDO;
-3. alterar para FECHADA;
-4. registrar data de fechamento.
-
----
-
-## RejeitarBaixaEstoque
-
-Consumidor do evento:
-
-```text
-estoque.baixa.rejeitada
-```
-
-Responsabilidades:
-
-1. buscar nota;
-2. validar PROCESSANDO;
-3. retornar para ABERTA;
-4. armazenar motivo, caso desejado.
-
----
-
-# 20. Numeração sequencial
-
-A numeração deve ser sequencial.
-
-Opções possíveis no PostgreSQL:
-
-```text
-SEQUENCE
-IDENTITY
-tabela de controle
-```
-
-A opção mais simples é utilizar uma sequence dedicada:
-
-```sql
-CREATE SEQUENCE faturamento.nota_fiscal_numero_seq;
-```
-
-Durante a criação:
-
-```sql
-SELECT nextval('faturamento.nota_fiscal_numero_seq');
-```
-
-Isso evita problemas com:
-
-```sql
-SELECT MAX(numero) + 1
-```
-
-em cenários concorrentes.
-
----
-
-# 21. Modelo relacional inicial
-
-## Estoque
-
-### produtos
-
-```text
-id UUID PK
-codigo VARCHAR UNIQUE NOT NULL
-descricao VARCHAR NOT NULL
-saldo INTEGER NOT NULL
-ativo BOOLEAN NOT NULL DEFAULT TRUE
-data_cadastro TIMESTAMP NOT NULL
-data_atualizacao TIMESTAMP NOT NULL
-```
-
-### movimentacoes_estoque
-
-```text
-id UUID PK
-produto_id UUID NOT NULL
-tipo VARCHAR NOT NULL
-quantidade INTEGER NOT NULL
-referencia UUID
-data_movimentacao TIMESTAMP NOT NULL
-```
-
-### mensagens_processadas
-
-```text
-event_id UUID PK
-processed_at TIMESTAMP NOT NULL
-```
-
----
-
-## Faturamento
-
-### notas_fiscais
-
-```text
-id UUID PK
-numero BIGINT UNIQUE NOT NULL
-status faturamento.nota_fiscal_status NOT NULL
-motivo_rejeicao VARCHAR NULL
-data_cadastro TIMESTAMP NOT NULL
-data_atualizacao TIMESTAMP NOT NULL
-data_fechamento TIMESTAMP NULL
-```
-
-### itens_nota_fiscal
-
-```text
-id UUID PK
-nota_fiscal_id UUID NOT NULL
-produto_id UUID NOT NULL
-codigo_produto VARCHAR NOT NULL
-descricao_produto VARCHAR NOT NULL
-quantidade INTEGER NOT NULL
-```
-
-### outbox_events
-
-```text
-id UUID PK
-event_type VARCHAR NOT NULL
-aggregate_id UUID NOT NULL
-payload JSONB NOT NULL
-created_at TIMESTAMP NOT NULL
-published_at TIMESTAMP NULL
-```
-
-### mensagens_processadas
-
-```text
-correlation_id UUID PK
-event_id UUID UNIQUE NOT NULL
-processed_at TIMESTAMP NOT NULL
-```
-
----
-
-# 22. Invariantes
+O Estoque decide se uma baixa é válida. O Faturamento decide o ciclo de vida da
+nota. Nenhuma entidade é compartilhada entre os módulos.
 
 ## Produto
 
-```text
-codigo != vazio
-descricao != vazio
-saldo >= 0
-produto novo inicia ativo
-produto pode ser inativado, mas não excluído
-```
-
-## ItemNotaFiscal
-
-```text
-produtoId != vazio
-quantidade > 0
-```
-
-## NotaFiscal
-
-```text
-numero > 0
-status válido
-itens não vazios antes do fechamento
-```
-
-## Fechamento
-
-```text
-somente ABERTA pode iniciar fechamento
-somente PROCESSANDO pode ser confirmada
-somente PROCESSANDO pode voltar para ABERTA após rejeição
-nome e endereço do cliente são normalizados em uppercase
-```
-
----
-
-# 23. Erros de domínio sugeridos
-
-## Estoque
-
-```text
-PRODUTO_NAO_ENCONTRADO
-CODIGO_PRODUTO_JA_EXISTENTE
-SALDO_INVALIDO
-ESTOQUE_INSUFICIENTE
-QUANTIDADE_INVALIDA
-```
-
-## Faturamento
-
-```text
-NOTA_NAO_ENCONTRADA
-NOTA_NAO_ESTA_ABERTA
-NOTA_NAO_ESTA_PROCESSANDO
-NOTA_SEM_ITENS
-QUANTIDADE_INVALIDA
-STATUS_INVALIDO
-```
-
----
-
-# 24. Eventos de integração
-
-Eventos iniciais:
-
-```text
-estoque.baixa.solicitada
-estoque.baixa.realizada
-estoque.baixa.rejeitada
-```
-
-Esses eventos não fazem parte diretamente das entidades.
-
-Eles pertencem ao contrato de integração entre os contextos.
-
----
-
-# 25. Princípios do modelo
-
-O modelo deve seguir estas regras:
-
-1. Domínio não depende de Gin.
-2. Domínio não depende de PostgreSQL.
-3. Domínio não depende de RabbitMQ.
-4. Entidades não acessam banco.
-5. Casos de uso orquestram regras.
-6. Repositórios abstraem persistência.
-7. Mensageria fica na infraestrutura.
-8. Cada contexto é dono dos próprios dados.
-9. Integração entre contextos ocorre por contratos.
-10. Regras de saldo permanecem sob responsabilidade do Estoque.
-11. Construtores de entidades seguem o padrão `NewNomeDaEntidade`.
-12. Código e descrição de Produto são normalizados em uppercase.
-13. Models de persistência e DTOs HTTP não fazem parte do domínio.
-14. Repositories possuem nomes de negócio, independentemente da tecnologia concreta.
-15. A composição das dependências ocorre fora das camadas de domínio e aplicação.
-16. A camada HTTP traduz erros do domínio sem adicionar dependência HTTP ao domínio.
-17. Propriedades das entidades são privadas e lidas por getters idiomáticos de Go.
-18. Alterações ocorrem por métodos de negócio específicos, não por setters genéricos.
-19. A reconstituição de entidades persistidas reaplica as invariantes do domínio.
-20. Cada operação da aplicação é representada por um use case independente.
-21. Atualizações de múltiplos campos do Produto são atômicas no domínio.
-22. Toda alteração de saldo gera uma movimentação de entrada ou saída.
-23. A baixa de múltiplos itens é transacional: todos são aplicados ou nenhum é.
-24. O `eventId` garante que uma solicitação repetida não produza nova baixa.
-
----
-
-# 26. Escopo inicial
-
-A primeira versão do domínio deve permanecer pequena.
-
-### Estoque
-
-Implementar primeiro:
+`Produto` é a raiz do agregado de Estoque.
 
 ```text
 Produto
-CriarProduto
-ConsultarProduto
-ListarProdutos
+├── id
+├── codigo
+├── descricao
+├── saldo
+├── valor
+├── ativo
+├── dataCadastro
+└── dataAtualizacao
 ```
 
-Depois:
+### Invariantes
+
+- ID válido;
+- código e descrição não vazios;
+- código normalizado e imutável;
+- saldo não negativo;
+- valor não negativo;
+- produto novo ativo;
+- baixa com quantidade positiva;
+- baixa nunca deixa saldo negativo.
+
+Campos são privados. Construtores seguem `NewNomeDaEntidade`; reconstituição de
+models também passa pelas invariantes. Não existem setters genéricos.
+
+### Comportamentos
+
+- atualizar campos cadastrais permitidos;
+- ativar e inativar;
+- validar e aplicar alteração de saldo;
+- produzir os dados necessários para movimentação.
+
+## Movimentação de estoque
+
+Registra toda variação de saldo:
 
 ```text
-BaixarEstoque
-MovimentacaoEstoque
-Idempotência
+Movimentacao
+├── id
+├── produtoId
+├── tipo: ENTRADA | SAIDA
+├── quantidade
+├── referencia
+└── dataMovimentacao
 ```
 
-### Faturamento
+A referência associa uma saída automática à nota fiscal. Atualizações manuais
+também geram movimentação, garantindo auditoria do saldo.
 
-Implementar:
+## Baixa de múltiplos itens
+
+A baixa é uma operação de aplicação apoiada pelo domínio e pelo repositório:
+
+- o domínio valida produto, estado e quantidade;
+- o use case orquestra a lista e o resultado;
+- o repositório garante atomicidade e concorrência no PostgreSQL.
+
+Todos os itens são processados ou nenhum é. Solicitação repetida é reconhecida
+pelo `eventId` e não produz nova movimentação.
+
+## Nota Fiscal
+
+`NotaFiscal` é a raiz do agregado de Faturamento.
 
 ```text
 NotaFiscal
-ItemNotaFiscal
-CriarNotaFiscal
-ConsultarNotaFiscal
-ListarNotasFiscais
-IniciarFechamento
+├── id
+├── numero
+├── status
+├── nomeCliente
+├── enderecoCliente
+├── itens[]
+├── quantidadeTotal
+├── valorTotal
+├── motivoRejeicao
+├── dataCadastro
+├── dataAtualizacao
+└── dataFechamento
 ```
 
-Depois adicionar consumidores dos eventos de estoque.
+### Invariantes
 
----
+- número positivo e gerado por sequence;
+- nome e endereço obrigatórios;
+- pelo menos um item;
+- status pertencente ao enum do domínio;
+- totalizadores derivados dos itens;
+- apenas nota aberta pode ser editada ou iniciar fechamento;
+- apenas nota processando pode receber resultado.
 
-# 27. Conclusão
+Nome e endereço são normalizados em uppercase.
 
-O domínio foi separado em dois contextos claros:
+## Item da nota
 
 ```text
-Estoque
-Faturamento
+ItemNotaFiscal
+├── id
+├── produtoId
+├── codigoProduto
+├── descricaoProduto
+├── quantidade
+├── valorUnitario
+└── valorTotal
 ```
 
-A responsabilidade pela consistência de saldo permanece integralmente no Estoque.
+Quantidade deve ser positiva e o produto precisa existir e estar ativo no
+momento do snapshot. O valor total do item é calculado por quantidade vezes
+valor unitário.
 
-A responsabilidade pelo ciclo de vida da Nota Fiscal permanece integralmente no Faturamento.
+O `produtoId` é uma referência lógica, não uma foreign key entre schemas. Código,
+descrição e valor são cópias históricas intencionais.
 
-Essa separação permite utilizar mensageria entre os serviços sem criar dependência direta entre suas estruturas internas ou seus bancos lógicos.
+## Estados da nota
+
+```mermaid
+stateDiagram-v2
+    [*] --> ABERTA: criar
+    ABERTA --> ABERTA: atualizar
+    ABERTA --> PROCESSANDO: iniciar fechamento
+    PROCESSANDO --> FECHADA: baixa realizada
+    PROCESSANDO --> ABERTA: baixa rejeitada
+```
+
+### ABERTA
+
+Aceita edição de cliente, endereço e itens. Pode iniciar fechamento. Se veio de
+uma rejeição, expõe o motivo recebido do Estoque.
+
+### PROCESSANDO
+
+Estado transitório. Bloqueia edição e nova solicitação. O motivo anterior é
+limpo ao entrar nesse estado.
+
+### FECHADA
+
+Estado final após baixa confirmada, com data de fechamento.
+
+## Rejeições de baixa
+
+Motivos de negócio podem incluir:
+
+- `ESTOQUE_INSUFICIENTE`;
+- `PRODUTO_INATIVO`;
+- produto inexistente ou item inválido conforme contrato do consumidor.
+
+O Estoque publica a rejeição. O Faturamento reabre a nota e guarda o motivo para
+consulta pelo cliente.
+
+## Objetos técnicos fora do domínio
+
+Algumas estruturas são necessárias, mas não são entidades de negócio:
+
+- `OutboxEvent`: garante persistência da intenção de publicar;
+- `MensagemProcessada`: garante idempotência;
+- DTOs HTTP: representam contratos externos;
+- models GORM: representam tabelas;
+- mensagens RabbitMQ: representam contratos de integração.
+
+Mantê-las fora das entidades evita que detalhes de transporte e persistência
+contaminem as regras.
+
+## Erros e HTTP
+
+O domínio retorna erros próprios, como produto ou nota não encontrado, saldo
+insuficiente, status inválido e quantidade inválida. Ele não conhece códigos
+HTTP.
+
+Na apresentação, `domainerror` traduz erros conhecidos para `400`, `404` ou
+`409`. Falhas inesperadas viram `500` sem exposição de detalhes internos.
+
+## Totalizadores
+
+```text
+quantidadeTotal = soma das quantidades
+valorTotal      = soma dos valores totais dos itens
+```
+
+O cliente nunca define esses campos. Eles são recalculados ao criar ou atualizar
+a nota, preservando consistência interna do agregado.
+
+## Princípios aplicados
+
+1. domínio independente de framework e banco;
+2. estado privado e comportamento explícito;
+3. invariantes verificadas na criação e reconstituição;
+4. use case por operação;
+5. transação para mudanças que precisam ser atômicas;
+6. propriedade exclusiva dos dados por contexto;
+7. contratos de integração não reutilizados como entidades;
+8. consistência eventual representada no estado da nota.
