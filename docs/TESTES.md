@@ -41,6 +41,20 @@ Esses testes cobrem, entre outros pontos:
 - tradução de erros HTTP;
 - leitura dos headers de retry.
 
+### Frontend Angular
+
+PowerShell, Bash, Zsh, Git Bash ou Prompt de Comando:
+
+```console
+cd frontend/web
+npm test -- --watch=false
+```
+
+A suíte usa Angular TestBed com Vitest e cobre clientes HTTP, stores RxJS,
+filtros, tabelas, formulários, diálogos, paginação e estados de feedback. Polling
+e temporizadores são controlados com relógio falso para não tornar os testes
+lentos ou dependentes da rede.
+
 ## Testes de integração
 
 Requerem PostgreSQL ativo e migrations aplicadas. A build tag impede que sejam
@@ -123,13 +137,14 @@ infraestrutura compartilhada.
 ## Ordem recomendada antes de entregar
 
 ```text
-1. go test ./... nos dois módulos
-2. go vet ./... nos dois módulos
-3. testes de integração com PostgreSQL
-4. docker compose config
-5. docker compose up -d --build
-6. testes E2E
-7. git diff --check
+1. npm test -- --watch=false no frontend
+2. go test ./... nos dois módulos
+3. go vet ./... nos dois módulos
+4. testes de integração com PostgreSQL
+5. docker compose config
+6. docker compose up -d --build
+7. testes E2E
+8. git diff --check
 ```
 
 ## Diagnóstico de falhas

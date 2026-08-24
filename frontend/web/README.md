@@ -39,6 +39,10 @@ Implementado nesta etapa:
 - atualização automática de notas em processamento sem bloquear a tela;
 - feedback visual de fechamento e rejeição;
 - testes unitários do contrato HTTP de Faturamento;
+- testes unitários dos stores RxJS;
+- testes dos filtros, tabelas e formulários das features;
+- testes dos diálogos de confirmação e movimentações;
+- testes dos componentes compartilhados de paginação e feedback;
 - configuração central das URLs das APIs;
 - store global e stores isolados por feature usando RxJS;
 - configuração inicial de build e testes.
@@ -49,7 +53,6 @@ Implementado nesta etapa:
 
 Ainda não implementado:
 
-- testes unitários dos stores e componentes visuais;
 - container Docker do frontend.
 
 ## Pré-requisitos
@@ -288,5 +291,4 @@ as datas de cadastro e de última atualização retornadas pelas APIs.
 
 ## Próximas etapas
 
-1. criar testes dos stores e dos componentes visuais;
-2. adicionar o frontend ao Docker Compose.
+1. adicionar o frontend ao Docker Compose.
