@@ -47,6 +47,108 @@ services:
     networks:
       - korp-network
 
+  estoque-migrations:
+    build:
+      context: ./services/estoque
+      dockerfile: Dockerfile
+    image: korp/estoque-service:local
+    command: ["/app/migrate", "up"]
+    restart: "no"
+    environment:
+      ESTOQUE_DATABASE_URL: postgres://${POSTGRES_USER:?Defina POSTGRES_USER no arquivo .env}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}@postgres:5432/${POSTGRES_DB:?Defina POSTGRES_DB no arquivo .env}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - korp-network
+
+  estoque:
+    build:
+      context: ./services/estoque
+      dockerfile: Dockerfile
+    image: korp/estoque-service:local
+    container_name: korp-estoque
+    restart: unless-stopped
+    environment:
+      GIN_MODE: release
+      ESTOQUE_HTTP_PORT: ${ESTOQUE_HTTP_PORT:?Defina ESTOQUE_HTTP_PORT no arquivo .env}
+      ESTOQUE_DATABASE_URL: postgres://${POSTGRES_USER:?Defina POSTGRES_USER no arquivo .env}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}@postgres:5432/${POSTGRES_DB:?Defina POSTGRES_DB no arquivo .env}?sslmode=disable
+      ESTOQUE_RABBITMQ_URL: amqp://${RABBITMQ_USER:?Defina RABBITMQ_USER no arquivo .env}:${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no arquivo .env}@rabbitmq:5672/${RABBITMQ_VHOST:?Defina RABBITMQ_VHOST no arquivo .env}
+      RABBITMQ_RECOVERY_MAX_RETRIES: ${RABBITMQ_RECOVERY_MAX_RETRIES:?Defina RABBITMQ_RECOVERY_MAX_RETRIES no arquivo .env}
+      RABBITMQ_RECOVERY_INTERVAL: ${RABBITMQ_RECOVERY_INTERVAL:?Defina RABBITMQ_RECOVERY_INTERVAL no arquivo .env}
+      RABBITMQ_MESSAGE_TIMEOUT: ${RABBITMQ_MESSAGE_TIMEOUT:?Defina RABBITMQ_MESSAGE_TIMEOUT no arquivo .env}
+      RABBITMQ_MESSAGE_MAX_RETRIES: ${RABBITMQ_MESSAGE_MAX_RETRIES:?Defina RABBITMQ_MESSAGE_MAX_RETRIES no arquivo .env}
+      RABBITMQ_MESSAGE_RETRY_DELAY: ${RABBITMQ_MESSAGE_RETRY_DELAY:?Defina RABBITMQ_MESSAGE_RETRY_DELAY no arquivo .env}
+    ports:
+      - "${ESTOQUE_HTTP_PORT:?Defina ESTOQUE_HTTP_PORT no arquivo .env}:${ESTOQUE_HTTP_PORT:?Defina ESTOQUE_HTTP_PORT no arquivo .env}"
+    depends_on:
+      estoque-migrations:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:$${ESTOQUE_HTTP_PORT}/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    stop_grace_period: 15s
+    networks:
+      - korp-network
+
+  faturamento-migrations:
+    build:
+      context: ./services/faturamento
+      dockerfile: Dockerfile
+    image: korp/faturamento-service:local
+    command: ["/app/migrate", "up"]
+    restart: "no"
+    environment:
+      FATURAMENTO_DATABASE_URL: postgres://${POSTGRES_USER:?Defina POSTGRES_USER no arquivo .env}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}@postgres:5432/${POSTGRES_DB:?Defina POSTGRES_DB no arquivo .env}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - korp-network
+
+  faturamento:
+    build:
+      context: ./services/faturamento
+      dockerfile: Dockerfile
+    image: korp/faturamento-service:local
+    container_name: korp-faturamento
+    restart: unless-stopped
+    environment:
+      GIN_MODE: release
+      FATURAMENTO_HTTP_PORT: ${FATURAMENTO_HTTP_PORT:?Defina FATURAMENTO_HTTP_PORT no arquivo .env}
+      FATURAMENTO_DATABASE_URL: postgres://${POSTGRES_USER:?Defina POSTGRES_USER no arquivo .env}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}@postgres:5432/${POSTGRES_DB:?Defina POSTGRES_DB no arquivo .env}?sslmode=disable
+      FATURAMENTO_ESTOQUE_BASE_URL: http://estoque:${ESTOQUE_HTTP_PORT:?Defina ESTOQUE_HTTP_PORT no arquivo .env}
+      FATURAMENTO_RABBITMQ_URL: amqp://${RABBITMQ_USER:?Defina RABBITMQ_USER no arquivo .env}:${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no arquivo .env}@rabbitmq:5672/${RABBITMQ_VHOST:?Defina RABBITMQ_VHOST no arquivo .env}
+      FATURAMENTO_OUTBOX_INTERVAL: ${FATURAMENTO_OUTBOX_INTERVAL:?Defina FATURAMENTO_OUTBOX_INTERVAL no arquivo .env}
+      RABBITMQ_RECOVERY_MAX_RETRIES: ${RABBITMQ_RECOVERY_MAX_RETRIES:?Defina RABBITMQ_RECOVERY_MAX_RETRIES no arquivo .env}
+      RABBITMQ_RECOVERY_INTERVAL: ${RABBITMQ_RECOVERY_INTERVAL:?Defina RABBITMQ_RECOVERY_INTERVAL no arquivo .env}
+      RABBITMQ_MESSAGE_TIMEOUT: ${RABBITMQ_MESSAGE_TIMEOUT:?Defina RABBITMQ_MESSAGE_TIMEOUT no arquivo .env}
+      RABBITMQ_MESSAGE_MAX_RETRIES: ${RABBITMQ_MESSAGE_MAX_RETRIES:?Defina RABBITMQ_MESSAGE_MAX_RETRIES no arquivo .env}
+      RABBITMQ_MESSAGE_RETRY_DELAY: ${RABBITMQ_MESSAGE_RETRY_DELAY:?Defina RABBITMQ_MESSAGE_RETRY_DELAY no arquivo .env}
+    ports:
+      - "${FATURAMENTO_HTTP_PORT:?Defina FATURAMENTO_HTTP_PORT no arquivo .env}:${FATURAMENTO_HTTP_PORT:?Defina FATURAMENTO_HTTP_PORT no arquivo .env}"
+    depends_on:
+      faturamento-migrations:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      estoque:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:$${FATURAMENTO_HTTP_PORT}/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    stop_grace_period: 15s
+    networks:
+      - korp-network
+
 volumes:
   postgres_data:
     name: korp-postgres-data

@@ -8,7 +8,7 @@ microsserviços Go, PostgreSQL e RabbitMQ.
 
 | Componente | Estado |
 |---|---|
-| PostgreSQL e RabbitMQ | Implementados no Docker Compose |
+| Docker Compose | Infraestrutura, migrations e APIs implementadas |
 | Estoque Service | Produtos, movimentações e baixa transacional implementados |
 | Faturamento Service | Notas, itens e início de fechamento com Outbox implementados |
 | Frontend Angular | Planejado, ainda não implementado |
@@ -29,7 +29,7 @@ microsserviços Go, PostgreSQL e RabbitMQ.
 
 - Docker Desktop com Docker Compose;
 - Go 1.25 ou compatível com a versão declarada pelos módulos;
-- portas `5432`, `5672`, `15672` e `8081` livres para a configuração de exemplo.
+- portas `5432`, `5672`, `15672`, `8081` e `8082` livres para a configuração de exemplo.
 
 ## Configuração do ambiente
 
@@ -72,18 +72,70 @@ o arquivo.
 - Health checks verificam se os serviços estão realmente prontos.
 - O script inicial cria somente os schemas. As tabelas pertencem às migrations de cada microsserviço.
 
-### Iniciar e verificar
+### Iniciar a aplicação completa
 
 Os comandos abaixo são iguais no PowerShell, Bash, Zsh, Git Bash e Prompt de
 Comando. Execute-os na raiz do repositório:
 
 ```console
 docker compose config
-docker compose up -d
+docker compose up -d --build
 docker compose ps
 ```
 
-Para acompanhar logs:
+Na primeira execução, o Docker baixa as imagens-base e compila os dois módulos
+Go. As execuções seguintes reutilizam o cache. A ordem de inicialização é:
+
+1. PostgreSQL e RabbitMQ ficam saudáveis;
+2. `estoque-migrations` e `faturamento-migrations` aplicam as migrations e encerram;
+3. Estoque inicia e fica saudável;
+4. Faturamento inicia usando `http://estoque:8081` na rede interna.
+
+As APIs são executadas com usuário sem privilégios. As imagens usam build
+multi-stage: o SDK Go permanece apenas na etapa de compilação e não faz parte da
+imagem final.
+
+Serviços disponíveis:
+
+| Serviço | Endereço |
+|---|---|
+| Estoque | <http://localhost:8081> |
+| Swagger do Estoque | <http://localhost:8081/swagger/index.html> |
+| Faturamento | <http://localhost:8082> |
+| Swagger do Faturamento | <http://localhost:8082/swagger/index.html> |
+| RabbitMQ Management | <http://localhost:15672> |
+
+Para acompanhar todos os logs:
+
+```console
+docker compose logs -f estoque faturamento
+```
+
+Para reconstruir somente uma API após alterar seu código:
+
+```console
+docker compose up -d --build estoque
+docker compose up -d --build faturamento
+```
+
+Os containers de migration podem ser executados novamente com segurança. Quando
+não houver alterações, eles informam que não existem migrations pendentes:
+
+```console
+docker compose run --rm estoque-migrations
+docker compose run --rm faturamento-migrations
+```
+
+### Iniciar somente a infraestrutura
+
+Para desenvolver as APIs localmente com `go run`, inicie apenas PostgreSQL e
+RabbitMQ:
+
+```console
+docker compose up -d postgres rabbitmq
+```
+
+Para acompanhar os logs da infraestrutura:
 
 ```console
 docker compose logs -f postgres rabbitmq
