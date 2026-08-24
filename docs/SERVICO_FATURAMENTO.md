@@ -92,6 +92,10 @@ e duplicidades está em [RESILIENCIA.md](RESILIENCIA.md).
 GET /notas-fiscais?pagina=1&tamanhoPagina=20&numero=100&status=ABERTA&nomeCliente=MARIA
 ```
 
+As notas são ordenadas por prioridade operacional: `PROCESSANDO`, `ABERTA` e
+`FECHADA`. Dentro do mesmo status, aparecem primeiro as notas cadastradas mais
+recentemente; o número decrescente é usado como desempate.
+
 ### Criar pelo PowerShell
 
 ```powershell

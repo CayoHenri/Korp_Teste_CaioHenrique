@@ -239,7 +239,7 @@ func (r *ProdutoRepository) Listar(
 	if err := databaseQuery.Count(&total).Error; err != nil {
 		return sharedquery.Page[domain.Produto]{}, err
 	}
-	if err := databaseQuery.Order("codigo ASC").
+	if err := databaseQuery.Order("data_cadastro DESC").Order("id DESC").
 		Offset(criteria.Pagination.Offset()).Limit(criteria.Pagination.PageSize).
 		Find(&records).Error; err != nil {
 		return sharedquery.Page[domain.Produto]{}, err

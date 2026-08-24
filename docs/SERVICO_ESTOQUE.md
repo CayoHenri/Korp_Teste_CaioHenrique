@@ -96,7 +96,8 @@ GET /produtos?pagina=1&tamanhoPagina=20&codigo=SKU&descricao=TECLADO&ativo=true
 ```
 
 O tamanho máximo de página é 100. A resposta contém `itens`, `total`, `pagina`,
-`tamanhoPagina` e `totalPaginas`.
+`tamanhoPagina` e `totalPaginas`. Os produtos são ordenados pela data de cadastro
+decrescente; em caso de empate, o UUID em ordem decrescente estabiliza a paginação.
 
 ### Criar produto
 

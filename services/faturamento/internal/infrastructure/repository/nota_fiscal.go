@@ -159,7 +159,15 @@ func (r *NotaFiscalRepository) Listar(
 	if err := databaseQuery.Count(&total).Error; err != nil {
 		return sharedquery.Page[notafiscal.NotaFiscal]{}, err
 	}
-	if err := databaseQuery.Preload("Itens").Order("numero DESC").
+	if err := databaseQuery.Preload("Itens").
+		Order(`CASE status
+			WHEN 'PROCESSANDO' THEN 1
+			WHEN 'ABERTA' THEN 2
+			WHEN 'FECHADA' THEN 3
+			ELSE 4
+		END ASC`).
+		Order("data_cadastro DESC").
+		Order("numero DESC").
 		Offset(criteria.Pagination.Offset()).Limit(criteria.Pagination.PageSize).
 		Find(&records).Error; err != nil {
 		return sharedquery.Page[notafiscal.NotaFiscal]{}, err

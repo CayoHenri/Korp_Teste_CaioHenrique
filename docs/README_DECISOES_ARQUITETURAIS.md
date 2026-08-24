@@ -325,6 +325,20 @@ localmente sobre os produtos já carregados, evitando tráfego a cada tecla. Em
 edições, itens cujo produto deixou de estar ativo preservam seu snapshot para
 identificação visual, mas precisam ser substituídos ou removidos antes de salvar.
 
+## ADR-028 — Ordenação operacional das listagens
+
+**Status:** aceita.
+
+**Decisão:** a API de Estoque lista produtos pela data de cadastro decrescente.
+A API de Faturamento prioriza notas `PROCESSANDO`, depois `ABERTA` e por último
+`FECHADA`. Datas de cadastro e identificadores estáveis são usados como critérios
+secundários.
+
+**Consequências:** registros recentes ficam visíveis primeiro no estoque e notas
+que demandam acompanhamento aparecem antes das demais. Os desempates explícitos
+mantêm a paginação determinística mesmo quando vários registros compartilham a
+mesma data ou status.
+
 ## Decisões adiadas
 
 - autenticação e autorização;
