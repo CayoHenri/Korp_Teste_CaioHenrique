@@ -185,9 +185,47 @@ e dependências explícitas.
 **Consequências:** o projeto sobe com poucos comandos e reproduz a topologia. A
 primeira compilação consome mais tempo e recursos que a execução local direta.
 
+## ADR-018 — Angular 22 standalone
+
+**Status:** aceita.
+
+**Decisão:** usar a versão estável ativa mais recente do Angular na criação do
+projeto, com componentes standalone, modo estrito e rotas lazy por feature.
+
+**Consequências:** estrutura alinhada às APIs atuais e menor dependência de
+NgModules. Angular 22 exige versões recentes de Node e TypeScript; o projeto
+declara essas versões no `package.json` e no `package-lock.json`. npm é o
+gerenciador oficial do workspace para reduzir pré-requisitos e acompanhar a
+distribuição padrão do Node.js.
+
+## ADR-019 — RxJS como padrão de estado do frontend
+
+**Status:** aceita.
+
+**Decisão:** stores por feature mantêm um `BehaviorSubject` privado, expõem
+somente `Observable` e alteram estado por métodos explícitos. O template usa
+`AsyncPipe` para controlar subscriptions.
+
+**Consequências:** estado reativo sem adicionar NgRx no início do projeto. A
+equipe precisa evitar mutação direta, Subjects públicos e subscriptions manuais
+sem ciclo de vida controlado. Se a complexidade crescer, a decisão pode ser
+reavaliada.
+
+## ADR-020 — Angular Material para componentes visuais
+
+**Status:** aceita.
+
+**Decisão:** usar Angular Material e CDK na mesma linha principal do Angular.
+Componentes são importados por módulos específicos nos componentes standalone.
+
+**Consequências:** UI consistente, acessível e integrada ao ecossistema oficial
+do Angular, sem depender do licenciamento de outra biblioteca visual. O bundle
+é controlado por imports locais e customizações devem usar o sistema de temas
+antes de sobrescritas frágeis com `::ng-deep`.
+
 ## Decisões adiadas
 
-- frontend Angular;
+- funcionalidades completas e integração HTTP do frontend Angular;
 - autenticação e autorização;
 - API Gateway;
 - métricas, tracing e agregação de logs;

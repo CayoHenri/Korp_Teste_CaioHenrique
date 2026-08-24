@@ -1,0 +1,19 @@
+<app-page-header
+  eyebrow="Faturamento"
+  title="Notas fiscais"
+  description="Criação e acompanhamento do fluxo de fechamento."
+>
+  <button mat-flat-button type="button">
+    <mat-icon>add</mat-icon>
+    Nova nota
+  </button>
+</app-page-header>
+
+<mat-card>
+  <div class="empty-state">
+    <mat-icon>description</mat-icon>
+    <h2>Feature preparada</h2>
+    <p>O store RxJS iniciou com {{ (store.itens$ | async)?.length ?? 0 }} notas.</p>
+    <span>A integração com a API será implementada no próximo passo.</span>
+  </div>
+</mat-card>

@@ -1,0 +1,30 @@
+:root {
+  color-scheme: light;
+  --app-background: #f6f7fb;
+  --app-surface: #ffffff;
+  --app-border: #dfe3eb;
+  --app-text: #1b1b1f;
+  --app-muted: #5f6368;
+  --app-primary: #005cbb;
+  font-family: Roboto, ui-sans-serif, system-ui, sans-serif;
+  background: var(--app-background);
+  color: var(--app-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--app-background);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

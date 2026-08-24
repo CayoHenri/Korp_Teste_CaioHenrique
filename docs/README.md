@@ -13,6 +13,7 @@ fonte principal para evitar comandos ou decisões duplicadas e contraditórias.
 6. [Resiliência](RESILIENCIA.md): retry, DLQ, confirmação e idempotência;
 7. [Docker](EXECUCAO_DOCKER.md): execução completa ou desenvolvimento local;
 8. [Testes](TESTES.md): suítes, pré-requisitos e cenários cobertos.
+9. [Frontend](../frontend/web/README.md): estrutura Angular, RxJS e Angular Material.
 
 ## Mapa por necessidade
 
@@ -26,6 +27,7 @@ fonte principal para evitar comandos ou decisões duplicadas e contraditórias.
 | Entender RabbitMQ, Outbox ou duplicidade | [Resiliência](RESILIENCIA.md) |
 | Subir ou diagnosticar os containers | [Docker](EXECUCAO_DOCKER.md) |
 | Executar ou entender os testes | [Testes](TESTES.md) |
+| Entender ou evoluir o frontend | [Frontend](../frontend/web/README.md) |
 
 ## Contratos gerados
 

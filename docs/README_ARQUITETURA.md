@@ -12,7 +12,7 @@ Este documento descreve a arquitetura implementada. Regras detalhadas ficam no
 
 ```mermaid
 flowchart LR
-    UI[Cliente HTTP] --> EST[Estoque API]
+    UI[Angular] --> EST[Estoque API]
     UI --> FAT[Faturamento API]
     FAT -->|consulta produto| EST
     FAT -->|Outbox: solicitar baixa| MQ[RabbitMQ]
@@ -166,6 +166,19 @@ de domínio para status HTTP.
 O pacote `internal/dependency` é o composition root: instancia implementações e
 injeta repositórios, use cases, handlers e workers.
 
+## Frontend Angular
+
+O frontend fica em `frontend/web` e usa Angular standalone com rotas lazy por
+feature. `core` concentra configuração e estado global; `shared` contém UI
+reutilizável; `features` isola Produtos, Notas Fiscais e a página inicial.
+
+Estado de tela é representado por stores RxJS com `BehaviorSubject` privado e
+seletores públicos como `Observable`. Componentes consomem estado com `AsyncPipe`.
+Angular Material fornece componentes visuais, acessibilidade e tema consistente.
+
+Nesta etapa, shell, navegação, páginas e stores estão prontos; a integração HTTP
+das features será implementada nas próximas etapas.
+
 ## Consistência
 
 Não existe uma transação distribuída entre os serviços. A solução combina:
@@ -192,7 +205,7 @@ multi-stage, executadas sem root e verificadas por health checks. Consulte
 - uma instância física de PostgreSQL;
 - uma instância de cada worker de Outbox;
 - sem autenticação ou autorização;
-- sem frontend implementado;
+- frontend ainda sem integração funcional com as APIs;
 - sem observabilidade distribuída;
 - valores monetários usam ponto flutuante conforme decisão do projeto.
 

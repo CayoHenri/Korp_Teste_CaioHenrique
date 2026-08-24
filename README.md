@@ -35,7 +35,7 @@ flowchart LR
 | Fluxo assíncrono | Implementado |
 | Testes unitários, integrados e E2E | Implementados |
 | Docker Compose completo | Implementado |
-| Frontend Angular | Pendente |
+| Frontend Angular | Estrutura inicial implementada |
 
 ## Início rápido com Docker
 
@@ -102,6 +102,7 @@ go test -count=1 -v ./...
 ```text
 .
 ├── docs/                   documentação técnica
+├── frontend/web/           aplicação Angular
 ├── infrastructure/         inicialização do PostgreSQL
 ├── services/
 │   ├── estoque/            módulo Go do Estoque
@@ -123,6 +124,7 @@ O índice completo está em [docs/README.md](docs/README.md).
 - [Mensageria e resiliência](docs/RESILIENCIA.md)
 - [Execução e Docker](docs/EXECUCAO_DOCKER.md)
 - [Testes](docs/TESTES.md)
+- [Frontend Angular](frontend/web/README.md)
 
 ## Comandos mais usados
 
@@ -135,3 +137,11 @@ docker compose down
 
 Os comandos locais, migrations, exemplos HTTP e procedimentos de diagnóstico
 ficam nos documentos específicos para evitar duplicação neste README.
+
+Para executar a estrutura inicial do frontend fora do Compose:
+
+```console
+cd frontend/web
+npm install
+npm start
+```

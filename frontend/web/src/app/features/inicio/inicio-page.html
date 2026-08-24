@@ -1,0 +1,50 @@
+<app-page-header
+  eyebrow="Operação"
+  title="Visão geral"
+  description="Acompanhe os dois contextos da emissão de notas fiscais."
+/>
+
+<section class="context-grid">
+  <mat-card>
+    <div class="card-visual card-visual--stock"><mat-icon>inventory_2</mat-icon></div>
+    <mat-card-header>
+      <mat-card-title>Estoque</mat-card-title>
+      <mat-card-subtitle>Produtos, saldos e movimentações</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Cadastre produtos e acompanhe as alterações auditáveis do saldo.</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <a mat-flat-button routerLink="/produtos">
+        Abrir produtos
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </a>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card>
+    <div class="card-visual card-visual--invoice"><mat-icon>description</mat-icon></div>
+    <mat-card-header>
+      <mat-card-title>Faturamento</mat-card-title>
+      <mat-card-subtitle>Notas e fechamento assíncrono</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Monte notas e acompanhe a baixa de estoque até o estado final.</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <a mat-flat-button routerLink="/notas-fiscais">
+        Abrir notas
+        <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+      </a>
+    </mat-card-actions>
+  </mat-card>
+</section>
+
+<section class="architecture-note">
+  <div>
+    <span class="status-label">Estrutura inicial</span>
+    <h2>Frontend preparado para evoluir por feature</h2>
+    <p>Rotas lazy, estado RxJS e componentes Angular Material já estão configurados.</p>
+  </div>
+  <mat-icon>account_tree</mat-icon>
+</section>

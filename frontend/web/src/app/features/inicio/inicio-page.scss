@@ -1,0 +1,73 @@
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card-visual {
+  display: grid;
+  min-height: 8rem;
+  place-items: center;
+  border-radius: 0.75rem 0.75rem 0 0;
+  font-size: 3rem;
+}
+
+.card-visual mat-icon {
+  width: 3rem;
+  height: 3rem;
+  font-size: 3rem;
+}
+
+.card-visual--stock {
+  background: linear-gradient(135deg, #cffafe, #dbeafe);
+  color: #1d4ed8;
+}
+
+.card-visual--invoice {
+  background: linear-gradient(135deg, #fef3c7, #ffedd5);
+  color: #c2410c;
+}
+
+.architecture-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--app-border);
+  border-radius: 0.75rem;
+  background: var(--app-surface);
+}
+
+.architecture-note h2 {
+  margin: 0.8rem 0 0.35rem;
+}
+
+.architecture-note p {
+  margin: 0;
+  color: var(--app-muted);
+}
+
+.architecture-note > mat-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--app-primary);
+  font-size: 3rem;
+}
+
+.status-label {
+  display: inline-block;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .context-grid {
+    grid-template-columns: 1fr;
+  }
+}

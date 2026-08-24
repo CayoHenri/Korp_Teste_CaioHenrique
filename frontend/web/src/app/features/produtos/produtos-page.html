@@ -1,0 +1,19 @@
+<app-page-header
+  eyebrow="Estoque"
+  title="Produtos"
+  description="Cadastro, consulta e movimentação de estoque."
+>
+  <button mat-flat-button type="button">
+    <mat-icon>add</mat-icon>
+    Novo produto
+  </button>
+</app-page-header>
+
+<mat-card>
+  <div class="empty-state">
+    <mat-icon>inventory_2</mat-icon>
+    <h2>Feature preparada</h2>
+    <p>O store RxJS iniciou com {{ (store.itens$ | async)?.length ?? 0 }} produtos.</p>
+    <span>A integração com a API será implementada no próximo passo.</span>
+  </div>
+</mat-card>

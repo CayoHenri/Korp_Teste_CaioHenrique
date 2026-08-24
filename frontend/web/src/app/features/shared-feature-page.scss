@@ -1,0 +1,24 @@
+.empty-state {
+  display: grid;
+  min-height: 18rem;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  color: var(--app-primary);
+  font-size: 3rem;
+}
+
+.empty-state h2,
+.empty-state p {
+  margin: 0 0 0.5rem;
+}
+
+.empty-state span {
+  color: var(--app-muted);
+}

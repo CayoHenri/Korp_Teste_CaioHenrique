@@ -1,0 +1,39 @@
+<header class="app-header">
+  <mat-toolbar>
+    <a class="brand" routerLink="/inicio" aria-label="Ir para o início">
+      <span class="brand__mark">K</span>
+      <span>
+        <strong>Korp</strong>
+        <small>Notas fiscais</small>
+      </span>
+    </a>
+
+    <nav aria-label="Navegação principal">
+      <a mat-button routerLink="/inicio" routerLinkActive="active-link">
+        <mat-icon>home</mat-icon>
+        Início
+      </a>
+      <a mat-button routerLink="/produtos" routerLinkActive="active-link">
+        <mat-icon>inventory_2</mat-icon>
+        Produtos
+      </a>
+      <a mat-button routerLink="/notas-fiscais" routerLinkActive="active-link">
+        <mat-icon>description</mat-icon>
+        Notas fiscais
+      </a>
+    </nav>
+  </mat-toolbar>
+</header>
+
+@if (appStore.loading$ | async) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<main class="app-content">
+  <router-outlet />
+</main>
+
+<footer class="app-footer">
+  <span>Angular 22 · RxJS · Angular Material</span>
+  <span>{{ currentPath$ | async }}</span>
+</footer>
