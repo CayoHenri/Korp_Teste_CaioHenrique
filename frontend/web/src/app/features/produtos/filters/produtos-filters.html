@@ -1,0 +1,28 @@
+<form class="filters" [formGroup]="form" (ngSubmit)="filtrar()">
+  <mat-form-field appearance="outline">
+    <mat-label>Código</mat-label>
+    <input matInput formControlName="codigo" autocomplete="off" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Descrição</mat-label>
+    <input matInput formControlName="descricao" autocomplete="off" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Status</mat-label>
+    <mat-select formControlName="ativo">
+      <mat-option [value]="null">Todos</mat-option>
+      <mat-option [value]="true">Ativos</mat-option>
+      <mat-option [value]="false">Inativos</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <div class="filter-actions">
+    <button mat-button type="button" (click)="limpar()">Limpar</button>
+    <button mat-flat-button type="submit">
+      <mat-icon>search</mat-icon>
+      Filtrar
+    </button>
+  </div>
+</form>

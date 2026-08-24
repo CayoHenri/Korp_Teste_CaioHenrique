@@ -13,8 +13,8 @@ Aplicação Angular para operar os contextos de Estoque e Faturamento.
 - SCSS;
 - Vitest pelo builder oficial do Angular.
 
-As faixas de versão estão declaradas no `package.json`. O `package-lock.json`
-será recriado pelo `npm install` após a troca do PrimeNG pelo Angular Material.
+As faixas de versão estão declaradas no `package.json` e as versões resolvidas
+estão registradas no `package-lock.json`.
 
 ## Estado atual
 
@@ -26,7 +26,13 @@ Implementado nesta etapa:
 - shell responsivo com menu e rodapé;
 - tema Angular Material e Material Icons;
 - página inicial;
-- páginas iniciais de Produtos e Notas Fiscais;
+- página de Produtos integrada à API de Estoque;
+- listagem de produtos com filtros e paginação;
+- cadastro e edição de produtos;
+- ativação e inativação sem exclusão;
+- feedback de carregamento, estado vazio, sucesso e erro;
+- testes unitários do contrato HTTP de Produtos;
+- página inicial de Notas Fiscais;
 - configuração central das URLs das APIs;
 - store global e stores isolados por feature usando RxJS;
 - configuração inicial de build e testes.
@@ -37,9 +43,8 @@ Implementado nesta etapa:
 
 Ainda não implementado:
 
-- chamadas HTTP às APIs;
-- listagens, filtros e paginação funcionais;
-- formulários de produto e nota;
+- integração da página de Notas Fiscais com a API;
+- listagem, filtros, paginação e formulário de notas;
 - acompanhamento do fechamento;
 - tratamento visual dos erros retornados pelos serviços;
 - container Docker do frontend.
@@ -82,14 +87,22 @@ npm test -- --watch=false
 src/app/
 ├── core/
 │   ├── config/                  tokens e URLs das APIs
+│   ├── http/                    contratos e tratamento comum de erros HTTP
 │   └── state/                   estado global da aplicação
 ├── features/
 │   ├── inicio/                  visão geral
-│   ├── produtos/                model, store e página
+│   ├── produtos/
+│   │   ├── filters/             formulário de filtros da listagem
+│   │   ├── form/                formulário de criação e edição
+│   │   ├── list/                tabela e ações da listagem
+│   │   └── *.ts                 página, model, store e cliente HTTP
 │   └── notas-fiscais/           model, store e página
 ├── layout/                      shell e navegação
 ├── shared/
-│   └── ui/                      componentes reutilizáveis
+│   └── ui/
+│       ├── data-feedback/       estados vazio e de erro
+│       ├── page-header/         cabeçalho das páginas
+│       └── pagination/          paginação independente da feature
 ├── app.config.ts                providers globais
 └── app.routes.ts                rotas lazy
 ```
@@ -124,8 +137,9 @@ readonly itens$ = this.state$.pipe(
 );
 ```
 
-Quando a integração HTTP for criada, o serviço fará transporte e o store fará a
-orquestração do estado. Componentes ficam responsáveis por eventos e exibição.
+O serviço HTTP faz o transporte e converte o envelope da API. O store orquestra
+estado, carregamento, filtros, paginação e mutações. Componentes ficam
+responsáveis por eventos e exibição.
 
 ## Angular Material
 
@@ -155,11 +169,35 @@ As URLs iniciais ficam em `src/environments/environment.ts` e são expostas por
 `API_CONFIG`, um `InjectionToken` tipado:
 
 ```text
-Estoque:     http://localhost:8081
-Faturamento: http://localhost:8082
+Estoque:     /api/estoque
+Faturamento: /api/faturamento
 ```
 
 Serviços HTTP devem injetar esse token em vez de repetir URLs literais.
+
+Durante o `npm start`, `proxy.conf.json` encaminha esses caminhos para as APIs
+locais nas portas `8081` e `8082`. Assim o navegador acessa a mesma origem do
+Angular e o desenvolvimento não depende de liberar CORS nos serviços. O proxy
+de produção deverá preservar os mesmos prefixos.
+
+## Fluxo da feature Produtos
+
+```text
+ProdutosPage → ProdutosStore → ProdutoHttpService → API de Estoque
+```
+
+- `produto.model.ts` descreve respostas, filtros e comandos;
+- `produto-http.service.ts` conhece endpoints e envelopes HTTP;
+- `produtos.store.ts` mantém o estado RxJS e recarrega a listagem após mutações;
+- `form/produto-form-dialog.ts` reutiliza o formulário para criação e edição;
+- `filters/produtos-filters.ts` mantém e normaliza os controles de busca;
+- `list/produtos-list.ts` apresenta a tabela e emite ações para o container;
+- `produtos-page.ts` trata somente eventos e apresentação.
+
+Features com mais de uma responsabilidade visual devem ser divididas em pastas
+como `form/`, `list/` e `details/`. Componentes sem conhecimento do domínio,
+como paginação e feedback de dados, ficam em `shared/ui` e recebem toda a
+configuração por inputs, comunicando eventos por outputs.
 
 ## Convenções
 
@@ -175,9 +213,7 @@ Serviços HTTP devem injetar esse token em vez de repetir URLs literais.
 
 ## Próximas etapas
 
-1. criar clientes HTTP e contratos de resposta;
-2. implementar listagem e formulário de produtos;
-3. implementar listagem, criação e edição de notas;
-4. acompanhar notas `PROCESSANDO` até o resultado;
-5. apresentar mensagens de domínio com Toast;
-6. adicionar o frontend ao Docker Compose.
+1. implementar listagem, criação e edição de notas;
+2. acompanhar notas `PROCESSANDO` até o resultado;
+3. criar testes do store e dos componentes de Produtos;
+4. adicionar o frontend ao Docker Compose.

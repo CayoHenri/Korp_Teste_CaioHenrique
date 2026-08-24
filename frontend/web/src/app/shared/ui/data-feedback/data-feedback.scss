@@ -1,0 +1,55 @@
+.feedback {
+  display: grid;
+  min-height: 18rem;
+  place-items: center;
+  align-content: center;
+  padding: 1rem;
+  text-align: center;
+}
+
+.feedback mat-icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  color: var(--app-primary);
+  font-size: 3rem;
+}
+
+.feedback h2,
+.feedback p {
+  margin: 0 0 0.5rem;
+}
+
+.feedback p {
+  color: var(--app-muted);
+}
+
+.feedback--error {
+  min-height: 8rem;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  justify-items: start;
+  text-align: left;
+  margin: 1rem;
+  border-radius: 0.5rem;
+  background: #ffdad6;
+  color: #93000a;
+}
+
+.feedback--error mat-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+  color: inherit;
+  font-size: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .feedback--error {
+    grid-template-columns: auto 1fr;
+  }
+
+  .feedback--error button {
+    grid-column: 1 / -1;
+  }
+}

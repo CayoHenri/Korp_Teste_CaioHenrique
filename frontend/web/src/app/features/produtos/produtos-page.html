@@ -1,19 +1,33 @@
-<app-page-header
-  eyebrow="Estoque"
-  title="Produtos"
-  description="Cadastro, consulta e movimentação de estoque."
->
-  <button mat-flat-button type="button">
+<app-page-header eyebrow="Estoque" title="Produtos"
+  description="Cadastre produtos e acompanhe saldo, valor e situação.">
+  <button mat-flat-button type="button" (click)="abrirFormulario()">
     <mat-icon>add</mat-icon>
     Novo produto
   </button>
 </app-page-header>
 
-<mat-card>
-  <div class="empty-state">
-    <mat-icon>inventory_2</mat-icon>
-    <h2>Feature preparada</h2>
-    <p>O store RxJS iniciou com {{ (store.itens$ | async)?.length ?? 0 }} produtos.</p>
-    <span>A integração com a API será implementada no próximo passo.</span>
-  </div>
+@if (store.state$ | async; as state) {
+<mat-card class="filters-card">
+  <app-produtos-filters (filterChange)="filtrar($event)" />
 </mat-card>
+
+<mat-card class="results-card">
+  @if (state.carregando) {
+  <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (state.erro) {
+  <app-data-feedback type="error" title="Não foi possível carregar os produtos" [description]="state.erro"
+    (retry)="store.carregar()" />
+  }
+
+  @if (!state.carregando && !state.erro && state.itens.length === 0) {
+  <app-data-feedback type="empty" title="Nenhum produto encontrado"
+    description="Altere os filtros ou cadastre o primeiro produto." />
+  } @else if (state.itens.length > 0) {
+  <app-produtos-list [produtos]="state.itens" [total]="state.total" [pagina]="state.filtros.pagina"
+    [tamanhoPagina]="state.filtros.tamanhoPagina" (editar)="abrirFormulario($event)"
+    (alterarStatus)="alterarStatus($event)" (paginar)="paginar($event)" />
+  }
+</mat-card>
+}

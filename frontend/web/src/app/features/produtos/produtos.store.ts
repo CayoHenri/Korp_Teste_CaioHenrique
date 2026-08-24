@@ -1,42 +1,132 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
-import { Produto } from './produto.model';
+import { inject, Injectable, OnDestroy } from '@angular/core';
+import {
+  BehaviorSubject,
+  catchError,
+  EMPTY,
+  finalize,
+  map,
+  Observable,
+  Subject,
+  switchMap,
+  takeUntil,
+  tap,
+  throwError,
+} from 'rxjs';
+import { apiErrorMessage } from '../../core/http/api-error';
+import { AtualizarProdutoInput, CriarProdutoInput, Produto, ProdutoFiltros } from './produto.model';
+import { ProdutoHttpService } from './produto-http.service';
 
-interface ProdutosState {
+export interface ProdutosState {
   itens: readonly Produto[];
+  filtros: ProdutoFiltros;
+  total: number;
+  totalPaginas: number;
   carregando: boolean;
+  salvando: boolean;
   erro: string | null;
 }
 
+const filtrosIniciais: ProdutoFiltros = {
+  codigo: '',
+  descricao: '',
+  ativo: null,
+  pagina: 1,
+  tamanhoPagina: 10,
+};
+
 const initialState: ProdutosState = {
   itens: [],
+  filtros: filtrosIniciais,
+  total: 0,
+  totalPaginas: 0,
   carregando: false,
+  salvando: false,
   erro: null,
 };
 
 @Injectable()
-export class ProdutosStore {
+export class ProdutosStore implements OnDestroy {
+  private readonly service = inject(ProdutoHttpService);
   private readonly stateSubject = new BehaviorSubject<ProdutosState>(initialState);
+  private readonly recarregarSubject = new Subject<void>();
+  private readonly destroySubject = new Subject<void>();
+
   readonly state$ = this.stateSubject.asObservable();
-  readonly itens$ = this.state$.pipe(
-    map((state) => state.itens),
-    distinctUntilChanged(),
-  );
-  readonly carregando$ = this.state$.pipe(
-    map((state) => state.carregando),
-    distinctUntilChanged(),
-  );
+  readonly carregando$ = this.state$.pipe(map((state) => state.carregando));
+  readonly salvando$ = this.state$.pipe(map((state) => state.salvando));
 
-  definirItens(itens: readonly Produto[]): void {
-    this.patch({ itens, erro: null });
+  constructor() {
+    this.recarregarSubject
+      .pipe(
+        tap(() => this.patch({ carregando: true, erro: null })),
+        switchMap(() =>
+          this.service.listar(this.stateSubject.value.filtros).pipe(
+            catchError((error: unknown) => {
+              this.patch({ erro: apiErrorMessage(error) });
+              return EMPTY;
+            }),
+            finalize(() => this.patch({ carregando: false })),
+          ),
+        ),
+        takeUntil(this.destroySubject),
+      )
+      .subscribe((pagina) =>
+        this.patch({
+          itens: pagina.itens,
+          total: pagina.total,
+          totalPaginas: pagina.totalPaginas,
+          filtros: {
+            ...this.stateSubject.value.filtros,
+            pagina: pagina.pagina,
+            tamanhoPagina: pagina.tamanhoPagina,
+          },
+        }),
+      );
   }
 
-  definirCarregando(carregando: boolean): void {
-    this.patch({ carregando });
+  carregar(): void {
+    this.recarregarSubject.next();
   }
 
-  definirErro(erro: string): void {
-    this.patch({ erro, carregando: false });
+  filtrar(filtros: Pick<ProdutoFiltros, 'codigo' | 'descricao' | 'ativo'>): void {
+    this.patch({ filtros: { ...this.stateSubject.value.filtros, ...filtros, pagina: 1 } });
+    this.carregar();
+  }
+
+  paginar(pagina: number, tamanhoPagina: number): void {
+    this.patch({ filtros: { ...this.stateSubject.value.filtros, pagina, tamanhoPagina } });
+    this.carregar();
+  }
+
+  criar(input: CriarProdutoInput): Observable<Produto> {
+    return this.executarMutacao(this.service.criar(input));
+  }
+
+  atualizar(id: string, input: AtualizarProdutoInput): Observable<Produto> {
+    return this.executarMutacao(this.service.atualizar(id, input));
+  }
+
+  alterarStatus(produto: Produto): Observable<Produto> {
+    return this.executarMutacao(this.service.alterarStatus(produto));
+  }
+
+  ngOnDestroy(): void {
+    this.destroySubject.next();
+    this.destroySubject.complete();
+    this.stateSubject.complete();
+  }
+
+  private executarMutacao(operacao: Observable<Produto>): Observable<Produto> {
+    this.patch({ salvando: true, erro: null });
+
+    return operacao.pipe(
+      tap(() => this.carregar()),
+      catchError((error: unknown) => {
+        this.patch({ erro: apiErrorMessage(error) });
+        return throwError(() => error);
+      }),
+      finalize(() => this.patch({ salvando: false })),
+    );
   }
 
   private patch(partialState: Partial<ProdutosState>): void {

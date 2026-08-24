@@ -1,0 +1,21 @@
+.produto-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 1rem;
+  width: min(34rem, 80vw);
+  padding-top: 0.5rem;
+}
+
+.full-row {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 600px) {
+  .produto-form {
+    grid-template-columns: 1fr;
+  }
+
+  .full-row {
+    grid-column: auto;
+  }
+}

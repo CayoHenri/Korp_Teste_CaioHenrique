@@ -1,0 +1,12 @@
+<div class="feedback" [class.feedback--error]="type() === 'error'" [attr.role]="type() === 'error' ? 'alert' : null">
+  <mat-icon>{{ icon }}</mat-icon>
+  <div>
+    <h2>{{ title() }}</h2>
+    @if (description()) {
+    <p>{{ description() }}</p>
+    }
+  </div>
+  @if (type() === 'error') {
+  <button mat-button type="button" (click)="retry.emit()">Tentar novamente</button>
+  }
+</div>

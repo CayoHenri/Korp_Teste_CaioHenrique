@@ -223,9 +223,35 @@ do Angular, sem depender do licenciamento de outra biblioteca visual. O bundle
 é controlado por imports locais e customizações devem usar o sistema de temas
 antes de sobrescritas frágeis com `::ng-deep`.
 
+## ADR-021 — Proxy local do Angular para as APIs
+
+**Status:** aceita.
+
+**Decisão:** o frontend usa os prefixos relativos `/api/estoque` e
+`/api/faturamento`. Durante o desenvolvimento, `proxy.conf.json` encaminha as
+requisições para as portas locais dos serviços.
+
+**Consequências:** o navegador não enfrenta bloqueio de CORS no desenvolvimento
+e o código não contém hosts absolutos. O servidor ou proxy reverso de produção
+deve publicar os mesmos prefixos para que o frontend não precise ser recompilado
+por ambiente.
+
+## ADR-022 — Componentes frontend por responsabilidade
+
+**Status:** aceita.
+
+**Decisão:** features do frontend separam componentes visuais em pastas como
+`form/`, `list/` e `details/`. Elementos independentes do domínio, incluindo
+paginação e feedback de dados, ficam em `shared/ui` e usam inputs e outputs.
+
+**Consequências:** páginas atuam como containers de orquestração, componentes de
+feature ficam menores e a mesma paginação pode ser aplicada a Produtos e Notas
+Fiscais. Um componente só deve ir para `shared` quando não importar models ou
+stores de uma feature específica.
+
 ## Decisões adiadas
 
-- funcionalidades completas e integração HTTP do frontend Angular;
+- integração HTTP das Notas Fiscais no frontend Angular;
 - autenticação e autorização;
 - API Gateway;
 - métricas, tracing e agregação de logs;
