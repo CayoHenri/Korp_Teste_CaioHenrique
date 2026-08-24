@@ -31,7 +31,14 @@ func NewContainer(
 ) (*Container, error) {
 	notaRepository := repository.NewNotaFiscalRepository(connection.Gorm)
 	outboxRepository := repository.NewOutboxRepository(connection.Gorm)
-	publisher, err := messaging.NewRabbitMQPublisher(cfg.RabbitMQURL)
+	publisher, err := messaging.NewRabbitMQPublisher(
+		cfg.RabbitMQURL,
+		cfg.RabbitMQRecoveryMaxRetries,
+		cfg.RabbitMQRecoveryInterval,
+		cfg.RabbitMQMessageTimeout,
+		cfg.RabbitMQMessageMaxRetries,
+		cfg.RabbitMQMessageRetryDelay,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("inicializar publisher RabbitMQ: %w", err)
 	}

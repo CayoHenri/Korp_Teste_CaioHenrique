@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,11 +13,16 @@ import (
 )
 
 type Config struct {
-	HTTPPort       string
-	DatabaseURL    string
-	EstoqueBaseURL string
-	RabbitMQURL    string
-	OutboxInterval time.Duration
+	HTTPPort                   string
+	DatabaseURL                string
+	EstoqueBaseURL             string
+	RabbitMQURL                string
+	OutboxInterval             time.Duration
+	RabbitMQRecoveryMaxRetries int
+	RabbitMQRecoveryInterval   time.Duration
+	RabbitMQMessageTimeout     time.Duration
+	RabbitMQMessageMaxRetries  int
+	RabbitMQMessageRetryDelay  time.Duration
 }
 
 func Load() (Config, error) {
@@ -45,13 +51,66 @@ func Load() (Config, error) {
 	if err != nil || outboxInterval <= 0 {
 		return Config{}, fmt.Errorf("FATURAMENTO_OUTBOX_INTERVAL deve ser uma duracao positiva")
 	}
+	recoveryMaxRetries, recoveryInterval, messageTimeout, messageMaxRetries, messageRetryDelay, err := rabbitMQResilienceConfig()
+	if err != nil {
+		return Config{}, err
+	}
 	return Config{
-		HTTPPort:       port,
-		DatabaseURL:    databaseURL,
-		EstoqueBaseURL: estoqueBaseURL,
-		RabbitMQURL:    rabbitMQURL,
-		OutboxInterval: outboxInterval,
+		HTTPPort:                   port,
+		DatabaseURL:                databaseURL,
+		EstoqueBaseURL:             estoqueBaseURL,
+		RabbitMQURL:                rabbitMQURL,
+		OutboxInterval:             outboxInterval,
+		RabbitMQRecoveryMaxRetries: recoveryMaxRetries,
+		RabbitMQRecoveryInterval:   recoveryInterval,
+		RabbitMQMessageTimeout:     messageTimeout,
+		RabbitMQMessageMaxRetries:  messageMaxRetries,
+		RabbitMQMessageRetryDelay:  messageRetryDelay,
 	}, nil
+}
+
+func rabbitMQResilienceConfig() (int, time.Duration, time.Duration, int, time.Duration, error) {
+	maxRetriesValue, err := requiredEnv("RABBITMQ_RECOVERY_MAX_RETRIES")
+	if err != nil {
+		return 0, 0, 0, 0, 0, err
+	}
+	maxRetries, err := strconv.Atoi(maxRetriesValue)
+	if err != nil || maxRetries <= 0 {
+		return 0, 0, 0, 0, 0, fmt.Errorf("RABBITMQ_RECOVERY_MAX_RETRIES deve ser positivo")
+	}
+	intervalValue, err := requiredEnv("RABBITMQ_RECOVERY_INTERVAL")
+	if err != nil {
+		return 0, 0, 0, 0, 0, err
+	}
+	interval, err := time.ParseDuration(intervalValue)
+	if err != nil || interval <= 0 {
+		return 0, 0, 0, 0, 0, fmt.Errorf("RABBITMQ_RECOVERY_INTERVAL deve ser uma duracao positiva")
+	}
+	timeoutValue, err := requiredEnv("RABBITMQ_MESSAGE_TIMEOUT")
+	if err != nil {
+		return 0, 0, 0, 0, 0, err
+	}
+	timeout, err := time.ParseDuration(timeoutValue)
+	if err != nil || timeout <= 0 {
+		return 0, 0, 0, 0, 0, fmt.Errorf("RABBITMQ_MESSAGE_TIMEOUT deve ser uma duracao positiva")
+	}
+	messageMaxRetriesValue, err := requiredEnv("RABBITMQ_MESSAGE_MAX_RETRIES")
+	if err != nil {
+		return 0, 0, 0, 0, 0, err
+	}
+	messageMaxRetries, err := strconv.Atoi(messageMaxRetriesValue)
+	if err != nil || messageMaxRetries <= 0 {
+		return 0, 0, 0, 0, 0, fmt.Errorf("RABBITMQ_MESSAGE_MAX_RETRIES deve ser positivo")
+	}
+	messageRetryDelayValue, err := requiredEnv("RABBITMQ_MESSAGE_RETRY_DELAY")
+	if err != nil {
+		return 0, 0, 0, 0, 0, err
+	}
+	messageRetryDelay, err := time.ParseDuration(messageRetryDelayValue)
+	if err != nil || messageRetryDelay <= 0 {
+		return 0, 0, 0, 0, 0, fmt.Errorf("RABBITMQ_MESSAGE_RETRY_DELAY deve ser uma duracao positiva")
+	}
+	return maxRetries, interval, timeout, messageMaxRetries, messageRetryDelay, nil
 }
 
 func DatabaseURL() (string, error) {

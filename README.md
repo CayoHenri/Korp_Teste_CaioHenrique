@@ -21,7 +21,9 @@ microsserviços Go, PostgreSQL e RabbitMQ.
 - GORM é usado para persistência, sem `AutoMigrate`.
 - As APIs HTTP usam Gin e são documentadas com Swagger/OpenAPI.
 - Não existem valores de configuração padrão no código ou no Compose. Variáveis obrigatórias ausentes causam erro imediatamente.
-- RabbitMQ será usado na integração assíncrona entre Faturamento e Estoque.
+- RabbitMQ integra Faturamento e Estoque com reconexão automática, retentativas
+  limitadas e filas de mensagens mortas. As decisões estão detalhadas em
+  [`docs/RESILIENCIA.md`](docs/RESILIENCIA.md).
 
 ## Pré-requisitos
 
@@ -149,6 +151,7 @@ Nesta etapa estão implementados:
 - consumo de `estoque.baixa.solicitada` pelo RabbitMQ;
 - publicação confirmada de `estoque.baixa.realizada` ou `estoque.baixa.rejeitada`;
 - confirmação manual, requeue de falhas técnicas e DLQ para mensagens inválidas;
+- reconexão automática e retentativas técnicas com atraso fixo antes da DLQ;
 - encerramento gracioso da API.
 
 ### Decisões técnicas
@@ -182,6 +185,11 @@ Nesta etapa estão implementados:
 ESTOQUE_HTTP_PORT
 ESTOQUE_DATABASE_URL
 ESTOQUE_RABBITMQ_URL
+RABBITMQ_RECOVERY_MAX_RETRIES
+RABBITMQ_RECOVERY_INTERVAL
+RABBITMQ_MESSAGE_TIMEOUT
+RABBITMQ_MESSAGE_MAX_RETRIES
+RABBITMQ_MESSAGE_RETRY_DELAY
 ```
 
 Opcionalmente, as variáveis podem ser sobrescritas apenas na sessão atual.
@@ -418,6 +426,11 @@ FATURAMENTO_DATABASE_URL
 FATURAMENTO_ESTOQUE_BASE_URL
 FATURAMENTO_RABBITMQ_URL
 FATURAMENTO_OUTBOX_INTERVAL
+RABBITMQ_RECOVERY_MAX_RETRIES
+RABBITMQ_RECOVERY_INTERVAL
+RABBITMQ_MESSAGE_TIMEOUT
+RABBITMQ_MESSAGE_MAX_RETRIES
+RABBITMQ_MESSAGE_RETRY_DELAY
 ```
 
 ### Dependências e validação
@@ -520,13 +533,16 @@ nota já estiver `PROCESSANDO` ou `FECHADA`.
 Ao iniciar a API, o worker consulta periodicamente os registros com
 `published_at IS NULL`, publica mensagens persistentes na exchange durável
 `korp.events` usando a routing key `estoque.baixa.solicitada` e somente marca o
-evento como publicado depois da confirmação do RabbitMQ. Em caso de falha, ele
-permanece pendente para uma nova tentativa.
+evento como publicado depois da confirmação do RabbitMQ. Em caso de falha, o
+registro continua pendente para uma execução posterior do worker.
 
 O Estoque consome a solicitação com confirmação manual, executa a baixa
 transacional e publica `estoque.baixa.realizada` ou `estoque.baixa.rejeitada`.
 Mensagens com JSON inválido são preservadas em
-`estoque.baixa.solicitada.dlq`; falhas técnicas são recolocadas na fila.
+`estoque.baixa.solicitada.dlq`. Falhas técnicas passam por uma fila de retry com
+atraso fixo. Depois de `RABBITMQ_MESSAGE_MAX_RETRIES`, seguem para a DLQ,
+evitando ciclos infinitos de reentrega imediata. O mesmo mecanismo protege o
+consumo dos resultados pelo Faturamento.
 
 O Faturamento consome os resultados com confirmação manual. No sucesso, a nota
 passa de `PROCESSANDO` para `FECHADA` e recebe `dataFechamento`; na rejeição,
@@ -579,8 +595,6 @@ Os cenários criam dados com códigos únicos e verificam:
 - idempotência de solicitações e resultados duplicados;
 - mensagens inválidas encaminhadas para as duas DLQs.
 
-O cenário de indisponibilidade real do RabbitMQ está declarado como disruptivo
-e permanece ignorado até a implementação da reconexão automática dos workers.
 
 ## Frontend Angular
 

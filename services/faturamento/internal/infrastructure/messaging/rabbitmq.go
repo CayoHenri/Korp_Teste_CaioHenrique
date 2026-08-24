@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	notafiscalApplication "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/application/nota_fiscal"
 	application "github.com/caiog/korp-notas-fiscais/services/faturamento/internal/application/outbox"
@@ -20,16 +21,21 @@ const (
 	BaixaSolicitadaQueue = "estoque.baixa.solicitada"
 	ResultadoBaixaQueue  = "faturamento.baixa.resultado"
 	ResultadoBaixaDLQ    = "faturamento.baixa.resultado.dlq"
+	ResultadoBaixaRetry  = "faturamento.baixa.resultado.retry"
+	ResultadoRetryRoute  = "faturamento.baixa.resultado.retry"
 )
 
 var ErrPublicacaoNaoConfirmada = errors.New("publicacao nao confirmada pelo RabbitMQ")
 
 type RabbitMQPublisher struct {
-	connection      *amqp.Connection
-	channel         *amqp.Channel
-	consumerChannel *amqp.Channel
-	confirmations   <-chan amqp.Confirmation
-	mutex           sync.Mutex
+	connection        *amqp.Connection
+	channel           *amqp.Channel
+	consumerChannel   *amqp.Channel
+	confirmations     <-chan amqp.Confirmation
+	mutex             sync.Mutex
+	messageTimeout    time.Duration
+	messageMaxRetries int
+	messageRetryDelay time.Duration
 }
 
 type resultadoBaixaMessage struct {
@@ -39,8 +45,19 @@ type resultadoBaixaMessage struct {
 	Motivo        string    `json:"motivo,omitempty"`
 }
 
-func NewRabbitMQPublisher(url string) (*RabbitMQPublisher, error) {
-	connection, err := amqp.Dial(url)
+func NewRabbitMQPublisher(
+	url string,
+	maxRetries int,
+	retryInterval, messageTimeout time.Duration,
+	messageMaxRetries int,
+	messageRetryDelay time.Duration,
+) (*RabbitMQPublisher, error) {
+	connection, err := amqp.DialConfig(url, amqp.Config{Recovery: &amqp.Recovery{
+		ReconnectionConfig: &amqp.ReconnectionConfig{
+			MaxRetryCount: maxRetries,
+			RetryInterval: retryInterval,
+		},
+	}})
 	if err != nil {
 		return nil, fmt.Errorf("conectar ao RabbitMQ: %w", err)
 	}
@@ -95,6 +112,14 @@ func NewRabbitMQPublisher(url string) (*RabbitMQPublisher, error) {
 	); err != nil {
 		return closeOnError(fmt.Errorf("declarar DLQ de resultados: %w", err))
 	}
+	if _, err := consumerChannel.QueueDeclare(
+		ResultadoBaixaRetry, true, false, false, false, amqp.Table{
+			"x-dead-letter-exchange":    EventsExchange,
+			"x-dead-letter-routing-key": ResultadoRetryRoute,
+		},
+	); err != nil {
+		return closeOnError(fmt.Errorf("declarar fila de retentativa: %w", err))
+	}
 	if err := consumerChannel.QueueBind(
 		ResultadoBaixaDLQ, ResultadoBaixaQueue, DeadLetterExchange, false, nil,
 	); err != nil {
@@ -103,6 +128,7 @@ func NewRabbitMQPublisher(url string) (*RabbitMQPublisher, error) {
 	for _, eventType := range []string{
 		notafiscalApplication.EventTypeBaixaRealizada,
 		notafiscalApplication.EventTypeBaixaRejeitada,
+		ResultadoRetryRoute,
 	} {
 		if err := consumerChannel.QueueBind(
 			ResultadoBaixaQueue, eventType, EventsExchange, false, nil,
@@ -117,10 +143,13 @@ func NewRabbitMQPublisher(url string) (*RabbitMQPublisher, error) {
 		return closeOnError(fmt.Errorf("habilitar confirmacao de publicacao: %w", err))
 	}
 	return &RabbitMQPublisher{
-		connection:      connection,
-		channel:         channel,
-		consumerChannel: consumerChannel,
-		confirmations:   channel.NotifyPublish(make(chan amqp.Confirmation, 1)),
+		connection:        connection,
+		channel:           channel,
+		consumerChannel:   consumerChannel,
+		confirmations:     channel.NotifyPublish(make(chan amqp.Confirmation, 1)),
+		messageTimeout:    messageTimeout,
+		messageMaxRetries: messageMaxRetries,
+		messageRetryDelay: messageRetryDelay,
 	}, nil
 }
 
@@ -135,19 +164,22 @@ func (publisher *RabbitMQPublisher) ConsumirResultados(
 		return fmt.Errorf("iniciar consumidor de resultados: %w", err)
 	}
 	for delivery := range deliveries {
+		messageContext, cancel := context.WithTimeout(ctx, publisher.messageTimeout)
 		var message resultadoBaixaMessage
 		if err := json.Unmarshal(delivery.Body, &message); err != nil ||
 			message.EventID == uuid.Nil ||
 			message.CorrelationID == uuid.Nil ||
 			message.NotaFiscalID == uuid.Nil {
-			if err := publisher.enviarResultadoParaDLQ(ctx, delivery); err != nil {
+			if err := publisher.enviarResultadoParaDLQ(messageContext, delivery); err != nil {
 				_ = delivery.Nack(false, true)
+				cancel()
 				continue
 			}
 			_ = delivery.Ack(false)
+			cancel()
 			continue
 		}
-		_, err := useCase.Execute(ctx, notafiscalApplication.ResultadoBaixaInput{
+		_, err := useCase.Execute(messageContext, notafiscalApplication.ResultadoBaixaInput{
 			EventID: message.EventID, CorrelationID: message.CorrelationID,
 			NotaFiscalID: message.NotaFiscalID, Type: delivery.Type, Motivo: message.Motivo,
 		})
@@ -155,15 +187,57 @@ func (publisher *RabbitMQPublisher) ConsumirResultados(
 			if erroResultadoTerminal(err) {
 				if err := publisher.enviarResultadoParaDLQ(ctx, delivery); err == nil {
 					_ = delivery.Ack(false)
+					cancel()
 					continue
 				}
 			}
-			_ = delivery.Nack(false, true)
+			if err := publisher.reagendarOuEnviarParaDLQ(ctx, delivery); err != nil {
+				_ = delivery.Nack(false, true)
+			} else {
+				_ = delivery.Ack(false)
+			}
+			cancel()
 			continue
 		}
 		_ = delivery.Ack(false)
+		cancel()
 	}
 	return ctx.Err()
+}
+
+func (publisher *RabbitMQPublisher) reagendarOuEnviarParaDLQ(ctx context.Context, delivery amqp.Delivery) error {
+	retry := retryCount(delivery.Headers)
+	message := copiarMensagem(delivery)
+	if retry >= publisher.messageMaxRetries {
+		return publisher.publicarComConfirmacao(ctx, DeadLetterExchange, ResultadoBaixaQueue, message)
+	}
+	message.Headers["x-retry-count"] = int32(retry + 1)
+	message.Expiration = fmt.Sprintf("%d", publisher.messageRetryDelay.Milliseconds())
+	return publisher.publicarComConfirmacao(ctx, "", ResultadoBaixaRetry, message)
+}
+
+func copiarMensagem(delivery amqp.Delivery) amqp.Publishing {
+	headers := amqp.Table{}
+	for key, value := range delivery.Headers {
+		headers[key] = value
+	}
+	return amqp.Publishing{Headers: headers, ContentType: delivery.ContentType, DeliveryMode: amqp.Persistent, MessageId: delivery.MessageId, CorrelationId: delivery.CorrelationId, Timestamp: delivery.Timestamp, Type: delivery.Type, Body: delivery.Body}
+}
+
+func retryCount(headers amqp.Table) int {
+	if headers == nil {
+		return 0
+	}
+	switch value := headers["x-retry-count"].(type) {
+	case int:
+		return value
+	case int32:
+		return int(value)
+	case int64:
+		return int(value)
+	default:
+		return 0
+	}
 }
 
 func erroResultadoTerminal(err error) bool {
@@ -211,10 +285,12 @@ func (publisher *RabbitMQPublisher) publicarComConfirmacao(
 	exchange, routingKey string,
 	message amqp.Publishing,
 ) error {
+	requestContext, cancel := context.WithTimeout(ctx, publisher.messageTimeout)
+	defer cancel()
 	publisher.mutex.Lock()
 	defer publisher.mutex.Unlock()
 	if err := publisher.channel.PublishWithContext(
-		ctx,
+		requestContext,
 		exchange,
 		routingKey,
 		false,
@@ -229,8 +305,8 @@ func (publisher *RabbitMQPublisher) publicarComConfirmacao(
 			return ErrPublicacaoNaoConfirmada
 		}
 		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	case <-requestContext.Done():
+		return requestContext.Err()
 	}
 }
 

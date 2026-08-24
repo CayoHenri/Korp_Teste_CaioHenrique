@@ -27,7 +27,14 @@ func NewContainer(
 	logger *slog.Logger,
 ) (*Container, error) {
 	produtoRepository := repository.NewProdutoRepository(connection.Gorm)
-	rabbitMQ, err := messaging.NewRabbitMQ(cfg.RabbitMQURL)
+	rabbitMQ, err := messaging.NewRabbitMQ(
+		cfg.RabbitMQURL,
+		cfg.RabbitMQRecoveryMaxRetries,
+		cfg.RabbitMQRecoveryInterval,
+		cfg.RabbitMQMessageTimeout,
+		cfg.RabbitMQMessageMaxRetries,
+		cfg.RabbitMQMessageRetryDelay,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("inicializar RabbitMQ: %w", err)
 	}

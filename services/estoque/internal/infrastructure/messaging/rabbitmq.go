@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"sync"
 	"time"
 
@@ -18,21 +19,36 @@ const (
 	DeadLetterExchange   = "korp.events.dlx"
 	BaixaSolicitadaQueue = "estoque.baixa.solicitada"
 	BaixaSolicitadaDLQ   = "estoque.baixa.solicitada.dlq"
+	BaixaSolicitadaRetry = "estoque.baixa.solicitada.retry"
 	ResultadoBaixaQueue  = "faturamento.baixa.resultado"
 )
 
 var ErrPublicacaoNaoConfirmada = errors.New("publicacao nao confirmada pelo RabbitMQ")
 
 type RabbitMQ struct {
-	connection       *amqp.Connection
-	consumerChannel  *amqp.Channel
-	publisherChannel *amqp.Channel
-	confirmations    <-chan amqp.Confirmation
-	publisherMutex   sync.Mutex
+	connection        *amqp.Connection
+	consumerChannel   *amqp.Channel
+	publisherChannel  *amqp.Channel
+	confirmations     <-chan amqp.Confirmation
+	publisherMutex    sync.Mutex
+	messageTimeout    time.Duration
+	messageMaxRetries int
+	messageRetryDelay time.Duration
 }
 
-func NewRabbitMQ(url string) (*RabbitMQ, error) {
-	connection, err := amqp.Dial(url)
+func NewRabbitMQ(
+	url string,
+	maxRetries int,
+	retryInterval, messageTimeout time.Duration,
+	messageMaxRetries int,
+	messageRetryDelay time.Duration,
+) (*RabbitMQ, error) {
+	connection, err := amqp.DialConfig(url, amqp.Config{Recovery: &amqp.Recovery{
+		ReconnectionConfig: &amqp.ReconnectionConfig{
+			MaxRetryCount: maxRetries,
+			RetryInterval: retryInterval,
+		},
+	}})
 	if err != nil {
 		return nil, fmt.Errorf("conectar ao RabbitMQ: %w", err)
 	}
@@ -48,9 +64,12 @@ func NewRabbitMQ(url string) (*RabbitMQ, error) {
 		return nil, fmt.Errorf("abrir canal publisher: %w", err)
 	}
 	client := &RabbitMQ{
-		connection:       connection,
-		consumerChannel:  consumerChannel,
-		publisherChannel: publisherChannel,
+		connection:        connection,
+		consumerChannel:   consumerChannel,
+		publisherChannel:  publisherChannel,
+		messageTimeout:    messageTimeout,
+		messageMaxRetries: messageMaxRetries,
+		messageRetryDelay: messageRetryDelay,
 	}
 	if err := client.configureTopology(); err != nil {
 		_ = client.Close()
@@ -90,6 +109,14 @@ func (client *RabbitMQ) configureTopology() error {
 		BaixaSolicitadaDLQ, true, false, false, false, nil,
 	); err != nil {
 		return fmt.Errorf("declarar DLQ: %w", err)
+	}
+	if _, err := client.consumerChannel.QueueDeclare(
+		BaixaSolicitadaRetry, true, false, false, false, amqp.Table{
+			"x-dead-letter-exchange":    EventsExchange,
+			"x-dead-letter-routing-key": application.EventTypeBaixaSolicitada,
+		},
+	); err != nil {
+		return fmt.Errorf("declarar fila de retentativa: %w", err)
 	}
 	if err := client.consumerChannel.QueueBind(
 		BaixaSolicitadaDLQ, BaixaSolicitadaQueue, DeadLetterExchange, false, nil,
@@ -136,13 +163,16 @@ func (client *RabbitMQ) ConsumirBaixas(
 		return fmt.Errorf("iniciar consumidor de baixas: %w", err)
 	}
 	for delivery := range deliveries {
+		messageContext, cancel := context.WithTimeout(ctx, client.messageTimeout)
 		var message BaixaSolicitadaMessage
 		if err := json.Unmarshal(delivery.Body, &message); err != nil {
-			if err := client.publicarMensagemInvalida(ctx, delivery); err != nil {
+			if err := client.publicarMensagemInvalida(messageContext, delivery); err != nil {
 				_ = delivery.Nack(false, true)
+				cancel()
 				continue
 			}
 			_ = delivery.Ack(false)
+			cancel()
 			continue
 		}
 		input := application.BaixarEstoqueInput{
@@ -155,19 +185,71 @@ func (client *RabbitMQ) ConsumirBaixas(
 				ProdutoID: item.ProdutoID, Quantidade: item.Quantidade,
 			})
 		}
-		if err := useCase.Execute(ctx, input); err != nil {
-			_ = delivery.Nack(false, true)
+		if err := useCase.Execute(messageContext, input); err != nil {
+			if err := client.reagendarOuEnviarParaDLQ(ctx, delivery, BaixaSolicitadaRetry, BaixaSolicitadaQueue); err != nil {
+				_ = delivery.Nack(false, true)
+			} else {
+				_ = delivery.Ack(false)
+			}
+			cancel()
 			continue
 		}
 		_ = delivery.Ack(false)
+		cancel()
 	}
 	return ctx.Err()
 }
 
-func (client *RabbitMQ) publicarMensagemInvalida(
+func (client *RabbitMQ) reagendarOuEnviarParaDLQ(
 	ctx context.Context,
 	delivery amqp.Delivery,
+	retryQueue, deadLetterKey string,
 ) error {
+	retry := retryCount(delivery.Headers)
+	message := copiarMensagem(delivery)
+	if retry >= client.messageMaxRetries {
+		return client.publicarComConfirmacao(ctx, DeadLetterExchange, deadLetterKey, message)
+	}
+	if message.Headers == nil {
+		message.Headers = amqp.Table{}
+	}
+	message.Headers["x-retry-count"] = int32(retry + 1)
+	message.Expiration = fmt.Sprintf("%d", client.messageRetryDelay.Milliseconds())
+	return client.publicarComConfirmacao(ctx, "", retryQueue, message)
+}
+
+func copiarMensagem(delivery amqp.Delivery) amqp.Publishing {
+	headers := amqp.Table{}
+	maps.Copy(headers, delivery.Headers)
+	return amqp.Publishing{
+		Headers:       headers,
+		ContentType:   delivery.ContentType,
+		DeliveryMode:  amqp.Persistent,
+		MessageId:     delivery.MessageId,
+		CorrelationId: delivery.CorrelationId,
+		Timestamp:     delivery.Timestamp,
+		Type:          delivery.Type,
+		Body:          delivery.Body,
+	}
+}
+
+func retryCount(headers amqp.Table) int {
+	if headers == nil {
+		return 0
+	}
+	switch value := headers["x-retry-count"].(type) {
+	case int:
+		return value
+	case int32:
+		return int(value)
+	case int64:
+		return int(value)
+	default:
+		return 0
+	}
+}
+
+func (client *RabbitMQ) publicarMensagemInvalida(ctx context.Context, delivery amqp.Delivery) error {
 	message := amqp.Publishing{
 		Headers:       delivery.Headers,
 		ContentType:   delivery.ContentType,
@@ -181,10 +263,7 @@ func (client *RabbitMQ) publicarMensagemInvalida(
 	return client.publicarComConfirmacao(ctx, DeadLetterExchange, BaixaSolicitadaQueue, message)
 }
 
-func (client *RabbitMQ) PublicarResultado(
-	ctx context.Context,
-	result application.ResultadoBaixa,
-) error {
+func (client *RabbitMQ) PublicarResultado(ctx context.Context, result application.ResultadoBaixa) error {
 	payload, err := json.Marshal(struct {
 		EventID       uuid.UUID `json:"eventId"`
 		CorrelationID uuid.UUID `json:"correlationId"`
@@ -215,10 +294,12 @@ func (client *RabbitMQ) publicarComConfirmacao(
 	exchange, routingKey string,
 	message amqp.Publishing,
 ) error {
+	requestContext, cancel := context.WithTimeout(ctx, client.messageTimeout)
+	defer cancel()
 	client.publisherMutex.Lock()
 	defer client.publisherMutex.Unlock()
 	if err := client.publisherChannel.PublishWithContext(
-		ctx, exchange, routingKey, false, false, message,
+		requestContext, exchange, routingKey, false, false, message,
 	); err != nil {
 		return err
 	}
@@ -228,8 +309,8 @@ func (client *RabbitMQ) publicarComConfirmacao(
 			return ErrPublicacaoNaoConfirmada
 		}
 		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	case <-requestContext.Done():
+		return requestContext.Err()
 	}
 }
 

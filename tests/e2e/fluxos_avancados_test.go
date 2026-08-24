@@ -233,7 +233,3 @@ func waitUntil(t *testing.T, timeout time.Duration, condition func() bool, messa
 	}
 	t.Fatal(message)
 }
-
-func TestRabbitMQIndisponivel(t *testing.T) {
-	t.Skip("teste disruptivo: sera habilitado na etapa de resiliencia dos workers")
-}
