@@ -43,6 +43,7 @@ Implementado nesta etapa:
 - testes dos filtros, tabelas e formulários das features;
 - testes dos diálogos de confirmação e movimentações;
 - testes dos componentes compartilhados de paginação e feedback;
+- testes E2E visuais dos fluxos críticos com Playwright;
 - configuração central das URLs das APIs;
 - store global e stores isolados por feature usando RxJS;
 - configuração inicial de build e testes.
@@ -54,6 +55,35 @@ Implementado nesta etapa:
 Ainda não implementado:
 
 - container Docker do frontend.
+
+## Testes E2E visuais
+
+Os testes Playwright percorrem a interface real integrada às APIs. Eles cadastram
+dados com identificadores únicos, criam notas, acompanham o fechamento assíncrono
+e validam o tratamento de produtos inativos durante a edição.
+
+Com PostgreSQL, RabbitMQ e as duas APIs ativos, instale o navegador uma vez:
+
+```console
+npx playwright install chromium
+```
+
+Execute em modo não interativo:
+
+```console
+npm run test:e2e
+```
+
+Para acompanhar e depurar os passos pela interface do Playwright:
+
+```console
+npm run test:e2e:ui
+```
+
+O Playwright inicia o `ng serve` automaticamente e reutiliza uma instância já
+ativa. A URL pode ser alterada com `E2E_WEB_URL`. Em falhas, screenshots, vídeos
+e traces ficam em `test-results/e2e`; o relatório HTML fica em
+`playwright-report`.
 
 ## Pré-requisitos
 

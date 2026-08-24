@@ -126,6 +126,26 @@ As variáveis ficam no `.env` da raiz e não possuem fallback no código de test
 
 Os dados recebem códigos únicos para permitir repetição da suíte no mesmo banco.
 
+### E2E visual do frontend
+
+Localização: `frontend/web/e2e`.
+
+Com a infraestrutura e as APIs saudáveis:
+
+```console
+cd frontend/web
+npx playwright install chromium
+npm run test:e2e
+```
+
+A suíte usa seletores acessíveis por papel e rótulo, execução serial e dados
+únicos. Ela valida cadastro de produto, criação da nota pelo seletor pesquisável,
+fechamento assíncrono até `FECHADA` e bloqueio visual de itens inativos. O servidor
+Angular é iniciado automaticamente pelo Playwright.
+
+Em falhas são preservados screenshot, vídeo e trace. Use `npm run test:e2e:ui`
+para depuração interativa.
+
 ## Por que o teste de indisponibilidade não derruba o RabbitMQ
 
 A reconexão automática existe, mas não há um teste que interrompe o container.
@@ -143,8 +163,9 @@ infraestrutura compartilhada.
 4. testes de integração com PostgreSQL
 5. docker compose config
 6. docker compose up -d --build
-7. testes E2E
-8. git diff --check
+7. testes E2E das APIs
+8. npm run test:e2e no frontend
+9. git diff --check
 ```
 
 ## Diagnóstico de falhas

@@ -339,6 +339,20 @@ que demandam acompanhamento aparecem antes das demais. Os desempates explícitos
 mantêm a paginação determinística mesmo quando vários registros compartilham a
 mesma data ou status.
 
+## ADR-029 — E2E visual com Playwright
+
+**Status:** aceita.
+
+**Decisão:** os fluxos críticos do frontend são exercitados pelo Playwright em
+Chromium contra as APIs reais. A suíte é serial, cria dados únicos e usa seletores
+baseados em papéis e rótulos acessíveis. Screenshots, vídeos e traces são mantidos
+somente quando ocorre falha.
+
+**Consequências:** o teste valida integração entre navegador, Angular, APIs,
+PostgreSQL e RabbitMQ, incluindo consistência eventual. A execução exige a pilha
+de backend saudável e o navegador do Playwright previamente instalado; não há
+dependência de sleeps fixos nem de dados cadastrados manualmente.
+
 ## Decisões adiadas
 
 - autenticação e autorização;

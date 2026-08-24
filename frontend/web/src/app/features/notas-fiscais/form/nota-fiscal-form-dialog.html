@@ -87,7 +87,7 @@
               }
             </mat-select-trigger>
 
-            <div class="product-search" (click)="$event.stopPropagation()">
+              <div class="product-search" (click)="$event.stopPropagation()">
               <mat-icon>search</mat-icon>
               <input #productSearch type="search" placeholder="Pesquisar por código ou descrição"
                 aria-label="Pesquisar produtos" [value]="pesquisaProduto()"
@@ -98,9 +98,21 @@
                 <mat-icon>close</mat-icon>
               </button>
               }
-            </div>
+              </div>
 
-            @for (produto of produtosFiltrados(); track produto.id) {
+              @if (itemInativo(item.controls.codigoProduto.value); as produtoInativo) {
+                <mat-option class="inactive-product-option" [value]="produtoInativo.codigoProduto" disabled>
+                  <span class="product-option">
+                    <span class="product-option__identity">
+                      <strong>{{ produtoInativo.codigoProduto }}</strong>
+                      <small>{{ produtoInativo.descricaoProduto }}</small>
+                    </span>
+                    <span class="product-option__inactive-label">Inativo</span>
+                  </span>
+                </mat-option>
+              }
+
+              @for (produto of produtosFiltrados(); track produto.id) {
             <mat-option [value]="produto.codigo">
               <span class="product-option">
                 <span class="product-option__identity">
