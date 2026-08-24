@@ -62,7 +62,7 @@ func NewContainer(
 		notaRepository,
 	)
 	return &Container{
-		HTTPHandler:          httpPresentation.NewRouter(connection.SQL, handler),
+		HTTPHandler:          httpPresentation.NewRouter(connection.SQL, handler, cfg.CORSAllowedOrigins...),
 		OutboxWorker:         worker.NewOutboxWorker(publicarEventos, cfg.OutboxInterval, logger),
 		ResultadoBaixaWorker: worker.NewResultadoBaixaWorker(publisher, processarResultado, logger),
 		publisher:            publisher,

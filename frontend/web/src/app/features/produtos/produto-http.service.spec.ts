@@ -27,7 +27,10 @@ describe('ProdutoHttpService', () => {
         provideHttpClientTesting(),
         {
           provide: API_CONFIG,
-          useValue: { estoqueUrl: '/api/estoque', faturamentoUrl: '/api/faturamento' },
+          useValue: {
+            estoqueUrl: 'http://localhost:8081',
+            faturamentoUrl: 'http://localhost:8082',
+          },
         },
       ],
     });
@@ -51,7 +54,7 @@ describe('ProdutoHttpService', () => {
 
     const request = httpController.expectOne(
       (candidate) =>
-        candidate.url === '/api/estoque/produtos' &&
+        candidate.url === 'http://localhost:8081/produtos' &&
         candidate.params.get('pagina') === '2' &&
         candidate.params.get('tamanhoPagina') === '10' &&
         candidate.params.get('codigo') === 'SKU' &&
@@ -70,7 +73,7 @@ describe('ProdutoHttpService', () => {
     const input = { codigo: 'SKU-001', descricao: 'TECLADO MECANICO', saldo: 10, valor: 159.9 };
     service.criar(input).subscribe((response) => expect(response).toEqual(produto));
 
-    const request = httpController.expectOne('/api/estoque/produtos');
+    const request = httpController.expectOne('http://localhost:8081/produtos');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual(input);
     request.flush({ success: true, data: produto });
@@ -80,7 +83,7 @@ describe('ProdutoHttpService', () => {
     const input = { descricao: 'TECLADO RGB', saldo: 20, valor: 199.9 };
     service.atualizar(produto.id, input).subscribe();
 
-    const request = httpController.expectOne(`/api/estoque/produtos/${produto.id}`);
+    const request = httpController.expectOne(`http://localhost:8081/produtos/${produto.id}`);
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual(input);
     request.flush({ success: true, data: { ...produto, ...input } });
@@ -89,7 +92,9 @@ describe('ProdutoHttpService', () => {
   it('escolhe a operação de status a partir do estado atual', () => {
     service.alterarStatus(produto).subscribe();
 
-    const request = httpController.expectOne(`/api/estoque/produtos/${produto.id}/inativar`);
+    const request = httpController.expectOne(
+      `http://localhost:8081/produtos/${produto.id}/inativar`,
+    );
     expect(request.request.method).toBe('PATCH');
     request.flush({ success: true, data: { ...produto, ativo: false } });
   });

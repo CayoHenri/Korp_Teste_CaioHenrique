@@ -55,7 +55,7 @@ func NewContainer(
 	)
 
 	return &Container{
-		HTTPHandler:        httpapi.NewRouter(connection.SQL, produtoHandler),
+		HTTPHandler:        httpapi.NewRouter(connection.SQL, produtoHandler, cfg.CORSAllowedOrigins...),
 		BaixaEstoqueWorker: worker.NewBaixaEstoqueWorker(rabbitMQ, processarBaixa, logger),
 		rabbitMQ:           rabbitMQ,
 	}, nil

@@ -169,16 +169,16 @@ As URLs iniciais ficam em `src/environments/environment.ts` e são expostas por
 `API_CONFIG`, um `InjectionToken` tipado:
 
 ```text
-Estoque:     /api/estoque
-Faturamento: /api/faturamento
+Estoque:     http://localhost:8081
+Faturamento: http://localhost:8082
 ```
 
 Serviços HTTP devem injetar esse token em vez de repetir URLs literais.
 
-Durante o `npm start`, `proxy.conf.json` encaminha esses caminhos para as APIs
-locais nas portas `8081` e `8082`. Assim o navegador acessa a mesma origem do
-Angular e o desenvolvimento não depende de liberar CORS nos serviços. O proxy
-de produção deverá preservar os mesmos prefixos.
+O frontend chama as APIs diretamente. Estoque e Faturamento liberam a origem do
+Angular por CORS usando, respectivamente, `ESTOQUE_CORS_ALLOWED_ORIGINS` e
+`FATURAMENTO_CORS_ALLOWED_ORIGINS`. Não existe proxy no servidor de
+desenvolvimento do frontend.
 
 ## Fluxo da feature Produtos
 

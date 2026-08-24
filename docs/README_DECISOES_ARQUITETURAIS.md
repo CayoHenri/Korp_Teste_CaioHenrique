@@ -225,7 +225,7 @@ antes de sobrescritas frágeis com `::ng-deep`.
 
 ## ADR-021 — Proxy local do Angular para as APIs
 
-**Status:** aceita.
+**Status:** substituída pela ADR-023.
 
 **Decisão:** o frontend usa os prefixos relativos `/api/estoque` e
 `/api/faturamento`. Durante o desenvolvimento, `proxy.conf.json` encaminha as
@@ -248,6 +248,20 @@ paginação e feedback de dados, ficam em `shared/ui` e usam inputs e outputs.
 feature ficam menores e a mesma paginação pode ser aplicada a Produtos e Notas
 Fiscais. Um componente só deve ir para `shared` quando não importar models ou
 stores de uma feature específica.
+
+## ADR-023 — CORS explícito nas APIs
+
+**Status:** aceita.
+
+**Decisão:** o frontend chama diretamente as URLs de Estoque e Faturamento. Cada
+API recebe uma lista obrigatória de origens permitidas, separadas por vírgula,
+pelas variáveis `ESTOQUE_CORS_ALLOWED_ORIGINS` e
+`FATURAMENTO_CORS_ALLOWED_ORIGINS`. O proxy local do Angular foi removido.
+
+**Consequências:** a política de acesso pertence às APIs e funciona para qualquer
+cliente web autorizado, não apenas para `ng serve`. Novas origens precisam ser
+declaradas explicitamente no ambiente; preflights de origens desconhecidas
+recebem HTTP 403.
 
 ## Decisões adiadas
 

@@ -14,6 +14,7 @@ import (
 
 type Config struct {
 	HTTPPort                   string
+	CORSAllowedOrigins         []string
 	DatabaseURL                string
 	EstoqueBaseURL             string
 	RabbitMQURL                string
@@ -28,6 +29,10 @@ type Config struct {
 func Load() (Config, error) {
 	loadEnvironmentFile()
 	port, err := requiredEnv("FATURAMENTO_HTTP_PORT")
+	if err != nil {
+		return Config{}, err
+	}
+	corsAllowedOrigins, err := requiredListEnv("FATURAMENTO_CORS_ALLOWED_ORIGINS")
 	if err != nil {
 		return Config{}, err
 	}
@@ -57,6 +62,7 @@ func Load() (Config, error) {
 	}
 	return Config{
 		HTTPPort:                   port,
+		CORSAllowedOrigins:         corsAllowedOrigins,
 		DatabaseURL:                databaseURL,
 		EstoqueBaseURL:             estoqueBaseURL,
 		RabbitMQURL:                rabbitMQURL,
@@ -67,6 +73,26 @@ func Load() (Config, error) {
 		RabbitMQMessageMaxRetries:  messageMaxRetries,
 		RabbitMQMessageRetryDelay:  messageRetryDelay,
 	}, nil
+}
+
+func requiredListEnv(key string) ([]string, error) {
+	value, err := requiredEnv(key)
+	if err != nil {
+		return nil, err
+	}
+
+	items := strings.Split(value, ",")
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		if trimmed := strings.TrimSpace(item); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	if len(result) == 0 {
+		return nil, fmt.Errorf("%s deve conter ao menos uma origem", key)
+	}
+
+	return result, nil
 }
 
 func rabbitMQResilienceConfig() (int, time.Duration, time.Duration, int, time.Duration, error) {

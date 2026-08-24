@@ -14,9 +14,13 @@ type databasePinger interface {
 	PingContext(context.Context) error
 }
 
-func NewRouter(database databasePinger, handler *NotaFiscalHandler) nethttp.Handler {
+func NewRouter(
+	database databasePinger,
+	handler *NotaFiscalHandler,
+	allowedOrigins ...string,
+) nethttp.Handler {
 	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery())
+	router.Use(gin.Logger(), gin.Recovery(), corsMiddleware(allowedOrigins))
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/health", healthHandler(database))
 	handler.RegisterRoutes(router)
