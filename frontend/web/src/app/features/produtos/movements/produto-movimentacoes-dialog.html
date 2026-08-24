@@ -1,0 +1,89 @@
+<header class="dialog-header">
+  <span class="dialog-header__icon" aria-hidden="true">
+    <mat-icon>history</mat-icon>
+  </span>
+  <div class="dialog-header__content">
+    <span class="dialog-header__eyebrow">Movimentações de estoque</span>
+    <h2 mat-dialog-title>{{ produto.codigo }}</h2>
+    <p>{{ produto.descricao }}</p>
+  </div>
+  <div class="balance" matTooltip="Saldo atual">
+    <span>Saldo atual</span>
+    <strong>{{ produto.saldo }}</strong>
+  </div>
+</header>
+
+<mat-dialog-content>
+  @if (state$ | async; as state) {
+    @if (state.carregando) {
+      <mat-progress-bar mode="indeterminate" />
+      <div class="loading-label">Carregando histórico...</div>
+    } @else if (state.erro) {
+      <app-data-feedback
+        type="error"
+        title="Não foi possível carregar as movimentações"
+        [description]="state.erro"
+        (retry)="recarregar()"
+      />
+    } @else if (state.itens.length === 0) {
+      <app-data-feedback
+        type="empty"
+        title="Nenhuma movimentação registrada"
+        description="As alterações de saldo aparecerão neste histórico."
+      />
+    } @else {
+      <div class="history-summary">
+        <span>{{ state.itens.length }} {{ state.itens.length === 1 ? 'registro' : 'registros' }}</span>
+        <span>Mais recentes primeiro</span>
+      </div>
+
+      <div class="table-scroll">
+        <table mat-table [dataSource]="state.itens">
+          <ng-container matColumnDef="data">
+            <th mat-header-cell *matHeaderCellDef>Data</th>
+            <td mat-cell *matCellDef="let movimentacao">
+              {{ movimentacao.dataMovimentacao | date: 'dd/MM/yyyy HH:mm:ss' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="tipo">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let movimentacao">
+              <span class="movement-type" [class.movement-type--out]="movimentacao.tipo === 'SAIDA'">
+                <mat-icon>{{ movimentacao.tipo === 'ENTRADA' ? 'south_west' : 'north_east' }}</mat-icon>
+                {{ movimentacao.tipo === 'ENTRADA' ? 'Entrada' : 'Saída' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="quantidade">
+            <th mat-header-cell *matHeaderCellDef>Quantidade</th>
+            <td mat-cell *matCellDef="let movimentacao" class="quantity">
+              {{ movimentacao.tipo === 'ENTRADA' ? '+' : '−' }}{{ movimentacao.quantidade }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="referencia">
+            <th mat-header-cell *matHeaderCellDef>Referência</th>
+            <td mat-cell *matCellDef="let movimentacao">
+              @if (movimentacao.referencia) {
+                <span class="reference" [matTooltip]="movimentacao.referencia">
+                  {{ movimentacao.referencia }}
+                </span>
+              } @else {
+                <span class="without-reference">Ajuste manual</span>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+          <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+        </table>
+      </div>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button type="button" mat-dialog-close>Fechar</button>
+</mat-dialog-actions>

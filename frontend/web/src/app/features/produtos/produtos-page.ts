@@ -19,6 +19,7 @@ import { PageHeader } from '../../shared/ui/page-header/page-header';
 import { ProdutoFilterValue, ProdutosFilters } from './filters/produtos-filters';
 import { ProdutoFormDialog } from './form/produto-form-dialog';
 import { ProdutosList } from './list/produtos-list';
+import { ProdutoMovimentacoesDialog } from './movements/produto-movimentacoes-dialog';
 import { AtualizarProdutoInput, CriarProdutoInput, Produto } from './produto.model';
 import { ProdutosStore } from './produtos.store';
 
@@ -106,6 +107,15 @@ export class ProdutosPage implements OnInit {
         next: () => this.mostrarSucesso(produto ? 'Produto atualizado.' : 'Produto cadastrado.'),
         error: (error: unknown) => this.mostrarErro(error),
       });
+  }
+
+  protected abrirMovimentacoes(produto: Produto): void {
+    this.dialog.open<ProdutoMovimentacoesDialog, Produto>(ProdutoMovimentacoesDialog, {
+      data: produto,
+      width: '48rem',
+      maxWidth: 'calc(100vw - 2rem)',
+      autoFocus: false,
+    });
   }
 
   protected alterarStatus(produto: Produto): void {

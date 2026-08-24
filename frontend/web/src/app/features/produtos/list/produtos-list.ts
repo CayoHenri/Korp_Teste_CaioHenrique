@@ -30,6 +30,7 @@ export class ProdutosList {
   readonly pagina = input.required<number>();
   readonly tamanhoPagina = input.required<number>();
   readonly editar = output<Produto>();
+  readonly verMovimentacoes = output<Produto>();
   readonly alterarStatus = output<Produto>();
   readonly paginar = output<PaginationChange>();
 

@@ -37,3 +37,14 @@ export interface ProdutosPaginados {
   tamanhoPagina: number;
   totalPaginas: number;
 }
+
+export type TipoMovimentacao = 'ENTRADA' | 'SAIDA';
+
+export interface ProdutoMovimentacao {
+  id: string;
+  produtoId: string;
+  tipo: TipoMovimentacao;
+  quantidade: number;
+  referencia?: string;
+  dataMovimentacao: string;
+}

@@ -30,6 +30,7 @@ Implementado nesta etapa:
 - listagem de produtos com filtros e paginação;
 - cadastro e edição de produtos;
 - ativação e inativação sem exclusão;
+- consulta do histórico de movimentações de cada produto em diálogo;
 - feedback de carregamento, estado vazio, sucesso e erro;
 - testes unitários do contrato HTTP de Produtos;
 - página inicial de Notas Fiscais;
@@ -95,6 +96,7 @@ src/app/
 │   │   ├── filters/             formulário de filtros da listagem
 │   │   ├── form/                formulário de criação e edição
 │   │   ├── list/                tabela e ações da listagem
+│   │   ├── movements/           histórico de entradas e saídas
 │   │   └── *.ts                 página, model, store e cliente HTTP
 │   └── notas-fiscais/           model, store e página
 ├── layout/                      shell e navegação
@@ -215,6 +217,7 @@ ProdutosPage → ProdutosStore → ProdutoHttpService → API de Estoque
 - `form/produto-form-dialog.ts` reutiliza o formulário para criação e edição;
 - `filters/produtos-filters.ts` mantém e normaliza os controles de busca;
 - `list/produtos-list.ts` apresenta a tabela e emite ações para o container;
+- `movements/produto-movimentacoes-dialog.ts` consulta e apresenta o histórico;
 - `produtos-page.ts` trata somente eventos e apresentação.
 
 Features com mais de uma responsabilidade visual devem ser divididas em pastas
@@ -226,6 +229,7 @@ configuração por inputs, comunicando eventos por outputs.
 
 - nomes de arquivos em kebab-case;
 - componentes standalone e rotas lazy;
+- componentes de UI com arquivos `.ts`, `.html` e `.scss` separados;
 - models como interfaces ou tipos imutáveis;
 - estado localizado na feature que o utiliza;
 - imports RxJS diretamente de `rxjs`;

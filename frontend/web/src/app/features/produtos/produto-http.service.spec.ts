@@ -98,4 +98,25 @@ describe('ProdutoHttpService', () => {
     expect(request.request.method).toBe('PATCH');
     request.flush({ success: true, data: { ...produto, ativo: false } });
   });
+
+  it('lista as movimentações do produto', () => {
+    const movimentacao = {
+      id: '4fb18d54-0754-4c47-91cc-c67b3899b996',
+      produtoId: produto.id,
+      tipo: 'SAIDA' as const,
+      quantidade: 2,
+      referencia: 'd40549bd-93fb-47ef-a9c5-d40d858a583b',
+      dataMovimentacao: '2026-08-24T12:00:00Z',
+    };
+
+    service
+      .listarMovimentacoes(produto.id)
+      .subscribe((response) => expect(response).toEqual([movimentacao]));
+
+    const request = httpController.expectOne(
+      `http://localhost:8081/produtos/${produto.id}/movimentacoes`,
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush({ success: true, data: [movimentacao] });
+  });
 });

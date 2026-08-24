@@ -8,6 +8,7 @@ import {
   CriarProdutoInput,
   Produto,
   ProdutoFiltros,
+  ProdutoMovimentacao,
   ProdutosPaginados,
 } from './produto.model';
 
@@ -52,6 +53,14 @@ export class ProdutoHttpService {
     const acao = produto.ativo ? 'inativar' : 'ativar';
     return this.http
       .patch<ApiSuccessResponse<Produto>>(`${this.baseUrl}/${produto.id}/${acao}`, {})
+      .pipe(map((response) => response.data));
+  }
+
+  listarMovimentacoes(produtoId: string): Observable<ProdutoMovimentacao[]> {
+    return this.http
+      .get<ApiSuccessResponse<ProdutoMovimentacao[]>>(
+        `${this.baseUrl}/${produtoId}/movimentacoes`,
+      )
       .pipe(map((response) => response.data));
   }
 }

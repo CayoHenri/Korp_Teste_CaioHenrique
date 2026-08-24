@@ -43,14 +43,22 @@
     <ng-container matColumnDef="acoes">
       <th mat-header-cell *matHeaderCellDef><span class="sr-only">Ações</span></th>
       <td mat-cell *matCellDef="let produto" class="actions-cell">
-        <button mat-icon-button type="button" aria-label="Editar produto" matTooltip="Editar" (click)="editar.emit(produto)">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button type="button" [attr.aria-label]="produto.ativo ? 'Inativar produto' : 'Ativar produto'"
-          [matTooltip]="produto.ativo ? 'Inativar' : 'Ativar'"
-          (click)="alterarStatus.emit(produto)">
-          <mat-icon>{{ produto.ativo ? 'toggle_on' : 'toggle_off' }}</mat-icon>
-        </button>
+        <div class="action-group">
+          <button mat-icon-button type="button" aria-label="Ver movimentações" matTooltip="Movimentações"
+            (click)="verMovimentacoes.emit(produto)">
+            <mat-icon>history</mat-icon>
+          </button>
+          <button mat-icon-button type="button" aria-label="Editar produto" matTooltip="Editar"
+            (click)="editar.emit(produto)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button type="button"
+            [attr.aria-label]="produto.ativo ? 'Inativar produto' : 'Ativar produto'"
+            [matTooltip]="produto.ativo ? 'Inativar' : 'Ativar'"
+            (click)="alterarStatus.emit(produto)">
+            <mat-icon>{{ produto.ativo ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+          </button>
+        </div>
       </td>
     </ng-container>
 

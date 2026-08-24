@@ -67,7 +67,7 @@ tr[mat-row]:last-of-type td {
 }
 
 .mat-column-acoes {
-  width: 6rem;
+  width: 7rem;
 }
 
 .product-code {
@@ -109,6 +109,16 @@ tr[mat-row]:last-of-type td {
 .actions-cell {
   white-space: nowrap;
   text-align: right;
+}
+
+.action-group {
+  display: inline-flex;
+  gap: 0.125rem;
+  align-items: center;
+  padding: 0.125rem;
+  border: 1px solid var(--app-border);
+  border-radius: 0.5rem;
+  background: var(--app-surface-muted);
 }
 
 .actions-cell button {

@@ -27,7 +27,8 @@
   } @else if (state.itens.length > 0) {
   <app-produtos-list [produtos]="state.itens" [total]="state.total" [pagina]="state.filtros.pagina"
     [tamanhoPagina]="state.filtros.tamanhoPagina" (editar)="abrirFormulario($event)"
-    (alterarStatus)="alterarStatus($event)" (paginar)="paginar($event)" />
+    (verMovimentacoes)="abrirMovimentacoes($any($event))" (alterarStatus)="alterarStatus($any($event))"
+    (paginar)="paginar($event)" />
   }
 </mat-card>
 }

@@ -9,30 +9,8 @@ export interface PaginationChange {
 @Component({
   selector: 'app-pagination',
   imports: [MatPaginatorModule],
-  template: `
-    <mat-paginator
-      [length]="total()"
-      [pageIndex]="pagina() - 1"
-      [pageSize]="tamanhoPagina()"
-      [pageSizeOptions]="opcoesTamanho()"
-      [showFirstLastButtons]="true"
-      (page)="onPage($event)"
-    />
-  `,
-  styles: `
-    :host {
-      display: block;
-      border-top: 1px solid var(--app-border);
-      background: var(--app-surface-muted);
-      --mat-paginator-container-size: 40px;
-    }
-
-    mat-paginator {
-      background: transparent;
-      color: var(--app-muted);
-      font-size: 0.75rem;
-    }
-  `,
+  templateUrl: './pagination.html',
+  styleUrl: './pagination.scss',
 })
 export class Pagination {
   readonly total = input.required<number>();
