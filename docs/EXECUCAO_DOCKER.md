@@ -123,7 +123,7 @@ PowerShell:
 ```powershell
 Set-Location frontend/web
 npm install
-npm start
+npx ng serve
 ```
 
 Bash, Zsh ou Git Bash:
@@ -131,11 +131,13 @@ Bash, Zsh ou Git Bash:
 ```bash
 cd frontend/web
 npm install
-npm start
+npx ng serve
 ```
 
 Acesse <http://localhost:4200>. O frontend chama as APIs em `8081` e `8082`;
 as origens CORS correspondentes estão configuradas no `.env.example`.
+`npx ng` usa o Angular CLI instalado no workspace, garantindo a versão declarada
+no projeto sem exigir instalação global.
 
 ## Migrations manuais sem Docker
 

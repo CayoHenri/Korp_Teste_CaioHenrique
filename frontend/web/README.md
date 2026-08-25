@@ -48,8 +48,9 @@ Implementado nesta etapa:
 - store global e stores isolados por feature usando RxJS;
 - configuração inicial de build e testes.
 
-O frontend é executado localmente com npm. Ele não possui container Docker para
-evitar o custo de build do Angular no Docker Desktop durante o desenvolvimento.
+O frontend é executado localmente pelo Angular CLI instalado no workspace. Ele
+não possui container Docker para evitar o custo de build do Angular no Docker
+Desktop durante o desenvolvimento.
 
 ## Testes E2E visuais
 
@@ -66,13 +67,13 @@ npx playwright install chromium
 Execute em modo não interativo:
 
 ```console
-npm run test:e2e
+npx playwright test
 ```
 
 Para acompanhar e depurar os passos pela interface do Playwright:
 
 ```console
-npm run test:e2e:ui
+npx playwright test --ui
 ```
 
 O Playwright inicia o `ng serve` automaticamente e reutiliza uma instância já
@@ -95,21 +96,25 @@ PowerShell, Bash, Zsh, Git Bash ou Prompt de Comando:
 ```console
 cd frontend/web
 npm install
-npm start
+npx ng serve
 ```
 
 A aplicação fica em <http://localhost:4200>.
 
+`npm install` permanece necessário somente para instalar as dependências. Os
+comandos da aplicação usam `npx ng`, que executa a versão do Angular CLI fixada
+no próprio projeto e dispensa uma instalação global do `ng`.
+
 Build de produção:
 
 ```console
-npm run build
+npx ng build
 ```
 
 Testes:
 
 ```console
-npm test -- --watch=false
+npx ng test --watch=false
 ```
 
 ## Estrutura

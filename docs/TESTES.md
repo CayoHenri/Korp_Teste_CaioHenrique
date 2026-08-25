@@ -47,7 +47,7 @@ PowerShell, Bash, Zsh, Git Bash ou Prompt de Comando:
 
 ```console
 cd frontend/web
-npm test -- --watch=false
+npx ng test --watch=false
 ```
 
 A suíte usa Angular TestBed com Vitest e cobre clientes HTTP, stores RxJS,
@@ -81,15 +81,23 @@ movimentações, Outbox e idempotência.
 
 Localização: `tests/e2e`.
 
-Suba infraestrutura e migrations e, em terminais separados, inicie as duas APIs:
+Primeiro, suba infraestrutura e migrations na raiz:
 
 ```console
 docker compose up -d postgres rabbitmq
 docker compose run --rm estoque-migrations up
 docker compose run --rm faturamento-migrations up
 docker compose ps -a
+```
+
+Depois inicie cada API em um terminal separado:
+
+```console
 cd services/estoque
 go run ./cmd/api
+```
+
+```console
 cd services/faturamento
 go run ./cmd/api
 ```
@@ -141,7 +149,7 @@ Com a infraestrutura e as APIs saudáveis:
 ```console
 cd frontend/web
 npx playwright install chromium
-npm run test:e2e
+npx playwright test
 ```
 
 A suíte usa seletores acessíveis por papel e rótulo, execução serial e dados
@@ -149,7 +157,7 @@ A suíte usa seletores acessíveis por papel e rótulo, execução serial e dado
 fechamento assíncrono até `FECHADA` e bloqueio visual de itens inativos. O servidor
 Angular é iniciado automaticamente pelo Playwright.
 
-Em falhas são preservados screenshot, vídeo e trace. Use `npm run test:e2e:ui`
+Em falhas são preservados screenshot, vídeo e trace. Use `npx playwright test --ui`
 para depuração interativa.
 
 ## Por que o teste de indisponibilidade não derruba o RabbitMQ
@@ -163,14 +171,14 @@ infraestrutura compartilhada.
 ## Ordem recomendada antes de entregar
 
 ```text
-1. npm test -- --watch=false no frontend
+1. npx ng test --watch=false no frontend
 2. go test ./... nos dois módulos
 3. go vet ./... nos dois módulos
 4. testes de integração com PostgreSQL
 5. validar o Compose, subir a infraestrutura e aplicar as migrations em sequência
 6. iniciar as duas APIs Go localmente
 7. testes E2E das APIs
-8. npm run test:e2e no frontend
+8. npx playwright test no frontend
 9. git diff --check
 ```
 

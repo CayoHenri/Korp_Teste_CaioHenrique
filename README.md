@@ -88,7 +88,7 @@ go run ./cmd/api
 ```console
 cd frontend/web
 npm install
-npm start
+npx ng serve
 ```
 
 ## Endereços locais
@@ -159,5 +159,5 @@ Para executar o frontend:
 ```console
 cd frontend/web
 npm install
-npm start
+npx ng serve
 ```

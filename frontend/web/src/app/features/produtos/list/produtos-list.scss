@@ -53,12 +53,12 @@ tr[mat-row]:last-of-type td {
 }
 
 .mat-column-codigo {
-  width: 31%;
-  max-width: 23rem;
+  width: 15%;
+  max-width: 20rem;
 }
 
 .mat-column-descricao {
-  width: 18%;
+  width: 23%;
 }
 
 .mat-column-saldo,
@@ -102,7 +102,15 @@ th.mat-column-status {
 }
 
 .description-cell {
+  padding-block: 0.25rem;
   font-weight: 500;
+}
+
+.description-text {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  line-height: 1.25rem;
 }
 
 .number-cell {
