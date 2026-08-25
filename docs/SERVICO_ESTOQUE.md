@@ -206,6 +206,11 @@ ser usado após conferir manualmente o banco; ele não executa SQL.
 Uma migration nova exige arquivos `.up.sql` e `.down.sql` com o próximo número
 sequencial. O projeto não usa `AutoMigrate`.
 
+A migration `000006_seed_produtos_realistas` fornece dados de demonstração para
+ambientes criados do zero: produtos ativos e inativos, valores, saldos e uma
+movimentação de entrada correspondente para cada produto. IDs e códigos são
+determinísticos para manter consistência com os itens iniciais do Faturamento.
+
 ## Swagger
 
 Após mudar anotações dos handlers:

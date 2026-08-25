@@ -81,11 +81,17 @@ movimentações, Outbox e idempotência.
 
 Localização: `tests/e2e`.
 
-Suba a pilha completa:
+Suba infraestrutura e migrations e, em terminais separados, inicie as duas APIs:
 
 ```console
-docker compose up -d --build
-docker compose ps
+docker compose up -d postgres rabbitmq
+docker compose run --rm estoque-migrations up
+docker compose run --rm faturamento-migrations up
+docker compose ps -a
+cd services/estoque
+go run ./cmd/api
+cd services/faturamento
+go run ./cmd/api
 ```
 
 PowerShell:
@@ -161,8 +167,8 @@ infraestrutura compartilhada.
 2. go test ./... nos dois módulos
 3. go vet ./... nos dois módulos
 4. testes de integração com PostgreSQL
-5. docker compose config
-6. docker compose up -d --build
+5. validar o Compose, subir a infraestrutura e aplicar as migrations em sequência
+6. iniciar as duas APIs Go localmente
 7. testes E2E das APIs
 8. npm run test:e2e no frontend
 9. git diff --check

@@ -34,10 +34,10 @@ flowchart LR
 | Faturamento Service | Implementado |
 | Fluxo assíncrono | Implementado |
 | Testes unitários, integrados e E2E | Implementados |
-| Docker Compose completo | Implementado |
-| Frontend Angular | Estrutura inicial implementada |
+| Docker para infraestrutura e migrations | Implementado |
+| Frontend Angular | Implementado |
 
-## Início rápido com Docker
+## Início rápido
 
 Pré-requisito: Docker Desktop com Docker Compose.
 
@@ -61,21 +61,41 @@ Prompt de Comando:
 copy .env.example .env
 ```
 
-Suba a aplicação completa a partir da raiz:
+Suba PostgreSQL, RabbitMQ e aplique as migrations a partir da raiz:
 
 ```console
 docker compose config
-docker compose up -d --build
-docker compose ps
+docker compose up -d postgres rabbitmq
+docker compose build estoque-migrations
+docker compose run --rm estoque-migrations up
+docker compose build faturamento-migrations
+docker compose run --rm faturamento-migrations up
+docker compose ps -a
 ```
 
-Na primeira execução, o Docker compila as duas APIs. Os containers de migration
-aplicam os arquivos SQL antes da inicialização dos serviços.
+As APIs Go e o Angular não rodam em containers. Em três terminais separados:
+
+```console
+cd services/estoque
+go run ./cmd/api
+```
+
+```console
+cd services/faturamento
+go run ./cmd/api
+```
+
+```console
+cd frontend/web
+npm install
+npm start
+```
 
 ## Endereços locais
 
 | Recurso | Endereço |
 |---|---|
+| Frontend | <http://localhost:4200> |
 | Estoque | <http://localhost:8081> |
 | Swagger do Estoque | <http://localhost:8081/swagger/index.html> |
 | Faturamento | <http://localhost:8082> |
@@ -84,13 +104,7 @@ aplicam os arquivos SQL antes da inicialização dos serviços.
 
 Credenciais e portas de desenvolvimento estão declaradas no `.env.example`.
 
-## Verificação rápida
-
-```console
-docker compose logs -f estoque faturamento
-```
-
-Com a pilha saudável, execute os testes de ponta a ponta:
+Com a infraestrutura e as aplicações locais ativas, execute os testes de ponta a ponta:
 
 ```console
 cd tests/e2e
@@ -109,7 +123,7 @@ go test -count=1 -v ./...
 │   └── faturamento/        módulo Go do Faturamento
 ├── tests/e2e/              testes externos do fluxo completo
 ├── .env.example            contrato de configuração
-└── docker-compose.yml      ambiente local completo
+└── docker-compose.yml      infraestrutura e migrations
 ```
 
 ## Documentação
@@ -129,16 +143,18 @@ O índice completo está em [docs/README.md](docs/README.md).
 ## Comandos mais usados
 
 ```console
-docker compose up -d --build
-docker compose ps
-docker compose logs -f estoque faturamento
+docker compose up -d postgres rabbitmq
+docker compose run --rm estoque-migrations up
+docker compose run --rm faturamento-migrations up
+docker compose ps -a
+docker compose logs postgres rabbitmq
 docker compose down
 ```
 
 Os comandos locais, migrations, exemplos HTTP e procedimentos de diagnóstico
 ficam nos documentos específicos para evitar duplicação neste README.
 
-Para executar a estrutura inicial do frontend fora do Compose:
+Para executar o frontend:
 
 ```console
 cd frontend/web

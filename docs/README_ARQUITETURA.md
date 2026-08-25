@@ -176,8 +176,8 @@ Estado de tela é representado por stores RxJS com `BehaviorSubject` privado e
 seletores públicos como `Observable`. Componentes consomem estado com `AsyncPipe`.
 Angular Material fornece componentes visuais, acessibilidade e tema consistente.
 
-Nesta etapa, shell, navegação, páginas e stores estão prontos; a integração HTTP
-das features será implementada nas próximas etapas.
+Produtos e Notas Fiscais estão integrados às APIs por clientes HTTP e stores
+RxJS. O frontend acompanha o fechamento assíncrono sem bloquear a interface.
 
 ## Consistência
 
@@ -196,8 +196,10 @@ posteriormente como `FECHADA` ou `ABERTA` com motivo.
 
 ## Implantação local
 
-O Docker Compose contém infraestrutura, migrations e APIs. As imagens são
-multi-stage, executadas sem root e verificadas por health checks. Consulte
+O Docker Compose contém PostgreSQL, RabbitMQ e migrations. As APIs Go e o
+frontend Angular rodam no host para reduzir consumo de recursos no Docker
+Desktop. As imagens de migration são multi-stage, executadas sem root e compilam
+somente o comando necessário. Consulte
 [EXECUCAO_DOCKER.md](EXECUCAO_DOCKER.md).
 
 ## Limites atuais
@@ -205,7 +207,6 @@ multi-stage, executadas sem root e verificadas por health checks. Consulte
 - uma instância física de PostgreSQL;
 - uma instância de cada worker de Outbox;
 - sem autenticação ou autorização;
-- frontend ainda sem integração funcional com as APIs;
 - sem observabilidade distribuída;
 - valores monetários usam ponto flutuante conforme decisão do projeto.
 

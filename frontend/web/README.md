@@ -48,13 +48,8 @@ Implementado nesta etapa:
 - store global e stores isolados por feature usando RxJS;
 - configuração inicial de build e testes.
 
-> A troca para Angular Material foi feita apenas no código e nas dependências.
-> Build e testes não foram executados nesta etapa; valide-os após instalar os
-> pacotes conforme os comandos abaixo.
-
-Ainda não implementado:
-
-- container Docker do frontend.
+O frontend é executado localmente com npm. Ele não possui container Docker para
+evitar o custo de build do Angular no Docker Desktop durante o desenvolvimento.
 
 ## Testes E2E visuais
 
@@ -319,6 +314,8 @@ Valores monetários e quantidades possuem realces compactos distintos, mantendo
 alinhamento tabular entre cabeçalho e conteúdo. Listagens exibem separadamente
 as datas de cadastro e de última atualização retornadas pelas APIs.
 
-## Próximas etapas
+## Ordem de execução
 
-1. adicionar o frontend ao Docker Compose.
+Antes de iniciar o frontend, suba PostgreSQL, RabbitMQ e migrations pelo Compose
+e execute as APIs de Estoque e Faturamento localmente. O passo a passo completo
+está em [Execução local e Docker](../../docs/EXECUCAO_DOCKER.md).

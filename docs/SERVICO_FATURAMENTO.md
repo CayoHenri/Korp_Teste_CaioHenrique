@@ -167,6 +167,10 @@ O Faturamento usa sua própria tabela de controle de versão,
 `faturamento_schema_migrations`. O schema evolui somente por SQL versionado;
 `AutoMigrate` não é utilizado.
 
+A migration `000008_seed_notas_abertas_realistas` cria notas abertas com
+clientes, endereços e itens fictícios. Os itens mantêm o snapshot de código,
+descrição e valor e usam os mesmos IDs dos produtos criados pelo seed do Estoque.
+
 ## Swagger
 
 ```console

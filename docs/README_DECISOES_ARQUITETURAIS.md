@@ -175,15 +175,22 @@ gerados ficam versionados.
 **Consequências:** contrato pode ser consultado sem instalar o gerador. Mudanças
 de handlers exigem regeneração explícita.
 
-## ADR-017 — Docker Compose completo
+## ADR-017 — Docker para infraestrutura e migrations
 
 **Status:** aceita.
 
-**Decisão:** imagens multi-stage e sem root, migrations separadas, health checks
-e dependências explícitas.
+**Decisão:** o Compose executa PostgreSQL, RabbitMQ e migrations. As imagens de
+migration são multi-stage, sem root e compilam apenas `cmd/migrate`. APIs Go e
+Angular são executados diretamente no host.
 
-**Consequências:** o projeto sobe com poucos comandos e reproduz a topologia. A
-primeira compilação consome mais tempo e recursos que a execução local direta.
+**Consequências:** a infraestrutura permanece reproduzível, enquanto builds e
+hot reload das aplicações consomem menos memória no Docker Desktop. A execução
+completa exige terminais separados para Estoque, Faturamento e frontend.
+
+Dados realistas de demonstração também são migrations versionadas e
+determinísticas. Assim, uma instalação limpa já permite explorar a interface e
+o fluxo de fechamento, sem depender de carga manual ou script fora do controle
+de versão.
 
 ## ADR-018 — Angular 22 standalone
 
